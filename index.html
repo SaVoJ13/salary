@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор ЗП Fiege</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .calculator { max-width: 500px; margin: 0 auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .form-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        label { font-size: 14px; color: #34495e; font-weight: 500; }
+        input, select { width: 45%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; text-align: right; }
+        .divider { border-top: 2px solid #ecf0f1; margin: 20px 0; }
+        .result-group { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; font-weight: bold; }
+        .gross { color: #2980b9; }
+        .net { color: #27ae60; font-size: 18px; }
+        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <h2>Розрахунок ЗП Fiege</h2>
+    
+    <div class="form-group">
+        <label>Базова ставка (zł):</label>
+        <input type="number" id="baseRate" value="5630">
+    </div>
+    
+    <div class="form-group">
+        <label>Доплата за стаж (zł):</label>
+        <input type="number" id="tenureBonus" value="300">
+    </div>
+
+    <div class="form-group">
+        <label>Премія (%):</label>
+        <input type="number" id="bonusPct" value="15">
+    </div>
+
+    <div class="form-group">
+        <label>Робочі сб та нд (днів):</label>
+        <input type="number" id="weekendDays" value="7">
+    </div>
+
+    <div class="form-group">
+        <label>Нічні зміни (кількість):</label>
+        <input type="number" id="nightShifts" value="5">
+    </div>
+
+    <div class="form-group">
+        <label>Нічний тариф (zł/год):</label>
+        <input type="number" step="0.01" id="nightTariff" value="5.46">
+    </div>
+
+    <div class="form-group">
+        <label>Надгодини (сума, zł):</label>
+        <input type="number" step="0.01" id="overtimePay" value="2695.45">
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="result-group gross">
+        <span>Сума Брутто:</span>
+        <span id="grossResult">0.00 zł</span>
+    </div>
+
+    <div class="result-group net">
+        <span>Сума Нетто (приблизно):</span>
+        <span id="netResult">0.00 zł</span>
+    </div>
+
+    <button onclick="calculateSalary()">Розрахувати</button>
+</div>
+
+<script>
+    function calculateSalary() {
+        const baseRate = parseFloat(document.getElementById('baseRate').value) || 0;
+        const tenureBonus = parseFloat(document.getElementById('tenureBonus').value) || 0;
+        const bonusPct = parseFloat(document.getElementById('bonusPct').value) || 0;
+        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
+        const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
+        const nightTariff = parseFloat(document.getElementById('nightTariff').value) || 0;
+        const overtimePay = parseFloat(document.getElementById('overtimePay').value) || 0;
+
+        const totalBase = baseRate + tenureBonus;
+        const bonusAmount = totalBase * (bonusPct / 100);
+        const weekendPay = weekendDays * 100;
+        const nightPay = nightShifts * 8 * nightTariff;
+
+        const gross = totalBase + bonusAmount + weekendPay + nightPay + overtimePay;
+        const net = gross * 0.7049;
+
+        document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
+        document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
+    }
+
+    calculateSalary();
+</script>
+
+</body>
+</html>
