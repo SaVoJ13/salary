@@ -175,33 +175,37 @@
         // 4. Робочі вихідні
         const weekendPay = weekendDays * 100;
 
-        // 5. Надгодини (по днях з округленням до 2 знаків як у таблиці)
+        // 5. Надгодини
         const overtimePay = Math.round(((totalBase / workDays) * 2 * overtimeDays) * 100) / 100;
 
         // Брутто (без прання для візуалу)
         const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
-        // Доплата за прання додається суто для бази Нетто
+        // Доплата за прання додається для бази Нетто
         const laundryBonus = 13.00;
         const grossForNet = gross + laundryBonus;
 
         // --- ВІДРАХУВАННЯ ---
         const zus = gross * 0.1371; // ZUS вираховується з Брутто без прання
         const healthBase = gross - zus;
-        const nfz = healthBase * 0.09;
+        const nfz = Math.round((healthBase * 0.09) * 100) / 100;
 
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
         const ppkEmployer = ppkActive ? (gross * 0.015) : 0;
 
+        // Бенефіти (MultiSport/MyBenefit)
+        const benefitBenefitExpense = 54.00; // Додається до бази податку
+        const benefitDeduction = 30.25;       // Відраховується з Нетто
+
         const kup = 250.00;
-        const pitBase = Math.max(0, healthBase + ppkEmployer - kup);
-        let pit = (pitBase * 0.12) - 300.00;
+        const pitBase = Math.max(0, healthBase + ppkEmployer + benefitBenefitExpense - kup);
+        let pit = Math.round(((pitBase * 0.12) - 300.00));
         pit = Math.max(0, pit);
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
 
-        // Нетто (з урахуванням прання)
-        const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction;
+        // Нетто (з урахуванням бенефітів та прання)
+        const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction;
 
         // Вивід
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
