@@ -144,9 +144,9 @@
         const selectedMonth = monthSelect.value;
         const workDays = monthData[selectedMonth];
 
-        // Нічний тариф: (4806 / (Роб.дні * 8)) * 20%
+        // Нічний тариф за формулою: (4806 / (Роб.дні * 8)) * 20%
         const minSalary = 4806.00;
-        const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
+        const nightTariff = (minSalary / (workDays * 8)) * 0.20;
 
         // Вхідні дані
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
@@ -161,56 +161,56 @@
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
 
-        // 1. Ставка + Стаж
+        // 1. Загальна база (Ставка + Стаж)
         const totalBase = baseSalary + tenureBonus;
 
-        // 2. Премія
+        // 2. Премія від загальної бази
         const bonusAmount = totalBase * (bonusPct / 100);
 
-        // 3. Нічні (ранкові по 10 хв + нічні 8 год + 30 zł за зміну)
-        const morningNightPay = Math.round((morningShifts * (10 / 60) * nightTariff) * 100) / 100;
+        // 3. Нічні
+        const morningNightPay = morningShifts * (10 / 60) * nightTariff;
         const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         const totalNightPay = morningNightPay + nightPay;
 
-        // 4. Робочі вихідні (+100 zł за зміну)
+        // 4. Робочі вихідні
         const weekendPay = weekendDays * 100;
 
         // 5. Надгодини (по днях)
-        const overtimePay = Math.round(((totalBase / workDays) * 2 * overtimeDays) * 100) / 100;
+        const overtimePay = (totalBase / workDays) * 2 * overtimeDays;
 
         // Візуальне Брутто (без прання)
         const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
-        // Доплата за прання додається до загальної виплати
+        // Доплата за прання (додається до Нетто)
         const laundryBonus = 13.00;
         const grossForNet = gross + laundryBonus;
 
         // --- ВІДРАХУВАННЯ ---
-        // 1. ZUS (13,71%) - рахується з Брутто без прання
+        // 1. ZUS (13,71%) - вираховується з Брутто без прання
         const zus = gross * 0.1371;
 
-        // 2. NFZ (9%) - рахується з бази (Брутто - ZUS)
+        // 2. NFZ (9%) - вираховується з бази (Брутто - ZUS)
         const healthBase = gross - zus;
-        const nfz = Math.round((healthBase * 0.09) * 100) / 100;
+        const nfz = healthBase * 0.09;
 
         // 3. PPK
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
         const ppkEmployer = ppkActive ? (gross * 0.015) : 0;
 
-        // 4. Бенефіти (MultiSport/MyBenefit)
+        // 4. Бенефіти
         const benefitExpense = 54.00;   // Додається до бази податку
         const benefitDeduction = 30.25; // Відраховується з Нетто
 
-        // 5. Податок PIT (12%)
+        // 5. Податок PIT (12%) з округленням бази та авансу до цілих злотих
         const kup = 250.00;
-        const pitBase = Math.max(0, healthBase + ppkEmployer + benefitExpense - kup);
+        const pitBase = Math.max(0, Math.round(healthBase + ppkEmployer + benefitExpense - kup));
         let pit = Math.round((pitBase * 0.12) - 300.00);
         pit = Math.max(0, pit);
 
         // 6. Страхування
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
 
-        // Фінальне Нетто
+        // Підсумкове Нетто
         const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction;
 
         // Вивід
