@@ -44,65 +44,65 @@
     
     <div class="form-group">
         <label>Місяць</label>
-        <select id="monthSelect" onchange="calculateSalary()"></select>
+        <select id="monthSelect" onchange="saveAndCalculate()"></select>
     </div>
 
     <div class="form-group">
         <label>Основний оклад (zł)</label>
-        <input type="number" id="baseSalary" value="5630" oninput="calculateSalary()">
+        <input type="number" id="baseSalary" placeholder="0" oninput="saveAndCalculate()" onfocus="this.select()">
     </div>
 
     <div class="form-group">
         <label>Стаж роботи</label>
-        <select id="tenureSelect" onchange="calculateSalary()">
+        <select id="tenureSelect" onchange="saveAndCalculate()">
             <option value="0">менше 12 місяців</option>
             <option value="150">1 рік</option>
-            <option value="300" selected>2+ роки</option>
+            <option value="300">2+ роки</option>
         </select>
     </div>
 
     <div class="form-group">
         <label>Премія</label>
-        <select id="bonusPctSelect" onchange="calculateSalary()">
+        <select id="bonusPctSelect" onchange="saveAndCalculate()">
             <option value="0">0%</option>
             <option value="5">5%</option>
             <option value="10">10%</option>
-            <option value="15" selected>15%</option>
+            <option value="15">15%</option>
         </select>
     </div>
 
     <div class="form-group">
         <label>Ранкові зміни</label>
-        <input type="number" id="morningShifts" value="10" oninput="calculateSalary()">
+        <input type="number" id="morningShifts" placeholder="0" oninput="saveAndCalculate()" onfocus="this.select()">
     </div>
 
     <div class="form-group">
         <label>Нічні зміни</label>
-        <input type="number" id="nightShifts" value="5" oninput="calculateSalary()">
+        <input type="number" id="nightShifts" placeholder="0" oninput="saveAndCalculate()" onfocus="this.select()">
     </div>
 
     <div class="form-group">
         <label>Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" value="6" oninput="calculateSalary()">
+        <input type="number" id="weekendDays" placeholder="0" oninput="saveAndCalculate()" onfocus="this.select()">
     </div>
 
     <div class="form-group">
         <label>Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" value="3" oninput="calculateSalary()">
+        <input type="number" id="overtimeDays" placeholder="0" oninput="saveAndCalculate()" onfocus="this.select()">
     </div>
 
     <div class="form-group">
         <label>Участь у PPK</label>
-        <select id="ppkSelect" onchange="calculateSalary()">
+        <select id="ppkSelect" onchange="saveAndCalculate()">
             <option value="yes">Так</option>
-            <option value="no" selected>Ні</option>
+            <option value="no">Ні</option>
         </select>
     </div>
 
     <div class="form-group">
         <label>Додаткове страхування</label>
-        <select id="insuranceSelect" onchange="calculateSalary()">
-            <option value="yes" selected>Так</option>
+        <select id="insuranceSelect" onchange="saveAndCalculate()">
+            <option value="yes">Так</option>
             <option value="no">Ні</option>
         </select>
     </div>
@@ -124,7 +124,6 @@
 </div>
 
 <script>
-    // Виробничий календар на 2026 рік
     const monthData = {
         "січень": 20, "лютий": 20, "березень": 22, "квітень": 21,
         "травень": 20, "червень": 21, "липень": 23, "серпень": 20,
@@ -138,17 +137,40 @@
         option.text = month.charAt(0).toUpperCase() + month.slice(1);
         monthSelect.appendChild(option);
     }
-    monthSelect.value = "жовтень";
+
+    const fields = ['monthSelect', 'baseSalary', 'tenureSelect', 'bonusPctSelect', 'morningShifts', 'nightShifts', 'weekendDays', 'overtimeDays', 'ppkSelect', 'insuranceSelect'];
+
+    function saveValues() {
+        fields.forEach(id => {
+            localStorage.setItem(id, document.getElementById(id).value);
+        });
+    }
+
+    function loadValues() {
+        let savedMonth = localStorage.getItem('monthSelect');
+        monthSelect.value = savedMonth ? savedMonth : "жовтень";
+
+        fields.forEach(id => {
+            if (id === 'monthSelect') return;
+            let val = localStorage.getItem(id);
+            if (val !== null) {
+                document.getElementById(id).value = val;
+            }
+        });
+    }
+
+    function saveAndCalculate() {
+        saveValues();
+        calculateSalary();
+    }
 
     function calculateSalary() {
         const selectedMonth = monthSelect.value;
         const workDays = monthData[selectedMonth];
 
-        // Нічний тариф: (4806 / (Роб.дні * 8)) * 20%
         const minSalary = 4806.00;
         const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
 
-        // Вхідні дані
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
         const tenureBonus = parseFloat(document.getElementById('tenureSelect').value) || 0;
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
@@ -161,57 +183,46 @@
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
 
-        // 1. Ставка + Стаж
         const totalBase = baseSalary + tenureBonus;
-
-        // 2. Премія
         const bonusAmount = totalBase * (bonusPct / 100);
 
-        // 3. Нічні
         const morningNightPay = Math.round((morningShifts * (10 / 60) * nightTariff) * 100) / 100;
         const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         const totalNightPay = morningNightPay + nightPay;
 
-        // 4. Робочі вихідні
         const weekendPay = weekendDays * 100;
-
-        // 5. Надгодини
         const overtimePay = Math.round(((totalBase / workDays) * 2 * overtimeDays) * 100) / 100;
 
-        // Брутто (без прання для візуалу)
         const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
-        // Доплата за прання додається для бази Нетто
         const laundryBonus = 13.00;
         const grossForNet = gross + laundryBonus;
 
-        // --- ВІДРАХУВАННЯ ---
-        const zus = gross * 0.1371; // ZUS вираховується з Брутто без прання
+        const zus = Math.round((gross * 0.1371) * 100) / 100;
         const healthBase = gross - zus;
         const nfz = Math.round((healthBase * 0.09) * 100) / 100;
 
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
         const ppkEmployer = ppkActive ? (gross * 0.015) : 0;
 
-        // Бенефіти (MultiSport/MyBenefit)
-        const benefitBenefitExpense = 54.00; // Додається до бази податку
-        const benefitDeduction = 30.25;       // Відраховується з Нетто
+        const benefitExpense = 54.00; 
+        const benefitDeduction = 30.25;
 
         const kup = 250.00;
-        const pitBase = Math.max(0, healthBase + ppkEmployer + benefitBenefitExpense - kup);
-        let pit = Math.round(((pitBase * 0.12) - 300.00));
+        const pitBase = healthBase + ppkEmployer + benefitExpense - kup;
+        
+        let pit = Math.round((pitBase * 0.12) - 300.00);
         pit = Math.max(0, pit);
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
 
-        // Нетто (з урахуванням бенефітів та прання)
         const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction;
 
-        // Вивід
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
     }
 
+    loadValues();
     calculateSalary();
 </script>
 
