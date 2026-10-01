@@ -5,93 +5,246 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор ЗП Fiege</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .calculator { max-width: 500px; margin: 0 auto; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
-        .form-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        label { font-size: 14px; color: #34495e; font-weight: 500; }
-        input, select { width: 45%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; text-align: right; }
-        .divider { border-top: 2px solid #ecf0f1; margin: 20px 0; }
-        .result-group { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; font-weight: bold; }
-        .gross { color: #2980b9; }
-        .net { color: #27ae60; font-size: 18px; }
-        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #2980b9; }
+        :root {
+            --primary-color: #004a99;
+            --bg-color: #f0f4f8;
+            --panel-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #d1d9e6;
+            --success-color: #27ae60;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; box-sizing: border-box; }
+        .calculator { max-width: 600px; margin: 10px auto; background: var(--panel-bg); padding: 20px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
+        
+        .form-section { margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 15px; background: #fafbfc; }
+        .form-section-title { font-weight: bold; color: var(--primary-color); margin-bottom: 12px; font-size: 1em; display: flex; align-items: center; }
+        .form-section-title::before { content: ''; display: inline-block; width: 5px; height: 1em; background-color: var(--primary-color); margin-right: 8px; border-radius: 3px; }
+
+        .form-group { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        label { font-size: 14px; font-weight: 500; flex: 1; min-width: 180px; margin-right: 10px; }
+        input, select { width: 42%; min-width: 130px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; text-align: right; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 5px rgba(0,74,153,0.2); }
+        
+        .read-only-input { background-color: #e9ecef; border-color: #adb5bd; color: #495057; font-weight: bold; }
+
+        .divider { border-top: 2px solid var(--border-color); margin: 20px 0; }
+        
+        .results-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .result-box { background: #fafbfc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; text-align: center; }
+        .result-title { font-size: 13px; color: #7f8c8d; margin-bottom: 5px; font-weight: 500; }
+        .result-value { font-size: 20px; font-weight: bold; }
+        
+        .gross-result { color: var(--primary-color); }
+        .net-result { color: var(--success-color); border: 2px solid var(--success-color); background: #eafaf1; }
+
+        button { width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
+        button:hover { background: #003a7a; }
+
+        @media (max-width: 480px) {
+            .form-group { flex-direction: column; align-items: flex-start; }
+            label { margin-right: 0; margin-bottom: 4px; width: 100%; }
+            input, select { width: 100%; text-align: left; }
+            .results-panel { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
 <div class="calculator">
-    <h2>Розрахунок ЗП Fiege</h2>
+    <h2>Калькулятор ЗП Fiege</h2>
     
-    <div class="form-group">
-        <label>Базова ставка (zł):</label>
-        <input type="number" id="baseRate" value="5630">
-    </div>
-    
-    <div class="form-group">
-        <label>Доплата за стаж (zł):</label>
-        <input type="number" id="tenureBonus" value="300">
-    </div>
-
-    <div class="form-group">
-        <label>Премія (%):</label>
-        <input type="number" id="bonusPct" value="15">
-    </div>
-
-    <div class="form-group">
-        <label>Робочі сб та нд (днів):</label>
-        <input type="number" id="weekendDays" value="7">
+    <!-- 1. Місяць та параметри -->
+    <div class="form-section">
+        <div class="form-section-title">Місяць та Норматив</div>
+        <div class="form-group">
+            <label>Розрахунковий місяць:</label>
+            <select id="monthSelect" onchange="calculateSalary()"></select>
+        </div>
+        <div class="form-group">
+            <label>Робочих днів у місяці:</label>
+            <input type="number" id="workDays" class="read-only-input" readonly>
+        </div>
+        <div class="form-group">
+            <label>Нічний тариф (zł/год):</label>
+            <input type="number" step="0.01" id="nightTariff" class="read-only-input" readonly>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Нічні зміни (кількість):</label>
-        <input type="number" id="nightShifts" value="5">
+    <!-- 2. Оклад та Стаж -->
+    <div class="form-section">
+        <div class="form-section-title">Оклад, Стаж та Премія</div>
+        <div class="form-group">
+            <label>Основний оклад (zł):</label>
+            <input type="number" id="baseSalary" value="5750" oninput="calculateSalary()">
+        </div>
+        <div class="form-group">
+            <label>Стаж роботи:</label>
+            <select id="tenureSelect" onchange="calculateSalary()">
+                <option value="0">менше 12 місяців (+0 zł)</option>
+                <option value="150">1 рік (+150 zł)</option>
+                <option value="300" selected>2+ роки (+300 zł)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Премія (%):</label>
+            <select id="bonusPctSelect" onchange="calculateSalary()">
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="10">10%</option>
+                <option value="15" selected>15%</option>
+            </select>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Нічний тариф (zł/год):</label>
-        <input type="number" step="0.01" id="nightTariff" value="5.46">
+    <!-- 3. Зміни та Надгодини -->
+    <div class="form-section">
+        <div class="form-section-title">Зміни, Вихідні та Надгодини</div>
+        <div class="form-group">
+            <label>Ранкові зміни (по 10 хв нічних):</label>
+            <input type="number" id="morningShifts" value="10" oninput="calculateSalary()">
+        </div>
+        <div class="form-group">
+            <label>Нічні зміни (по 8 год + 30 zł):</label>
+            <input type="number" id="nightShifts" value="5" oninput="calculateSalary()">
+        </div>
+        <div class="form-group">
+            <label>Робочі сб/нд (днів):</label>
+            <input type="number" id="weekendDays" value="3" oninput="calculateSalary()">
+        </div>
+        <div class="form-group">
+            <label>Надгодини (годин):</label>
+            <input type="number" id="overtimeHours" value="0" oninput="calculateSalary()">
+        </div>
+        <div class="form-group">
+            <label>Доплата за прання (zł):</label>
+            <input type="number" step="0.01" id="laundryBonus" value="8.00" oninput="calculateSalary()">
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Надгодини (сума, zł):</label>
-        <input type="number" step="0.01" id="overtimePay" value="2695.45">
+    <!-- 4. Додаткові опції та відрахування -->
+    <div class="form-section">
+        <div class="form-section-title">Страхування та PPK</div>
+        <div class="form-group">
+            <label>Участь у PPK (2%):</label>
+            <select id="ppkSelect" onchange="calculateSalary()">
+                <option value="yes" selected>Так (2%)</option>
+                <option value="no">Ні</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Додаткове страхування (36,70 zł):</label>
+            <select id="insuranceSelect" onchange="calculateSalary()">
+                <option value="yes" selected>Так (36,70 zł)</option>
+                <option value="no">Ні</option>
+            </select>
+        </div>
     </div>
+
+    <button onclick="calculateSalary()">Розрахувати ЗП</button>
 
     <div class="divider"></div>
 
-    <div class="result-group gross">
-        <span>Сума Брутто:</span>
-        <span id="grossResult">0.00 zł</span>
+    <div class="results-panel">
+        <div class="result-box">
+            <div class="result-title">Сума Брутто (Wyn. brutto)</div>
+            <div class="result-value gross-result" id="grossResult">0.00 zł</div>
+        </div>
+        <div class="result-box">
+            <div class="result-title">До виплати Нетто (Netto)</div>
+            <div class="result-value net-result" id="netResult">0.00 zł</div>
+        </div>
     </div>
-
-    <div class="result-group net">
-        <span>Сума Нетто (приблизно):</span>
-        <span id="netResult">0.00 zł</span>
-    </div>
-
-    <button onclick="calculateSalary()">Розрахувати</button>
 </div>
 
 <script>
+    const monthData = {
+        "січень": 20, "лютий": 20, "березень": 22, "квітень": 21,
+        "травень": 20, "червень": 21, "липень": 23, "серпень": 20,
+        "вересень": 22, "жовтень": 22, "листопад": 20, "грудень": 20
+    };
+
+    const monthSelect = document.getElementById('monthSelect');
+    for (const month in monthData) {
+        let option = document.createElement('option');
+        option.value = month;
+        option.text = month.charAt(0).toUpperCase() + month.slice(1);
+        monthSelect.appendChild(option);
+    }
+    monthSelect.value = "жовтень";
+
     function calculateSalary() {
-        const baseRate = parseFloat(document.getElementById('baseRate').value) || 0;
-        const tenureBonus = parseFloat(document.getElementById('tenureBonus').value) || 0;
-        const bonusPct = parseFloat(document.getElementById('bonusPct').value) || 0;
-        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
+        const selectedMonth = monthSelect.value;
+        const workDays = monthData[selectedMonth];
+        document.getElementById('workDays').value = workDays;
+
+        // Нічний тариф за вашою формулою: (4806 / (Роб.дні * 8)) * 20%
+        const minSalary = 4806.00;
+        const nightTariff = (minSalary / (workDays * 8)) * 0.20;
+        document.getElementById('nightTariff').value = nightTariff.toFixed(2);
+
+        // Вхідні дані
+        const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+        const tenureBonus = parseFloat(document.getElementById('tenureSelect').value) || 0;
+        const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
+        
+        const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
         const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
-        const nightTariff = parseFloat(document.getElementById('nightTariff').value) || 0;
-        const overtimePay = parseFloat(document.getElementById('overtimePay').value) || 0;
+        const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
+        const overtimeHours = parseFloat(document.getElementById('overtimeHours').value) || 0;
+        const laundryBonus = parseFloat(document.getElementById('laundryBonus').value) || 0;
 
-        const totalBase = baseRate + tenureBonus;
+        const ppkActive = document.getElementById('ppkSelect').value === 'yes';
+        const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
+
+        // 1. Загальна база (Ставка + Стаж)
+        const totalBase = baseSalary + tenureBonus;
+
+        // 2. Премія від загальної бази
         const bonusAmount = totalBase * (bonusPct / 100);
+
+        // 3. Нічні години (10 хв за ранкову + 8 год за нічну)
+        const nightHours = (morningShifts * (10 / 60)) + (nightShifts * 8);
+        const nightPay = nightHours * nightTariff;
+        const nightShiftBonus = nightShifts * 30; // 30 zł за кожну нічну зміну
+
+        // 4. Вікенд (100 zł/день)
         const weekendPay = weekendDays * 100;
-        const nightPay = nightShifts * 8 * nightTariff;
 
-        const gross = totalBase + bonusAmount + weekendPay + nightPay + overtimePay;
-        const net = gross * 0.7049;
+        // 5. Надгодини за вашою формулою: (База / Робочі дні місяця)
+        const overtimeDayRate = totalBase / workDays;
+        const overtimeHourlyRate = overtimeDayRate / 8;
+        const overtimePay = overtimeHours * overtimeHourlyRate;
 
+        // Повне Брутто
+        const gross = totalBase + bonusAmount + nightPay + nightShiftBonus + weekendPay + overtimePay + laundryBonus;
+
+        // --- ВІДРАХУВАННЯ (In minus) ---
+        // ZUS (13.71%)
+        const zus = gross * 0.1371;
+
+        // База для NFZ
+        const healthBase = gross - zus;
+        const nfz = healthBase * 0.09;
+
+        // PPK (2% з працівника + 1.5% з роботодавця до податкової бази)
+        const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
+        const ppkEmployer = ppkActive ? (gross * 0.015) : 0;
+
+        // PIT (Прибутковий податок 12%)
+        const kup = 250.00;
+        const pitBase = Math.max(0, healthBase + ppkEmployer - kup);
+        let pit = (pitBase * 0.12) - 300.00;
+        pit = Math.max(0, pit);
+
+        // Додаткове страхування (36,70 zł: 13,00 + 23,70)
+        const insuranceDeduction = insuranceActive ? 36.70 : 0;
+
+        // Підсумкове Нетто
+        const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction;
+
+        // Вивід результатів
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
     }
