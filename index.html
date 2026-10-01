@@ -107,6 +107,14 @@
         </select>
     </div>
 
+    <div class="form-group">
+        <label>Бенефіти (обіди/картки)</label>
+        <select id="benefitsSelect" onchange="calculateSalary()">
+            <option value="yes" selected>Так (Sodexo/MyBenefit)</option>
+            <option value="no">Ні</option>
+        </select>
+    </div>
+
     <button onclick="calculateSalary()">Розрахувати</button>
 
     <div class="divider"></div>
@@ -124,7 +132,6 @@
 </div>
 
 <script>
-    // Виробничий календар на 2026 рік
     const monthData = {
         "січень": 20, "лютий": 20, "березень": 22, "квітень": 21,
         "травень": 20, "червень": 21, "липень": 23, "серпень": 20,
@@ -144,11 +151,9 @@
         const selectedMonth = monthSelect.value;
         const workDays = monthData[selectedMonth];
 
-        // Нічний тариф за формулою: (4806 / (Роб.дні * 8)) * 20%
         const minSalary = 4806.00;
         const nightTariff = (minSalary / (workDays * 8)) * 0.20;
 
-        // Вхідні дані
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
         const tenureBonus = parseFloat(document.getElementById('tenureSelect').value) || 0;
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
@@ -160,60 +165,46 @@
 
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
+        const benefitsActive = document.getElementById('benefitsSelect').value === 'yes';
 
-        // 1. Загальна база (Ставка + Стаж)
         const totalBase = baseSalary + tenureBonus;
-
-        // 2. Премія від загальної бази
         const bonusAmount = totalBase * (bonusPct / 100);
 
-        // 3. Нічні
         const morningNightPay = morningShifts * (10 / 60) * nightTariff;
         const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         const totalNightPay = morningNightPay + nightPay;
 
-        // 4. Робочі вихідні
         const weekendPay = weekendDays * 100;
-
-        // 5. Надгодини (по днях)
         const overtimePay = (totalBase / workDays) * 2 * overtimeDays;
 
-        // Візуальне Брутто (без прання)
         const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
-        // Доплата за прання (додається до Нетто)
         const laundryBonus = 13.00;
         const grossForNet = gross + laundryBonus;
 
         // --- ВІДРАХУВАННЯ ---
-        // 1. ZUS (13,71%) - вираховується з Брутто без прання
         const zus = gross * 0.1371;
-
-        // 2. NFZ (9%) - вираховується з бази (Брутто - ZUS)
         const healthBase = gross - zus;
         const nfz = healthBase * 0.09;
 
-        // 3. PPK
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
         const ppkEmployer = ppkActive ? (gross * 0.015) : 0;
 
-        // 4. Бенефіти
-        const benefitExpense = 54.00;   // Додається до бази податку
-        const benefitDeduction = 30.25; // Відраховується з Нетто
+        // Бенефіти (Витрати + Відрахування за правилами Fiege)
+        const benefitExpense = benefitsActive ? 54.00 : 0;
+        const benefitDeduction = benefitsActive ? 30.25 : 0;
+        const totalBenefitDeduction = benefitExpense + benefitDeduction;
 
-        // 5. Податок PIT (12%) з округленням бази та авансу до цілих злотих
         const kup = 250.00;
         const pitBase = Math.max(0, Math.round(healthBase + ppkEmployer + benefitExpense - kup));
         let pit = Math.round((pitBase * 0.12) - 300.00);
         pit = Math.max(0, pit);
 
-        // 6. Страхування
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
 
-        // Підсумкове Нетто
-        const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction;
+        // Фінальний розрахунок Нетто
+        const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction - totalBenefitDeduction;
 
-        // Вивід
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
     }
