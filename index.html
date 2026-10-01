@@ -49,7 +49,7 @@
 
     <div class="form-group">
         <label>Основний оклад (zł)</label>
-        <input type="number" id="baseSalary" value="5750" oninput="calculateSalary()">
+        <input type="number" id="baseSalary" value="5630" oninput="calculateSalary()">
     </div>
 
     <div class="form-group">
@@ -83,19 +83,19 @@
 
     <div class="form-group">
         <label>Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" value="3" oninput="calculateSalary()">
+        <input type="number" id="weekendDays" value="6" oninput="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label>Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" value="0" oninput="calculateSalary()">
+        <input type="number" id="overtimeDays" value="3" oninput="calculateSalary()">
     </div>
 
     <div class="form-group">
         <label>Участь у PPK</label>
         <select id="ppkSelect" onchange="calculateSalary()">
-            <option value="yes" selected>Так</option>
-            <option value="no">Ні</option>
+            <option value="yes">Так</option>
+            <option value="no" selected>Ні</option>
         </select>
     </div>
 
@@ -146,7 +146,7 @@
 
         // Нічний тариф: (4806 / (Роб.дні * 8)) * 20%
         const minSalary = 4806.00;
-        const nightTariff = (minSalary / (workDays * 8)) * 0.20;
+        const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
 
         // Вхідні дані
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
@@ -161,9 +161,6 @@
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
 
-        // Доплата за прання (13 zł)
-        const laundryBonus = 13.00;
-
         // 1. Ставка + Стаж
         const totalBase = baseSalary + tenureBonus;
 
@@ -171,21 +168,25 @@
         const bonusAmount = totalBase * (bonusPct / 100);
 
         // 3. Нічні
-        const nightHours = (morningShifts * (10 / 60)) + (nightShifts * 8);
-        const nightPay = nightHours * nightTariff;
-        const nightShiftBonus = nightShifts * 30; // +30 zł за зміну
+        const morningNightPay = Math.round((morningShifts * (10 / 60) * nightTariff) * 100) / 100;
+        const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
+        const totalNightPay = morningNightPay + nightPay;
 
         // 4. Робочі вихідні
-        const weekendPay = weekendDays * 100; // +100 zł за день
+        const weekendPay = weekendDays * 100;
 
-        // 5. Надгодини (по днях): (Загальна ставка / Кількість днів) * 2 * кількість днів надгодин
-        const overtimePay = (totalBase / workDays) * 2 * overtimeDays;
+        // 5. Надгодини (по днях з округленням до 2 знаків як у таблиці)
+        const overtimePay = Math.round(((totalBase / workDays) * 2 * overtimeDays) * 100) / 100;
 
-        // Брутто
-        const gross = totalBase + bonusAmount + nightPay + nightShiftBonus + weekendPay + overtimePay + laundryBonus;
+        // Брутто (без прання для візуалу)
+        const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
+
+        // Доплата за прання додається суто для бази Нетто
+        const laundryBonus = 13.00;
+        const grossForNet = gross + laundryBonus;
 
         // --- ВІДРАХУВАННЯ ---
-        const zus = gross * 0.1371;
+        const zus = gross * 0.1371; // ZUS вираховується з Брутто без прання
         const healthBase = gross - zus;
         const nfz = healthBase * 0.09;
 
@@ -199,8 +200,8 @@
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
 
-        // Нетто
-        const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction;
+        // Нетто (з урахуванням прання)
+        const net = grossForNet - zus - nfz - pit - ppkEmployee - insuranceDeduction;
 
         // Вивід
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
