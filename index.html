@@ -87,8 +87,8 @@
     </div>
 
     <div class="form-group">
-        <label>Надгодини (годин)</label>
-        <input type="number" id="overtimeHours" value="0" oninput="calculateSalary()">
+        <label>Надгодини (днів)</label>
+        <input type="number" id="overtimeDays" value="0" oninput="calculateSalary()">
     </div>
 
     <div class="form-group">
@@ -144,7 +144,7 @@
         const selectedMonth = monthSelect.value;
         const workDays = monthData[selectedMonth];
 
-        // Нічний тариф за формулою: (4806 / (Роб.дні * 8)) * 20%
+        // Нічний тариф: (4806 / (Роб.дні * 8)) * 20%
         const minSalary = 4806.00;
         const nightTariff = (minSalary / (workDays * 8)) * 0.20;
 
@@ -156,12 +156,12 @@
         const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
         const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
         const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
-        const overtimeHours = parseFloat(document.getElementById('overtimeHours').value) || 0;
+        const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
 
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
 
-        // Фіксована доплата за прання (прихована в коді)
+        // Доплата за прання (13 zł)
         const laundryBonus = 13.00;
 
         // 1. Ставка + Стаж
@@ -175,12 +175,11 @@
         const nightPay = nightHours * nightTariff;
         const nightShiftBonus = nightShifts * 30; // +30 zł за зміну
 
-        // 4. Вихідні дня
+        // 4. Робочі вихідні
         const weekendPay = weekendDays * 100; // +100 zł за день
 
-        // 5. Надгодини: (База / Робочі дні) / 8 * години
-        const overtimeHourlyRate = (totalBase / workDays) / 8;
-        const overtimePay = overtimeHours * overtimeHourlyRate;
+        // 5. Надгодини (по днях): (Загальна ставка / Кількість днів) * 2 * кількість днів надгодин
+        const overtimePay = (totalBase / workDays) * 2 * overtimeDays;
 
         // Брутто
         const gross = totalBase + bonusAmount + nightPay + nightShiftBonus + weekendPay + overtimePay + laundryBonus;
