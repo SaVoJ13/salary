@@ -3,67 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЗП Калькулятор</title>
+    <title>ЗП Калькулятор Fiege</title>
     <style>
         :root {
-            --primary-color: #004a99;
+            --primary: #e3000f; /* Червоний колір Fiege */
             --bg-color: #f4f6f9;
             --panel-bg: #ffffff;
-            --text-color: #2c3e50;
-            --border-color: #dcdfe6;
-            --success-color: #27ae60;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e5ec;
+            --success: #27ae60;
         }
 
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; box-sizing: border-box; }
-        .calculator { max-width: 480px; margin: 0 auto; background: var(--panel-bg); padding: 20px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { text-align: center; color: var(--primary-color); margin-top: 0; margin-bottom: 20px; font-size: 20px; }
-        
-        .form-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        label { font-size: 14px; font-weight: 500; }
-        input, select { width: 48%; padding: 9px 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; text-align: right; box-sizing: border-box; }
-        input:focus, select:focus { border-color: var(--primary-color); outline: none; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 15px; 
+            box-sizing: border-box; 
+        }
 
-        .divider { border-top: 1px solid var(--border-color); margin: 18px 0; }
-        
-        .results-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .result-box { border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; text-align: center; background: #fafbfc; }
-        .result-title { font-size: 12px; color: #7f8c8d; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; }
-        .result-value { font-size: 18px; font-weight: bold; }
-        
-        .gross-result { color: var(--primary-color); }
-        .net-result { color: var(--success-color); border-color: var(--success-color); background: #f0fbf5; }
+        .calculator { 
+            max-width: 420px; 
+            margin: 0 auto; 
+            background: var(--panel-bg); 
+            padding: 24px 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
+            position: relative;
+        }
 
-        button { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        button:hover { background: #003773; }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        h2 { 
+            margin: 0; 
+            font-size: 20px; 
+            color: var(--text-main); 
+            font-weight: 700;
+        }
+
+        .lang-toggle {
+            display: flex;
+            background: #f0f3f7;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .lang-btn {
+            padding: 6px 10px;
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .form-group { 
+            margin-bottom: 14px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        label { 
+            font-size: 14px; 
+            font-weight: 500; 
+            color: var(--text-main);
+            width: 60%;
+        }
+
+        input, select { 
+            width: 38%; 
+            padding: 10px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            font-size: 14px; 
+            text-align: center; 
+            background: #fafbfc;
+            color: var(--text-main);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            appearance: none;
+        }
+
+        select {
+            text-align: center;
+            text-align-last: center;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 8px auto;
+            padding-right: 20px;
+        }
+
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            background: #fff;
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
+        }
+
+        input::placeholder {
+            color: #cbd5e1;
+            font-weight: 400;
+        }
+
+        .divider { 
+            border-top: 1px solid var(--border-color); 
+            margin: 20px 0; 
+        }
+        
+        .results-panel { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+        }
+
+        .result-box { 
+            border-radius: 12px; 
+            padding: 16px 12px; 
+            text-align: center; 
+        }
+
+        .result-box.brutto {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-box.netto {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .result-title { 
+            font-size: 11px; 
+            color: var(--text-muted); 
+            margin-bottom: 6px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+        }
+
+        .result-value { 
+            font-size: 20px; 
+            font-weight: 800; 
+        }
+        
+        .brutto .result-value { color: var(--text-main); }
+        .netto .result-value { color: var(--success); }
+
     </style>
 </head>
 <body>
 
 <div class="calculator">
-    <h2>Калькулятор ЗП</h2>
+    <div class="header-row">
+        <h2 id="lblTitle">Калькулятор ЗП</h2>
+        <div class="lang-toggle">
+            <div id="btnUA" class="lang-btn active" onclick="setLang('ua')">UA</div>
+            <div id="btnPL" class="lang-btn" onclick="setLang('pl')">PL</div>
+        </div>
+    </div>
     
     <div class="form-group">
-        <label>Місяць</label>
-        <select id="monthSelect" onchange="calculateSalary()"></select>
+        <label id="lblMonth">Місяць</label>
+        <select id="monthSelect"></select>
     </div>
 
     <div class="form-group">
-        <label>Основний оклад (zł)</label>
-        <input type="number" id="baseSalary" value="5630" oninput="calculateSalary()">
+        <label id="lblBase">Загальна ставка (zł)</label>
+        <input type="number" id="baseSalary" placeholder="-" onfocus="this.value=''">
     </div>
 
     <div class="form-group">
-        <label>Стаж роботи</label>
-        <select id="tenureSelect" onchange="calculateSalary()">
-            <option value="0">менше 12 місяців</option>
-            <option value="150">1 рік</option>
-            <option value="300" selected>2+ роки</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Премія</label>
-        <select id="bonusPctSelect" onchange="calculateSalary()">
+        <label id="lblBonus">Премія</label>
+        <select id="bonusPctSelect">
             <option value="0">0%</option>
             <option value="5">5%</option>
             <option value="10">10%</option>
@@ -72,84 +197,132 @@
     </div>
 
     <div class="form-group">
-        <label>Ранкові зміни</label>
-        <input type="number" id="morningShifts" value="10" oninput="calculateSalary()">
+        <label id="lblMorning">Ранкові зміни (шт)</label>
+        <input type="number" id="morningShifts" placeholder="-" onfocus="this.value=''">
     </div>
 
     <div class="form-group">
-        <label>Нічні зміни</label>
-        <input type="number" id="nightShifts" value="5" oninput="calculateSalary()">
+        <label id="lblNight">Нічні зміни (шт)</label>
+        <input type="number" id="nightShifts" placeholder="-" onfocus="this.value=''">
     </div>
 
     <div class="form-group">
-        <label>Робочі сб / нд (днів)</label>
-        <input type="number" id="weekendDays" value="6" oninput="calculateSalary()">
+        <label id="lblWeekend">Робочі сб / нд (днів)</label>
+        <input type="number" id="weekendDays" placeholder="-" onfocus="this.value=''">
     </div>
 
     <div class="form-group">
-        <label>Надгодини (днів)</label>
-        <input type="number" id="overtimeDays" value="3" oninput="calculateSalary()">
+        <label id="lblOvertime">Надгодини (днів)</label>
+        <input type="number" id="overtimeDays" placeholder="-" onfocus="this.value=''">
     </div>
 
     <div class="form-group">
-        <label>Участь у PPK</label>
-        <select id="ppkSelect" onchange="calculateSalary()">
-            <option value="yes">Так</option>
-            <option value="no" selected>Ні</option>
+        <label id="lblPPK">Участь у PPK</label>
+        <select id="ppkSelect">
+            <option value="yes" id="optPpkYes">Так</option>
+            <option value="no" id="optPpkNo" selected>Ні</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label>Додаткове страхування</label>
-        <select id="insuranceSelect" onchange="calculateSalary()">
-            <option value="yes" selected>Так</option>
-            <option value="no">Ні</option>
+        <label id="lblInsurance">Додаткове страхування</label>
+        <select id="insuranceSelect">
+            <option value="yes" id="optInsYes" selected>Так</option>
+            <option value="no" id="optInsNo">Ні</option>
         </select>
     </div>
-
-    <button onclick="calculateSalary()">Розрахувати</button>
 
     <div class="divider"></div>
 
     <div class="results-panel">
-        <div class="result-box">
-            <div class="result-title">Брутто</div>
-            <div class="result-value gross-result" id="grossResult">0.00 zł</div>
+        <div class="result-box brutto">
+            <div class="result-title">BRUTTO</div>
+            <div class="result-value" id="grossResult">0.00 zł</div>
         </div>
-        <div class="result-box">
-            <div class="result-title">Нетто</div>
-            <div class="result-value net-result" id="netResult">0.00 zł</div>
+        <div class="result-box netto">
+            <div class="result-title">NETTO</div>
+            <div class="result-value" id="netResult">0.00 zł</div>
         </div>
     </div>
 </div>
 
 <script>
-    const monthData = {
-        "січень": 20, "лютий": 20, "березень": 22, "квітень": 21,
-        "травень": 20, "червень": 21, "липень": 23, "серпень": 20,
-        "вересень": 22, "жовтень": 22, "листопад": 20, "грудень": 20
+    // Словник перекладу
+    const dict = {
+        ua: {
+            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
+            bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
+            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)",
+            ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
+            months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
+        },
+        pl: {
+            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka podstawowa (zł)",
+            bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
+            weekend: "Pracujące sb / nd (dni)", overtime: "Nadgodziny (dni)",
+            ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
+            months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
+        }
     };
 
-    const monthSelect = document.getElementById('monthSelect');
-    for (const month in monthData) {
-        let option = document.createElement('option');
-        option.value = month;
-        option.text = month.charAt(0).toUpperCase() + month.slice(1);
-        monthSelect.appendChild(option);
+    let currentLang = 'ua';
+    const monthWorkDays = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
+
+    function initMonths() {
+        const select = document.getElementById('monthSelect');
+        const currentVal = select.value || 9; // Жовтень за замовчуванням (індекс 9)
+        select.innerHTML = '';
+        dict[currentLang].months.forEach((m, idx) => {
+            let opt = document.createElement('option');
+            opt.value = idx;
+            opt.text = m;
+            select.appendChild(opt);
+        });
+        select.value = currentVal;
     }
-    monthSelect.value = "жовтень";
+
+    function setLang(lang) {
+        currentLang = lang;
+        document.getElementById('btnUA').className = lang === 'ua' ? 'lang-btn active' : 'lang-btn';
+        document.getElementById('btnPL').className = lang === 'pl' ? 'lang-btn active' : 'lang-btn';
+        
+        document.getElementById('lblTitle').innerText = dict[lang].title;
+        document.getElementById('lblMonth').innerText = dict[lang].month;
+        document.getElementById('lblBase').innerText = dict[lang].base;
+        document.getElementById('lblBonus').innerText = dict[lang].bonus;
+        document.getElementById('lblMorning').innerText = dict[lang].morning;
+        document.getElementById('lblNight').innerText = dict[lang].night;
+        document.getElementById('lblWeekend').innerText = dict[lang].weekend;
+        document.getElementById('lblOvertime').innerText = dict[lang].overtime;
+        document.getElementById('lblPPK').innerText = dict[lang].ppk;
+        document.getElementById('lblInsurance').innerText = dict[lang].insurance;
+        
+        document.getElementById('optPpkYes').innerText = dict[lang].yes;
+        document.getElementById('optPpkNo').innerText = dict[lang].no;
+        document.getElementById('optInsYes').innerText = dict[lang].yes;
+        document.getElementById('optInsNo').innerText = dict[lang].no;
+
+        initMonths();
+        calculateSalary();
+    }
 
     function calculateSalary() {
-        const selectedMonth = monthSelect.value;
-        const workDays = monthData[selectedMonth];
+        const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+        
+        // Якщо ставка не введена, виводимо нулі і зупиняємо розрахунок
+        if (baseSalary === 0) {
+            document.getElementById('grossResult').innerText = '0.00 zł';
+            document.getElementById('netResult').innerText = '0.00 zł';
+            return;
+        }
+
+        const monthIdx = parseInt(document.getElementById('monthSelect').value);
+        const workDays = monthWorkDays[monthIdx];
 
         const minSalary = 4806.00;
         const nightTariff = Math.round(((minSalary / (workDays * 8)) * 0.20) * 100) / 100;
 
-        const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
-        const tenureBonus = parseFloat(document.getElementById('tenureSelect').value) || 0;
         const bonusPct = parseFloat(document.getElementById('bonusPctSelect').value) || 0;
-        
         const morningShifts = parseInt(document.getElementById('morningShifts').value) || 0;
         const nightShifts = parseInt(document.getElementById('nightShifts').value) || 0;
         const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
@@ -158,49 +331,51 @@
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
 
-        const totalBase = baseSalary + tenureBonus;
-        const bonusAmount = totalBase * (bonusPct / 100);
-
+        const bonusAmount = baseSalary * (bonusPct / 100);
         const morningNightPay = Math.round((morningShifts * (10 / 60) * nightTariff) * 100) / 100;
         const nightPay = (nightShifts * 8 * nightTariff) + (nightShifts * 30);
         const totalNightPay = morningNightPay + nightPay;
 
         const weekendPay = weekendDays * 100;
-        const overtimePay = Math.round(((totalBase / workDays) * 2 * overtimeDays) * 100) / 100;
+        const overtimePay = Math.round(((baseSalary / workDays) * 2 * overtimeDays) * 100) / 100;
 
-        // Брутто (без прання) є базою для ZUS та податків
-        const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
+        // Брутто (без прання)
+        const gross = baseSalary + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
+        // Математика Fiege
         const zus = gross * 0.1371; 
         const healthBase = gross - zus;
         const nfz = Math.round((healthBase * 0.09) * 100) / 100;
 
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
 
-        // Податкова база (KUP = 300) округлюється до цілого
         const kup = 300.00;
         const pitBase = Math.round(Math.max(0, healthBase - kup));
-        
         let nominalPit = (pitBase * 0.12) - 300.00;
-        const benefitExpense = 54.00;
         
-        // Fiege округлює номінальний податок і тільки потім додає 54 zł
+        const benefitExpense = 54.00;
         let pit = Math.round(nominalPit) + benefitExpense;
         pit = Math.max(0, pit);
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
         const benefitDeduction = 30.25;
-        
-        // Прання (13 zł) повністю звільнене від податків і додається до виплати
         const laundryBonus = 13.00;
 
-        // Фінальне Нетто
+        // Нетто
         const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
 
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
     }
 
+    // Додаємо слухачі подій для автоматичного розрахунку при будь-якому вводі
+    document.querySelectorAll('input, select').forEach(element => {
+        element.addEventListener('input', calculateSalary);
+        element.addEventListener('change', calculateSalary);
+    });
+
+    // Ініціалізація
+    initMonths();
     calculateSalary();
 </script>
 
