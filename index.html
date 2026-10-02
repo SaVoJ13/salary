@@ -6,7 +6,7 @@
     <title>ЗП Калькулятор Fiege</title>
     <style>
         :root {
-            --primary: #e3000f; /* Червоний колір Fiege */
+            --primary: #e3000f; 
             --bg-color: #f4f6f9;
             --panel-bg: #ffffff;
             --text-main: #2c3e50;
@@ -178,7 +178,9 @@
     
     <div class="form-group">
         <label id="lblMonth">Місяць</label>
-        <select id="monthSelect"></select>
+        <select id="monthSelect">
+            <option value="" disabled selected hidden>-</option>
+        </select>
     </div>
 
     <div class="form-group">
@@ -189,10 +191,11 @@
     <div class="form-group">
         <label id="lblBonus">Премія</label>
         <select id="bonusPctSelect">
+            <option value="" disabled selected hidden>-</option>
             <option value="0">0%</option>
             <option value="5">5%</option>
             <option value="10">10%</option>
-            <option value="15" selected>15%</option>
+            <option value="15">15%</option>
         </select>
     </div>
 
@@ -219,15 +222,17 @@
     <div class="form-group">
         <label id="lblPPK">Участь у PPK</label>
         <select id="ppkSelect">
+            <option value="" disabled selected hidden>-</option>
             <option value="yes" id="optPpkYes">Так</option>
-            <option value="no" id="optPpkNo" selected>Ні</option>
+            <option value="no" id="optPpkNo">Ні</option>
         </select>
     </div>
 
     <div class="form-group">
         <label id="lblInsurance">Додаткове страхування</label>
         <select id="insuranceSelect">
-            <option value="yes" id="optInsYes" selected>Так</option>
+            <option value="" disabled selected hidden>-</option>
+            <option value="yes" id="optInsYes">Так</option>
             <option value="no" id="optInsNo">Ні</option>
         </select>
     </div>
@@ -247,7 +252,6 @@
 </div>
 
 <script>
-    // Словник перекладу
     const dict = {
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
@@ -270,15 +274,28 @@
 
     function initMonths() {
         const select = document.getElementById('monthSelect');
-        const currentVal = select.value || 9; // Жовтень за замовчуванням (індекс 9)
+        const currentVal = select.value;
         select.innerHTML = '';
+        
+        let defaultOpt = document.createElement('option');
+        defaultOpt.value = "";
+        defaultOpt.text = "-";
+        defaultOpt.disabled = true;
+        defaultOpt.hidden = true;
+        select.appendChild(defaultOpt);
+
         dict[currentLang].months.forEach((m, idx) => {
             let opt = document.createElement('option');
             opt.value = idx;
             opt.text = m;
             select.appendChild(opt);
         });
-        select.value = currentVal;
+
+        if (currentVal) {
+            select.value = currentVal;
+        } else {
+            select.value = "";
+        }
     }
 
     function setLang(lang) {
@@ -308,15 +325,16 @@
 
     function calculateSalary() {
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+        const monthVal = document.getElementById('monthSelect').value;
         
-        // Якщо ставка не введена, виводимо нулі і зупиняємо розрахунок
-        if (baseSalary === 0) {
+        // Зупиняємо розрахунок, якщо не введена ставка або не обраний місяць
+        if (baseSalary === 0 || monthVal === "") {
             document.getElementById('grossResult').innerText = '0.00 zł';
             document.getElementById('netResult').innerText = '0.00 zł';
             return;
         }
 
-        const monthIdx = parseInt(document.getElementById('monthSelect').value);
+        const monthIdx = parseInt(monthVal);
         const workDays = monthWorkDays[monthIdx];
 
         const minSalary = 4806.00;
@@ -342,7 +360,6 @@
         // Брутто (без прання)
         const gross = baseSalary + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
-        // Математика Fiege
         const zus = gross * 0.1371; 
         const healthBase = gross - zus;
         const nfz = Math.round((healthBase * 0.09) * 100) / 100;
@@ -359,7 +376,9 @@
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
         const benefitDeduction = 30.25;
-        const laundryBonus = 13.00;
+        
+        // Оновлена доплата за прання (20 zł)
+        const laundryBonus = 20.00;
 
         // Нетто
         const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
@@ -368,13 +387,11 @@
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
     }
 
-    // Додаємо слухачі подій для автоматичного розрахунку при будь-якому вводі
     document.querySelectorAll('input, select').forEach(element => {
         element.addEventListener('input', calculateSalary);
         element.addEventListener('change', calculateSalary);
     });
 
-    // Ініціалізація
     initMonths();
     calculateSalary();
 </script>
