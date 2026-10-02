@@ -168,38 +168,36 @@
         const weekendPay = weekendDays * 100;
         const overtimePay = Math.round(((totalBase / workDays) * 2 * overtimeDays) * 100) / 100;
 
-        // Брутто для відображення на екрані (без прання)
-        const grossVisual = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
+        // Брутто (без прання) є базою для ZUS та податків
+        const gross = totalBase + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
-        // Повне Брутто для бухгалтерії (прання входить у базу ZUS)
-        const laundryBonus = 13.00;
-        const grossPayroll = grossVisual + laundryBonus;
-
-        const zus = grossPayroll * 0.1371; 
-        const healthBase = grossPayroll - zus;
+        const zus = gross * 0.1371; 
+        const healthBase = gross - zus;
         const nfz = Math.round((healthBase * 0.09) * 100) / 100;
 
-        const ppkEmployee = ppkActive ? (grossPayroll * 0.02) : 0;
+        const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
 
-        // Специфічний розрахунок податку Fiege
-        const kup = 300.00; // Підвищені KUP (300 zł)
-        const pitBase = Math.max(0, healthBase - kup);
+        // Податкова база (KUP = 300) округлюється до цілого
+        const kup = 300.00;
+        const pitBase = Math.round(Math.max(0, healthBase - kup));
         
-        // Номінальний податок
         let nominalPit = (pitBase * 0.12) - 300.00;
-        
-        // Фіге додає 54 zł напряму до суми податку (а не до бази)
         const benefitExpense = 54.00;
-        let pit = nominalPit + benefitExpense;
-        pit = Math.max(0, Math.round(pit));
+        
+        // Fiege округлює номінальний податок і тільки потім додає 54 zł
+        let pit = Math.round(nominalPit) + benefitExpense;
+        pit = Math.max(0, pit);
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
         const benefitDeduction = 30.25;
+        
+        // Прання (13 zł) повністю звільнене від податків і додається до виплати
+        const laundryBonus = 13.00;
 
-        // Нетто
-        const net = grossPayroll - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction;
+        // Фінальне Нетто
+        const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
 
-        document.getElementById('grossResult').innerText = grossVisual.toFixed(2) + ' zł';
+        document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
         document.getElementById('netResult').innerText = net.toFixed(2) + ' zł';
     }
 
