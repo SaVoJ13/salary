@@ -178,9 +178,7 @@
     
     <div class="form-group">
         <label id="lblMonth">Місяць</label>
-        <select id="monthSelect">
-            <option value="" disabled selected hidden>-</option>
-        </select>
+        <select id="monthSelect"></select>
     </div>
 
     <div class="form-group">
@@ -191,7 +189,7 @@
     <div class="form-group">
         <label id="lblBonus">Премія</label>
         <select id="bonusPctSelect">
-            <option value="" disabled selected hidden>-</option>
+            <option value="" disabled selected>-</option>
             <option value="0">0%</option>
             <option value="5">5%</option>
             <option value="10">10%</option>
@@ -222,7 +220,7 @@
     <div class="form-group">
         <label id="lblPPK">Участь у PPK</label>
         <select id="ppkSelect">
-            <option value="" disabled selected hidden>-</option>
+            <option value="" disabled selected>-</option>
             <option value="yes" id="optPpkYes">Так</option>
             <option value="no" id="optPpkNo">Ні</option>
         </select>
@@ -231,7 +229,7 @@
     <div class="form-group">
         <label id="lblInsurance">Додаткове страхування</label>
         <select id="insuranceSelect">
-            <option value="" disabled selected hidden>-</option>
+            <option value="" disabled selected>-</option>
             <option value="yes" id="optInsYes">Так</option>
             <option value="no" id="optInsNo">Ні</option>
         </select>
@@ -263,7 +261,7 @@
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka podstawowa (zł)",
             bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
-            weekend: "Pracujące sb / nd (dni)", overtime: "Nadgodziny (dni)",
+            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)",
             ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
             months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
@@ -274,28 +272,17 @@
 
     function initMonths() {
         const select = document.getElementById('monthSelect');
-        const currentVal = select.value;
-        select.innerHTML = '';
+        const currentVal = select.value; 
         
-        let defaultOpt = document.createElement('option');
-        defaultOpt.value = "";
-        defaultOpt.text = "-";
-        defaultOpt.disabled = true;
-        defaultOpt.hidden = true;
-        select.appendChild(defaultOpt);
-
+        select.innerHTML = '<option value="" disabled selected>-</option>';
         dict[currentLang].months.forEach((m, idx) => {
             let opt = document.createElement('option');
             opt.value = idx;
             opt.text = m;
             select.appendChild(opt);
         });
-
-        if (currentVal) {
-            select.value = currentVal;
-        } else {
-            select.value = "";
-        }
+        
+        if (currentVal) select.value = currentVal;
     }
 
     function setLang(lang) {
@@ -327,7 +314,7 @@
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
         const monthVal = document.getElementById('monthSelect').value;
         
-        // Зупиняємо розрахунок, якщо не введена ставка або не обраний місяць
+        // Зупиняємо розрахунок, якщо не введена ставка або не вибрано місяць
         if (baseSalary === 0 || monthVal === "") {
             document.getElementById('grossResult').innerText = '0.00 zł';
             document.getElementById('netResult').innerText = '0.00 zł';
@@ -357,7 +344,6 @@
         const weekendPay = weekendDays * 100;
         const overtimePay = Math.round(((baseSalary / workDays) * 2 * overtimeDays) * 100) / 100;
 
-        // Брутто (без прання)
         const gross = baseSalary + bonusAmount + totalNightPay + weekendPay + overtimePay;
 
         const zus = gross * 0.1371; 
@@ -377,10 +363,9 @@
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
         const benefitDeduction = 30.25;
         
-        // Оновлена доплата за прання (20 zł)
-        const laundryBonus = 20.00;
+        // Змінено на 15 zł згідно з вашим запитом
+        const laundryBonus = 15.00;
 
-        // Нетто
         const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
 
         document.getElementById('grossResult').innerText = gross.toFixed(2) + ' zł';
