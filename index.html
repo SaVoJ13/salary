@@ -218,6 +218,15 @@
     </div>
 
     <div class="form-group">
+        <label id="lblUnder26">Вік до 26 років</label>
+        <select id="under26Select">
+            <option value="" disabled selected>-</option>
+            <option value="yes" id="optU26Yes">Так</option>
+            <option value="no" id="optU26No">Ні</option>
+        </select>
+    </div>
+
+    <div class="form-group">
         <label id="lblPPK">Участь у PPK</label>
         <select id="ppkSelect">
             <option value="" disabled selected>-</option>
@@ -254,14 +263,14 @@
         ua: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)",
             bonus: "Премія", morning: "Ранкові зміни (шт)", night: "Нічні зміни (шт)",
-            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)",
+            weekend: "Робочі сб / нд (днів)", overtime: "Надгодини (днів)", under26: "Вік до 26 років",
             ppk: "Участь у PPK", insurance: "Дод. страхування", yes: "Так", no: "Ні",
             months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
         },
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka podstawowa (zł)",
             bonus: "Premia", morning: "Poranne zmiany (szt)", night: "Nocne zmiany (szt)",
-            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)",
+            weekend: "Weekendy (dni)", overtime: "Nadgodziny (dni)", under26: "Wiek poniżej 26 lat",
             ppk: "Uczestnictwo w PPK", insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
             months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
@@ -298,9 +307,12 @@
         document.getElementById('lblNight').innerText = dict[lang].night;
         document.getElementById('lblWeekend').innerText = dict[lang].weekend;
         document.getElementById('lblOvertime').innerText = dict[lang].overtime;
+        document.getElementById('lblUnder26').innerText = dict[lang].under26;
         document.getElementById('lblPPK').innerText = dict[lang].ppk;
         document.getElementById('lblInsurance').innerText = dict[lang].insurance;
         
+        document.getElementById('optU26Yes').innerText = dict[lang].yes;
+        document.getElementById('optU26No').innerText = dict[lang].no;
         document.getElementById('optPpkYes').innerText = dict[lang].yes;
         document.getElementById('optPpkNo').innerText = dict[lang].no;
         document.getElementById('optInsYes').innerText = dict[lang].yes;
@@ -314,7 +326,6 @@
         const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
         const monthVal = document.getElementById('monthSelect').value;
         
-        // Зупиняємо розрахунок, якщо не введена ставка або не вибрано місяць
         if (baseSalary === 0 || monthVal === "") {
             document.getElementById('grossResult').innerText = '0.00 zł';
             document.getElementById('netResult').innerText = '0.00 zł';
@@ -333,6 +344,7 @@
         const weekendDays = parseInt(document.getElementById('weekendDays').value) || 0;
         const overtimeDays = parseFloat(document.getElementById('overtimeDays').value) || 0;
 
+        const isUnder26 = document.getElementById('under26Select').value === 'yes';
         const ppkActive = document.getElementById('ppkSelect').value === 'yes';
         const insuranceActive = document.getElementById('insuranceSelect').value === 'yes';
 
@@ -352,18 +364,18 @@
 
         const ppkEmployee = ppkActive ? (gross * 0.02) : 0;
 
-        const kup = 300.00;
-        const pitBase = Math.round(Math.max(0, healthBase - kup));
-        let nominalPit = (pitBase * 0.12) - 300.00;
-        
-        const benefitExpense = 54.00;
-        let pit = Math.round(nominalPit) + benefitExpense;
-        pit = Math.max(0, pit);
+        let pit = 0;
+        if (!isUnder26) {
+            const kup = 300.00;
+            const pitBase = Math.round(Math.max(0, healthBase - kup));
+            let nominalPit = (pitBase * 0.12) - 300.00;
+            const benefitExpense = 54.00;
+            pit = Math.round(nominalPit) + benefitExpense;
+            pit = Math.max(0, pit);
+        }
 
         const insuranceDeduction = insuranceActive ? 36.70 : 0;
         const benefitDeduction = 30.25;
-        
-        // Змінено на 15 zł згідно з вашим запитом
         const laundryBonus = 15.00;
 
         const net = gross - zus - nfz - pit - ppkEmployee - insuranceDeduction - benefitDeduction + laundryBonus;
