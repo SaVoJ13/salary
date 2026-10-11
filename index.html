@@ -1,13 +1,10 @@
 <!DOCTYPE html>
-<html lang="ua">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЗП Калькулятор Fiege</title>
     <style>
-        /* ==========================================
-           БЛОК 1: ДИЗАЙН ТА СТИЛІ (CSS)
-           ========================================== */
         :root {
             --primary: #e3000f; 
             --bg-color: #f4f6f9;
@@ -36,14 +33,13 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; 
             box-sizing: border-box; display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; transition: background 0.3s, color 0.3s;
+            min-height: 100dvh; transition: background 0.3s, color 0.3s;
         }
 
         .calculator-wrapper { 
             width: 100%; max-width: 420px; background: var(--panel-bg); 
             border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
             box-sizing: border-box; position: relative; overflow: hidden; 
-            transition: background 0.3s;
         }
 
         .pages-track {
@@ -53,7 +49,7 @@
 
         .calculator-page {
             width: 50%; padding: 24px 20px; box-sizing: border-box;
-            flex-shrink: 0; position: relative;
+            flex-shrink: 0; position: relative; overflow-y: auto; max-height: 90dvh;
         }
 
         .menu-btn, .close-menu { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-main); padding: 0; }
@@ -74,38 +70,41 @@
         h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
         .premium-badge { background: var(--premium-border); color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: none; }
 
-        /* Поле графіка тепер постійно видиме для всіх */
         .schedule-badge {
             background: var(--premium-bg); border: 1px solid var(--premium-border);
-            border-radius: 8px; padding: 4px 6px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 8px; padding: 4px 6px; display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
             min-width: 45px;
         }
+        .is-logged-in .schedule-badge { display: flex; }
         .schedule-badge span { font-size: 9px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
         .schedule-badge input {
             width: 100%; padding: 0; background: transparent; border: none;
-            font-size: 15px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
+            font-size: 16px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
         }
         .schedule-badge input:focus { box-shadow: none; outline: none; }
 
-        .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
+        .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
         
         .premium-field { display: none; }
         .is-logged-in .premium-field { display: flex; }
         .is-logged-in .premium-badge { display: inline-block; }
         
-        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; }
+        .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--primary); }
+        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; cursor: pointer; }
+        .sub-group label { font-size: 13px; font-weight: 600; color: var(--text-main); }
 
+        /* iOS Safari Prevent Zoom: Font-size set to 16px */
         input, select { 
             width: 38%; padding: 10px; border: 1px solid var(--border-color); 
-            border-radius: 8px; font-size: 14px; text-align: center; 
+            border-radius: 8px; font-size: 16px; text-align: center; 
             background: var(--bg-color); color: var(--text-main);
             font-weight: 600; box-sizing: border-box; appearance: none;
         }
         
         select {
             text-align-last: center; padding-right: 20px;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%0-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 8px auto;
         }
         input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1); }
@@ -129,161 +128,186 @@
         .btn-logout { background: var(--text-muted); }
         .cloud-section { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
 
-        .info-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; }
-        .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 10px; }
+        .info-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 8px; }
         .info-row:last-child { margin-bottom: 0; }
+        .total-row { font-size: 15px; font-weight: 800; color: var(--text-main); margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--border-color); }
         
-        .sub-input-row { 
-            background: var(--premium-bg); border-left: 3px solid var(--premium-border);
-            padding: 6px 10px; border-radius: 0 8px 8px 0; margin-top: -6px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .sub-input-row span { font-size: 11px; color: var(--text-main); font-weight: 600; flex: 1; }
-        .sub-input-row input { 
-            width: 80px; padding: 4px 6px; font-size: 13px; font-weight: 700; 
-            color: var(--primary); border: 1px solid var(--border-color); 
-            background: var(--bg-color); border-radius: 6px; text-align: center;
-        }
-
         .swipe-hint { text-align: center; margin-top: 15px; font-size: 12px; color: var(--text-muted); }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #333; color: #fff; padding: 10px 20px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.3s ease; z-index: 1000;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
 </head>
 <body id="app-body">
 
+<div id="toast" class="toast"></div>
+
 <div class="calculator-wrapper">
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
-            <span id="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
-            <button class="close-menu" onclick="toggleMenu()">✕</button>
+            <span data-i18n="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
+            <button class="close-menu" aria-label="Закрити меню" onclick="toggleMenu()">✕</button>
         </div>
 
         <div class="menu-item">
-            <label id="lblMenuLang">Мова</label>
+            <label for="langSelect" data-i18n="menuLang">Мова</label>
             <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
-                <option value="ua">Українська</option>
+                <option value="uk">Українська</option>
                 <option value="pl">Polski</option>
             </select>
         </div>
         <div class="menu-item">
-            <label id="lblMenuTheme">Тема</label>
+            <label for="themeSelect" data-i18n="menuTheme">Тема</label>
             <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
-                <option value="light" id="optThemeLight">Світла</option>
-                <option value="dark" id="optThemeDark">Темна</option>
+                <option value="light" data-i18n="optThemeLight">Світла</option>
+                <option value="dark" data-i18n="optThemeDark">Темна</option>
             </select>
         </div>
 
         <div class="divider" style="margin: 10px 0;"></div>
 
         <div class="cloud-section">
-            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" id="lblCloudHeader">Акаунт & Хмара</label>
+            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" data-i18n="cloudHeader">Акаунт & Хмара</label>
             <div id="auth-container">
                 <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;">
                 <input type="password" id="password" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;">
-                <button id="btn-login" class="action-btn btn-auth-action">Увійти (PRO)</button>
-                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;">Реєстрація</button>
+                <button id="btn-login" class="action-btn btn-auth-action" data-i18n="btnLogin">Увійти (PRO)</button>
+                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;" data-i18n="btnRegister">Реєстрація</button>
             </div>
             <div id="sync-container" class="hidden">
                 <span id="user-email-display" style="font-size: 11px; display: block; margin-bottom: 8px; word-break: break-all; font-weight: bold;"></span>
-                <button id="btn-sync-up" class="action-btn btn-sync">Зберегти місяць ☁️</button>
-                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;">Завантажити місяць 📥</button>
-                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;">Вийти (Гостьовий режим)</button>
+                <button id="btn-sync-up" class="action-btn btn-sync" data-i18n="btnSaveCloud">Зберегти місяць ☁️</button>
+                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;" data-i18n="btnLoadCloud">Завантажити місяць 📥</button>
+                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;" data-i18n="btnLogout">Вийти (Гостьовий режим)</button>
             </div>
         </div>
     </div>
 
     <div class="pages-track" id="pagesTrack">
+        
         <!-- СТОРІНКА 1: ГОЛОВНИЙ КАЛЬКУЛЯТОР -->
-        <div class="calculator-page">
+        <div class="calculator-page" id="page1">
             <div class="header-row">
-                <button class="menu-btn" onclick="toggleMenu()">☰</button>
-                <h2 id="lblTitle" style="margin-right: auto; margin-left: 15px;">Калькулятор ЗП <span class="premium-badge">PRO</span></h2>
+                <button class="menu-btn" aria-label="Відкрити меню" onclick="toggleMenu()">☰</button>
+                <h2 style="margin-right: auto; margin-left: 15px;"><span data-i18n="title">Калькулятор ЗП</span> <span class="premium-badge">PRO</span></h2>
                 
                 <div class="schedule-badge" id="scheduleBadgeContainer">
-                    <span id="lblScheduleDays">Графік</span>
-                    <input type="number" id="scheduleDays" placeholder="0" min="0">
+                    <span data-i18n="schedDays">Графік</span>
+                    <input type="number" inputmode="decimal" id="scheduleDays" placeholder="0" min="0">
                 </div>
             </div>
             
             <div class="form-group">
-                <label id="lblMonth">Місяць</label>
+                <label for="monthSelect" data-i18n="month">Місяць</label>
                 <select id="monthSelect"></select>
             </div>
 
             <div class="form-group">
-                <label id="lblBase">Загальна ставка (zł)</label>
-                <input type="number" id="baseSalary" min="0" onfocus="this.value=''">
+                <label for="baseSalary" data-i18n="base">Загальна ставка (zł)</label>
+                <input type="number" inputmode="decimal" id="baseSalary" min="0">
             </div>
 
             <div class="form-group">
-                <label id="lblBonus">Премія</label>
+                <label for="bonusPctSelect" data-i18n="bonus">Премія за якість (макс 10%)</label>
                 <select id="bonusPctSelect">
-                    <option value="0">0%</option>
+                    <option value="10" selected>10%</option>
                     <option value="5">5%</option>
-                    <option value="10">10%</option>
-                    <option value="12.5">12.5%</option>
-                    <option value="15" selected>15%</option>
+                    <option value="0">0%</option>
                 </select>
-            </div>
-
-            <div class="form-group">
-                <label id="lblMorning">Ранкові зміни (шт)</label>
-                <input type="number" id="morningShifts" placeholder="-" min="0" onfocus="this.value=''">
-            </div>
-            <div class="form-group">
-                <label id="lblAfternoon">Денні зміни (шт)</label>
-                <input type="number" id="afternoonShifts" placeholder="-" min="0" onfocus="this.value=''">
-            </div>
-            <div class="form-group">
-                <label id="lblNight">Нічні зміни (шт)</label>
-                <input type="number" id="nightShifts" placeholder="-" min="0" onfocus="this.value=''">
-            </div>
-
-            <div class="form-group">
-                <label id="lblWeekend">Робота сб / нд (+100 zł)</label>
-                <input type="number" id="weekendDays" placeholder="-" min="0" onfocus="this.value=''">
-            </div>
-
-            <div class="form-group">
-                <label id="lblOvertime">Надгодини у вихідний (×2)</label>
-                <input type="number" id="overtimeDays" placeholder="-" min="0" step="1" onfocus="this.value=''">
-            </div>
-
-            <div class="form-group premium-field">
-                <label id="lblVacationDays">Відпустка (днів)</label>
-                <input type="number" id="vacationDays" placeholder="0" min="0" onfocus="this.value=''">
-            </div>
-
-            <div class="form-group premium-field">
-                <label id="lblBloodDonation">Донація крові (днів)</label>
-                <input type="number" id="bloodDonationDays" placeholder="0" min="0" onfocus="this.value=''">
-            </div>
-
-            <div class="form-group premium-field">
-                <label id="lblL4Days">Лікарняний L4 (календарні)</label>
-                <input type="number" id="l4Days" placeholder="0" min="0" onfocus="this.value=''">
             </div>
 
             <div class="divider"></div>
 
             <div class="form-group">
-                <label id="lblUnder26">Вік до 26 років</label>
+                <label for="morningShifts" data-i18n="morning">Ранкові зміни (шт)</label>
+                <input type="number" inputmode="decimal" id="morningShifts" placeholder="-" min="0">
+            </div>
+            <div class="form-group">
+                <label for="afternoonShifts" data-i18n="afternoon">Денні зміни (шт)</label>
+                <input type="number" inputmode="decimal" id="afternoonShifts" placeholder="-" min="0">
+            </div>
+            <div class="form-group">
+                <label for="nightShifts" data-i18n="night">Нічні зміни (шт)</label>
+                <input type="number" inputmode="decimal" id="nightShifts" placeholder="-" min="0">
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="weekendDays" data-i18n="weekend">Робочі сб / нд (днів)</label>
+                <input type="number" inputmode="decimal" id="weekendDays" placeholder="-" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="overtimeDays" data-i18n="overtime">Надгодини (днів)</label>
+                <input type="number" inputmode="decimal" id="overtimeDays" placeholder="-" min="0" step="0.5">
+            </div>
+
+            <!-- ВИНРАЮЧИЙ БЛОК УТОЧНЕННЯ НАДГОДИН -->
+            <div id="overtimeSubGroup" class="hidden">
+                <div class="form-group sub-group">
+                    <label for="overtimeMorningShifts" data-i18n="overtimeMorning">З них ранкових (змін) ☀️</label>
+                    <input type="number" inputmode="decimal" id="overtimeMorningShifts" placeholder="0" min="0" style="color:var(--primary);">
+                </div>
+                <div class="form-group sub-group">
+                    <label for="overtimeNightShifts" data-i18n="overtimeNight">З них нічних (змін) 🌙</label>
+                    <input type="number" inputmode="decimal" id="overtimeNightShifts" placeholder="0" min="0" style="color:var(--primary);">
+                </div>
+            </div>
+
+            <!-- БЛОК PRO (ВІДПУСТКИ, ДОНАЦІЇ, L4) -->
+            <div class="form-group premium-field" style="margin-top: 15px;">
+                <label for="vacationDays" data-i18n="vacationDays">Відпустка (днів)</label>
+                <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
+            </div>
+            <div class="form-group sub-group hidden" id="urlopBonusGroup">
+                <label for="urlopBonus" data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
+                <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
+            </div>
+
+            <div class="form-group premium-field">
+                <label for="bloodDonationDays" data-i18n="bloodDonation">Донація крові (днів)</label>
+                <input type="number" inputmode="decimal" id="bloodDonationDays" placeholder="0" min="0">
+            </div>
+            <div class="form-group sub-group hidden" id="bloodBonusGroup">
+                <label for="bloodBonus" data-i18n="bloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
+                <input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" min="0" style="color:var(--primary);">
+            </div>
+
+            <div class="form-group premium-field">
+                <label for="l4Days" data-i18n="l4Days">Лікарняний L4 (календ.)</label>
+                <input type="number" inputmode="decimal" id="l4Days" placeholder="0" min="0">
+            </div>
+            <div class="form-group sub-group hidden" id="l4MissedGroup">
+                <label for="l4MissedShifts" data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
+                <input type="number" inputmode="decimal" id="l4MissedShifts" placeholder="0" min="0" style="color:var(--primary);">
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="form-group">
+                <label for="under26Select" data-i18n="under26">Вік до 26 років</label>
                 <select id="under26Select">
-                    <option value="no" id="optU26No" selected>Ні</option>
-                    <option value="yes" id="optU26Yes">Так</option>
+                    <option value="no" data-i18n="no" selected>Ні</option>
+                    <option value="yes" data-i18n="yes">Так</option>
                 </select>
             </div>
             <div class="form-group">
-                <label id="lblPPK">Участь у PPK</label>
+                <label for="ppkSelect" data-i18n="ppk">Участь у PPK</label>
                 <select id="ppkSelect">
-                    <option value="no" id="optPpkNo" selected>Ні</option>
-                    <option value="yes" id="optPpkYes">Так</option>
+                    <option value="no" data-i18n="no" selected>Ні</option>
+                    <option value="yes" data-i18n="yes">Так</option>
                 </select>
             </div>
             <div class="form-group">
-                <label id="lblInsurance">Додаткове страхування</label>
+                <label for="insuranceSelect" data-i18n="insurance">Додаткове страхування</label>
                 <select id="insuranceSelect">
-                    <option value="yes" id="optInsYes" selected>Так</option>
-                    <option value="no" id="optInsNo">Ні</option>
+                    <option value="yes" data-i18n="yes" selected>Так</option>
+                    <option value="no" data-i18n="no">Ні</option>
                 </select>
             </div>
 
@@ -292,69 +316,68 @@
             <div class="results-panel">
                 <div class="result-box brutto">
                     <div class="result-title">BRUTTO</div>
-                    <div class="result-value" id="grossResult">0.00 zł</div>
+                    <div class="result-value" id="grossResult">0,00 zł</div>
                 </div>
                 <div class="result-box netto">
                     <div class="result-title">NETTO</div>
-                    <div class="result-value" id="netResult">0.00 zł</div>
+                    <div class="result-value" id="netResult">0,00 zł</div>
                 </div>
             </div>
 
-            <div class="swipe-hint">← Свайп вліво для деталей місяця</div>
+            <div class="swipe-hint" data-i18n="swipeHintLeft">← Свайп вліво для деталей та розрахунку</div>
         </div>
 
-        <!-- СТОРІНКА 2: ДЕТАЛІ ТА АНАЛІТИКА МІСЯЦЯ -->
-        <div class="calculator-page">
+        <!-- СТОРІНКА 2: ІНФОРМАЦІЙНА СТОРІНКА -->
+        <div class="calculator-page" id="page2" inert>
             <div class="header-row">
-                <button class="menu-btn" onclick="switchPage(1)">➔</button>
-                <h2 style="margin-right: auto; margin-left: 15px;">Деталі місяця 📊</h2>
+                <button class="menu-btn" aria-label="Повернутися на головну" onclick="switchPage(1)">➔</button>
+                <h2 style="margin-right: auto; margin-left: 15px;" data-i18n="detailsTitle">Деталі та розрахунок 📊</h2>
             </div>
             
             <div class="info-card">
-                <div class="info-row"><span>Місяць:</span> <strong id="infoMonth">-</strong></div>
-                <div class="info-row"><span>Базова ставка:</span> <strong id="infoBase">-</strong></div>
-                <div class="info-row"><span>Нарахування премії:</span> <strong id="infoBonusAmount" style="color: var(--success);">-</strong></div>
-                <div class="info-row"><span>Дні за графіком:</span> <strong id="infoSched">-</strong></div>
-                <div class="info-row"><span>Відпрацьовані зміни:</span> <strong id="infoWorked">-</strong></div>
+                <div style="font-weight: bold; margin-bottom: 12px; color: var(--text-main); font-size: 14px; text-transform: uppercase;" data-i18n="breakdownHeader">Деталізація нарахувань</div>
                 
-                <div class="info-row"><span>Дні відпустки:</span> <strong id="infoVacation">-</strong></div>
-                <div class="sub-input-row premium-field hidden" id="urlopBonusGroup">
-                    <span id="lblUrlopBonus">Середня за 1 день відп. (zł) ℹ️</span>
-                    <input type="number" id="urlopBonus" placeholder="0.00" min="0" onfocus="this.value=''">
+                <div class="info-row"><span data-i18n="infoBasePay">Базова ставка (з урахув. L4):</span> <strong id="infoBasePayVal">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoPresenceBonus">Премія за присутність (<span id="infoPresencePct">5%</span>):</span> <strong id="infoPresenceBonusSum" style="color: var(--success);">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoQualityBonus">Премія за якість (<span id="infoQualityPct">10%</span>):</span> <strong id="infoQualityBonusSum" style="color: var(--success);">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoNightTime">Доплата за нічний час (<span id="infoNightHours">0 год 0 хв</span>):</span> <strong id="infoNightTimeSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoNightShift">Доплата за нічну зміну (<span id="infoNightShiftsCount">0</span> змін):</span> <strong id="infoNightShiftSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoWeekend">Робота у вікенди:</span> <strong id="infoWeekendSum">0,00 zł</strong></div>
+                
+                <div class="info-row">
+                    <span data-i18n="infoOvertime">Надгодини:</span> 
+                    <span style="text-align: right;">
+                        <strong id="infoOvertimeSum">0,00 zł</strong>
+                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">(нетто: <strong id="infoOvertimeNetSum">0,00 zł</strong>)</span>
+                    </span>
                 </div>
 
-                <div class="info-row"><span>Дні донації крові:</span> <strong id="infoBlood">-</strong></div>
-                <div class="sub-input-row premium-field hidden" id="bloodBonusGroup">
-                    <span id="lblBloodBonus">Середня за 1 дн. донації (zł) ℹ️</span>
-                    <input type="number" id="bloodBonus" placeholder="0.00" min="0" onfocus="this.value=''">
-                </div>
-
-                <div class="info-row"><span>Лікарняний L4 (днів):</span> <strong id="infoL4">-</strong></div>
-                <div class="sub-input-row premium-field hidden" id="l4MissedGroup">
-                    <span id="lblL4Missed">Пропущено змін (шт) ℹ️</span>
-                    <input type="number" id="l4MissedShifts" placeholder="0" min="0" onfocus="this.value=''">
-                </div>
-
-                <div class="info-row"><span>Всього задіяних днів:</span> <strong id="infoTotalDays" style="color: var(--success);">-</strong></div>
-                <div class="info-row"><span>Нічний час:</span> <strong id="infoNightHours">-</strong></div>
-                <div class="info-row"><span>Нічний тариф:</span> <strong id="infoNightTariff">-</strong></div>
+                <div class="info-row"><span data-i18n="infoVacation">Оплата відпустки:</span> <strong id="infoVacationSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoBlood">Оплата донації крові:</span> <strong id="infoBloodSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoL4">Лікарняний L4 (компенс.):</span> <strong id="infoL4Sum">0,00 zł</strong></div>
                 
-                <div class="divider" style="margin: 8px 0;"></div>
-                <div class="info-row"><span>Доплата за сб/нд (+100 zł):</span> <strong id="infoWeekendPay">0.00 zł</strong></div>
-                <div class="info-row"><span>Надгодини у вихідний (×2):</span> <strong id="infoOvertimePay">0.00 zł</strong></div>
-                
-                <div class="divider" style="margin: 12px 0;"></div>
-                <div class="info-row" style="background: var(--premium-bg); padding: 8px; border-radius: 6px;">
-                    <span>Сума надбавок:</span> <strong id="infoTotalExtras" style="color: var(--primary);">-</strong>
+                <div class="info-row total-row">
+                    <span>РАЗОМ BRUTTO:</span> <strong id="infoTotalBrutto" style="color: var(--primary);">0,00 zł</strong>
                 </div>
+                <div class="info-row total-row" style="margin-top: 4px; border-top: none; padding-top: 0;">
+                    <span>РАЗОМ NETTO:</span> <strong id="infoTotalNetto" style="color: var(--success);">0,00 zł</strong>
+                </div>
+            </div>
+            
+            <div class="info-card" style="padding-top: 10px; padding-bottom: 10px;">
+                <div class="info-row" style="margin-bottom: 6px;"><span data-i18n="infoWorkedDays">Відпрацьовано планових змін:</span> <strong id="infoWorkedDaysVal">-</strong></div>
+                <div class="info-row" style="margin-bottom: 6px;"><span data-i18n="infoTotalDays">Всього задіяних днів:</span> <strong id="infoTotalDaysVal">-</strong></div>
+                <div class="info-row" style="margin-bottom: 6px;"><span data-i18n="infoSched">Дні за графіком (норма):</span> <strong id="infoSchedVal">-</strong></div>
+                <div class="info-row" style="margin-bottom: 0;"><span data-i18n="infoNightTariff">Нічний тариф:</span> <strong id="infoNightTariffVal">-</strong></div>
             </div>
 
             <div id="info-sync-container" class="premium-field" style="margin-top: 15px; display: none;">
-                <button id="btn-sync-up-info" class="action-btn btn-sync">Зберегти поточний місяць ☁️</button>
+                <button id="btn-sync-up-info" class="action-btn btn-sync" data-i18n="btnSaveCloud">Зберегти місяць в хмару ☁️</button>
             </div>
 
-            <div class="swipe-hint" style="margin-top: 20px;">Свайп вправо для повернення →</div>
+            <div class="swipe-hint" style="margin-top: 20px;" data-i18n="swipeHintRight">Свайп вправо для повернення →</div>
         </div>
+
     </div>
 </div>
 
@@ -363,9 +386,9 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // ==========================================
-    // КОНФІГУРАЦІЯ ТА КОНСТАНТИ
-    // ==========================================
+    /* ==========================================
+       КОНФІГУРАЦІЯ ТА КОНСТАНТИ
+       ========================================== */
     const CONFIG = {
         ZUS: 0.1371,
         NFZ: 0.09,
@@ -375,16 +398,20 @@
         LAUNDRY_MAX: 16.00,
         BENEFIT_ZUS_NFZ: 30.25,
         BENEFIT_TAX: 54.00,
-        DAILY_HOURS: 8 + (10 / 60), // 8.1667 год
+        EXTRA_INSURANCE_RATE: 36.70,
+        NIGHT_SHIFT_BONUS: 30.00,
+        WEEKEND_DAY_RATE: 100.00,
+        DAILY_HOURS: 8 + (10 / 60),
         BASE_SALARIES: {
             "2025": 4666,
             "2026_early": 5750,
             "2026_late": 5950
+        },
+        STATE_WORK_DAYS: {
+            2025: [21, 20, 21, 21, 20, 20, 22, 20, 22, 23, 19, 20],
+            2026: [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20]
         }
     };
-
-    // Законодавча норма робочих днів (використовується виключно для нічного тарифу)
-    const STATUTORY_WORKDAY_NORM = [20, 20, 22, 21, 20, 21, 23, 20, 22, 22, 20, 20];
 
     const firebaseConfig = {
         apiKey: "AIzaSyAfsfF3nLzqaAJTAfp73715efQhri-SOT8",
@@ -398,371 +425,252 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    
-    let currentLang = 'ua';
-    let isPremium = false;
-    let currentActivePage = 1;
-    
-    // Глобальний кеш даних місяців з Firestore
-    window.userMonthsCache = {};
 
-    const dict = {
-        ua: {
-            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Графік", vacationDays: "Відпустка (днів)", urlopBonus: "Середня за 1 день відп. (zł) ℹ️", 
-            bloodDonation: "Донація крові (днів)", bloodBonus: "Середня за 1 дн. донації (zł) ℹ️", 
-            l4Days: "Лікарняний L4 (календарні)", bonus: "Премія", morning: "Ранкові зміни (шт)", 
-            afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", 
-            weekend: "Робота сб / нд (+100 zł)", overtime: "Надгодини у вихідний (×2)", 
-            under26: "Вік до 26 років", ppk: "Участь у PPK", 
-            insurance: "Дод. страхування", yes: "Так", no: "Ні",
-            menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", 
-            monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
-        },
-        pl: {
-            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Grafik", vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa za 1 dzień ℹ️", 
-            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia za 1 dn. oddania (zł) ℹ️", 
-            l4Days: "L4 (dni kalendarzowe)", bonus: "Premia", morning: "Poranne zmiany (szt)", 
-            afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", 
-            weekend: "Praca sob./niedz. (+100 zł)", overtime: "Nadgodziny w dniu wolnym (×2)", 
-            under26: "Wiek < 26 lat", ppk: "PPK", 
-            insurance: "Dod. ubezpieczenie", yes: "Tak", no: "Nie",
-            menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
-            monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
-        }
-    };
+    const formatPLN = val => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(val);
 
-    // ==========================================
-    // УТИЛІТИ ДАНИХ
-    // ==========================================
-    function getNumber(id, defaultValue = 0) {
-        const el = document.getElementById(id);
-        if (!el) return defaultValue;
-        const val = parseFloat(el.value);
-        return Number.isFinite(val) && val >= 0 ? val : defaultValue;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    function getString(id, defaultValue = '') {
-        const el = document.getElementById(id);
-        return el ? el.value : defaultValue;
-    }
+    /* ==========================================
+       1. ЧИСТА ФУНКЦІЯ РОЗРАХУНКУ (COMPUTE)
+       ========================================== */
+    function compute(inputs) {
+        const {
+            baseSalary, stateDays, schedDays, regWorkedDays,
+            morningShifts, nightShifts, overtimeMorningShifts, overtimeNightShifts,
+            weekendDays, overtimeDays, vacDays, dailyUrlopBonus,
+            bloodDonationDays, bloodBonusOverride, l4Days, isPremium,
+            isUnder26, ppkActive, insuranceActive
+        } = inputs;
 
-    window.switchPage = function(page) {
-        currentActivePage = page;
-        const track = document.getElementById('pagesTrack');
-        track.style.transform = page === 2 ? 'translateX(-50%)' : 'translateX(0)';
-    }
-
-    window.toggleMenu = function() { 
-        document.getElementById('sideMenu').classList.toggle('open'); 
-    }
-
-    window.setTheme = function(theme) { 
-        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : ''); 
-        localStorage.setItem('theme', theme); 
-    }
-
-    let touchStartX = 0;
-    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
-    document.addEventListener('touchend', e => {
-        const touchEndX = e.changedTouches[0].screenX;
-        const diff = touchEndX - touchStartX;
-        const sideMenu = document.getElementById('sideMenu');
-        const isMenuOpen = sideMenu.classList.contains('open');
-
-        if (Math.abs(diff) < 60) return;
-
-        if (diff > 0) { 
-            if (isMenuOpen) sideMenu.classList.remove('open');
-            else if (currentActivePage === 2) switchPage(1);
-            else if (currentActivePage === 1) toggleMenu();
-        } else { 
-            if (isMenuOpen) sideMenu.classList.remove('open');
-            else if (currentActivePage === 1) switchPage(2);
-        }
-    });
-
-    // ==========================================
-    // ЯДРО РОЗРАХУНКУ (PAYROLL ENGINE V11)
-    // ==========================================
-    
-    function getMonthData() {
-        const monthVal = getString('monthSelect');
-        const [y, m] = monthVal ? monthVal.split('-') : ['2026', '10'];
-        const monthIdx = parseInt(m) - 1;
-        const calendarNormDays = STATUTORY_WORKDAY_NORM[monthIdx] || 21;
-
-        let defaultBase = CONFIG.BASE_SALARIES["2026_early"];
-        if (parseInt(y) === 2026 && monthIdx >= 9) defaultBase = CONFIG.BASE_SALARIES["2026_late"];
-        else if (parseInt(y) < 2026) defaultBase = CONFIG.BASE_SALARIES["2025"];
-
-        return {
-            monthVal,
-            year: parseInt(y),
-            monthIdx,
-            calendarNormDays,
-            
-            baseSalary: getNumber('baseSalary', defaultBase),
-            scheduleDays: getNumber('scheduleDays', 0), 
-            bonusPct: getNumber('bonusPctSelect', 15),
-
-            morningShifts: getNumber('morningShifts'),
-            afternoonShifts: getNumber('afternoonShifts'),
-            nightShifts: getNumber('nightShifts'),
-
-            weekendDays: getNumber('weekendDays'),
-            overtimeDays: getNumber('overtimeDays'), // Повні зміни у вихідні дня (+100%)
-
-            vacationDays: isPremium ? getNumber('vacationDays') : 0,
-            urlopBonusManual: isPremium ? getNumber('urlopBonus') : 0,
-
-            bloodDonationDays: isPremium ? getNumber('bloodDonationDays') : 0,
-            bloodBonusManual: isPremium ? getNumber('bloodBonus') : 0,
-
-            l4Days: isPremium ? getNumber('l4Days') : 0,
-            l4MissedShifts: isPremium ? getNumber('l4MissedShifts') : 0,
-
-            isUnder26: getString('under26Select') === 'yes',
-            ppkActive: getString('ppkSelect') === 'yes',
-            extraInsurance: getString('insuranceSelect') === 'yes' ? 36.70 : 0
-        };
-    }
-
-    function calculatePayroll(data) {
-        const regWorkedDays = data.morningShifts + data.afternoonShifts + data.nightShifts;
-        const schedDays = data.scheduleDays; 
-
-        // Якщо графік не вказано (0), денна ставка не обраховується
-        const dailyRate = schedDays > 0 ? (data.baseSalary / schedDays) : 0;
-
-        // L4
-        let adjustedBase = data.baseSalary;
+        let adjustedBase = baseSalary;
         let l4Pay = 0;
-        if (data.l4Days > 0) {
-            adjustedBase = Math.max(0, data.baseSalary - ((data.baseSalary / 30) * data.l4Days));
-            
-            let l4DailyRate = calculateHistoricalL4DailyRate(data.monthVal) || ((data.baseSalary * (1 - CONFIG.ZUS)) / 30);
-            l4Pay = l4DailyRate * 0.80 * data.l4Days;
+
+        if (isPremium && l4Days > 0) {
+            adjustedBase = baseSalary - ((baseSalary / 30) * l4Days);
+            let l4DailyRate = (baseSalary * (1 - CONFIG.ZUS)) / 30; 
+            if (window.cachedL4DailyRate && window.cachedL4DailyRate > 0) {
+                l4DailyRate = window.cachedL4DailyRate; 
+            }
+            l4Pay = l4DailyRate * 0.80 * l4Days; 
         }
 
-        // Премія від графіка
-        const bonusAmount = (schedDays > 0) 
-            ? ((data.baseSalary * (data.bonusPct / 100)) / schedDays * regWorkedDays) 
-            : 0;
+        const presenceBonusPct = (isPremium && l4Days > 0) ? (l4Days <= 2 ? 2.5 : 0) : 5;
+        const qualityBonusPct = inputs.qualityBonusPct || 0;
 
-        // Нічна доплата за законодавчою нормою
-        const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (data.calendarNormDays * CONFIG.DAILY_HOURS)) * 0.20) * 100) / 100;
-        const totalNightPay = Math.round((data.morningShifts * (10/60) * nightTariff) * 100)/100 
-            + (data.nightShifts * CONFIG.DAILY_HOURS * nightTariff) 
-            + (data.nightShifts * 30);
+        const presenceBonusAmount = (schedDays > 0) ? ((baseSalary * (presenceBonusPct / 100)) / schedDays * regWorkedDays) : 0;
+        const qualityBonusAmount = (schedDays > 0) ? ((baseSalary * (qualityBonusPct / 100)) / schedDays * regWorkedDays) : 0;
+        const bonusAmount = presenceBonusAmount + qualityBonusAmount;
 
-        // Робота у вихідні за графіком (+100 zł/день)
-        const weekendPremium = data.weekendDays * 100;
+        const nightTariff = Math.round(((CONFIG.NIGHT_BASE_SALARY / (stateDays * CONFIG.DAILY_HOURS)) * 0.20) * 100) / 100;
+        const overtimeTariff = Math.round(((baseSalary / stateDays) * 2) * 100) / 100;
 
-        // Надгодини: Повна зміна (100% базова оплата + 100% надбавка = 200% денної ставки)
-        const overtimePay = data.overtimeDays * dailyRate * 2;
+        const totalMorningShifts = morningShifts + overtimeMorningShifts;
+        const totalNightShifts = nightShifts + overtimeNightShifts;
 
-        // Відпустка
-        let autoUrlopBonus = 0;
-        if (data.vacationDays > 0 && data.urlopBonusManual === 0) {
-            autoUrlopBonus = calculateHistoricalUrlopBonus(data.year, data.monthIdx);
-        }
-        const effectiveUrlopDaily = data.urlopBonusManual > 0 ? data.urlopBonusManual : autoUrlopBonus;
-        const totalUrlopBonus = effectiveUrlopDaily * data.vacationDays;
+        const totalNightTimePay = Math.round(((totalMorningShifts * (10/60) * nightTariff) + (totalNightShifts * CONFIG.DAILY_HOURS * nightTariff)) * 100) / 100;
+        const totalNightShiftPay = totalNightShifts * CONFIG.NIGHT_SHIFT_BONUS;
+        const totalNightPay = totalNightTimePay + totalNightShiftPay;
 
-        // Донація крові
-        const variableExtras = bonusAmount + totalNightPay + weekendPremium + overtimePay;
-        const autoBloodDaily = schedDays > 0 ? (variableExtras / schedDays) : 0;
-        const effectiveBloodDaily = data.bloodBonusManual > 0 ? data.bloodBonusManual : autoBloodDaily;
-        const bloodDonationPay = effectiveBloodDaily * data.bloodDonationDays;
+        const totalWeekendPay = weekendDays * CONFIG.WEEKEND_DAY_RATE;
+        const totalOvertimePay = overtimeDays * overtimeTariff;
 
-        // BRUTTO
-        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + weekendPremium + overtimePay + totalUrlopBonus + bloodDonationPay;
+        // Маржинальне нетто надгодин
+        const zusOvertime = totalOvertimePay * CONFIG.ZUS;
+        const healthBaseOvertime = totalOvertimePay - zusOvertime;
+        const nfzOvertime = healthBaseOvertime * CONFIG.NFZ;
+        const pitOvertime = isUnder26 ? 0 : (healthBaseOvertime * CONFIG.PIT);
+        const totalOvertimeNet = Math.max(0, totalOvertimePay - zusOvertime - nfzOvertime - pitOvertime);
 
-        // Податковий розрахунок
+        const currentVariables = bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay;
+        const autoDailyBlood = (isPremium && schedDays > 0) ? (currentVariables / schedDays) : 0;
+        const finalDailyBlood = bloodBonusOverride > 0 ? bloodBonusOverride : autoDailyBlood;
+        const bloodDonationPay = finalDailyBlood * bloodDonationDays;
+
+        const totalUrlopBonus = dailyUrlopBonus * vacDays;
+        const gross = adjustedBase + l4Pay + bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay + totalUrlopBonus + bloodDonationPay;
+
         const zusBase = gross - l4Pay; 
         const zus = zusBase * CONFIG.ZUS; 
         const healthBase = gross - zus; 
         const nfz = Math.round((healthBase * CONFIG.NFZ) * 100) / 100;
         
         let pit = 0;
-        if (!data.isUnder26) {
+        if (!isUnder26) {
             const pitBase = Math.round(Math.max(0, healthBase - CONFIG.KWOTA_WOLNA));
             pit = Math.max(0, Math.round((pitBase * CONFIG.PIT) - CONFIG.KWOTA_WOLNA));
         }
 
         const totalBenefitCost = CONFIG.BENEFIT_ZUS_NFZ + CONFIG.BENEFIT_TAX; 
-        const laundryAllowance = schedDays > 0 ? Math.min(CONFIG.LAUNDRY_MAX, (regWorkedDays / schedDays) * CONFIG.LAUNDRY_MAX) : 0;
-        const ppkCost = data.ppkActive ? gross * 0.02 : 0;
+        let laundryAllowance = (schedDays > 0) ? Math.min(CONFIG.LAUNDRY_MAX, (regWorkedDays / schedDays) * CONFIG.LAUNDRY_MAX) : 0;
+        
+        const ppkCost = ppkActive ? gross * 0.02 : 0;
+        const extraInsurance = insuranceActive ? CONFIG.EXTRA_INSURANCE_RATE : 0;
 
-        // NETTO
-        const net = gross - zus - nfz - pit - ppkCost - data.extraInsurance - totalBenefitCost + laundryAllowance;
-
-        const totalExtrasSum = bonusAmount + totalNightPay + weekendPremium + overtimePay + totalUrlopBonus + bloodDonationPay;
+        const net = gross - zus - nfz - pit - ppkCost - extraInsurance - totalBenefitCost + laundryAllowance;
 
         return {
-            gross,
-            net,
-            regWorkedDays,
-            schedDays,
-            bonusAmount,
-            nightTariff,
-            totalNightPay,
-            weekendPremium,
-            overtimePay,
-            effectiveUrlopDaily,
-            effectiveBloodDaily,
-            totalExtrasSum
+            gross, net, adjustedBase, l4Pay, presenceBonusPct, qualityBonusPct,
+            presenceBonusAmount, qualityBonusAmount, bonusAmount, nightTariff,
+            totalMorningShifts, totalNightShifts, totalNightTimePay, totalNightShiftPay,
+            totalNightPay, totalWeekendPay, totalOvertimePay, totalOvertimeNet,
+            bloodDonationPay, autoDailyBlood, totalUrlopBonus, regWorkedDays,
+            totalEngagedDays: regWorkedDays + vacDays + bloodDonationDays
         };
     }
 
-    // Уніфіковані розрахунки історії через `calculatePayroll`
-    function calculateHistoricalL4DailyRate(currentMonthVal) {
-        const [yStr, mStr] = currentMonthVal.split('-');
-        let cYear = parseInt(yStr);
-        let cMonth = parseInt(mStr);
-        
-        let totalNetBase = 0;
-        let monthsFound = 0;
-
-        for (let i = 1; i <= 12; i++) {
-            let pMonth = cMonth - i;
-            let pYear = cYear;
-            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-            const pastKey = pYear + "-" + String(pMonth).padStart(2, '0');
-
-            const pRawData = window.userMonthsCache[pastKey];
-            if (pRawData) {
-                const monthIdx = pMonth - 1;
-                const pData = {
-                    monthVal: pastKey,
-                    year: pYear,
-                    monthIdx,
-                    calendarNormDays: STATUTORY_WORKDAY_NORM[monthIdx] || 21,
-                    baseSalary: Math.max(0, parseFloat(pRawData.baseSalary) || 5750),
-                    scheduleDays: Math.max(0, parseInt(pRawData.scheduleDays) || 0),
-                    bonusPct: parseFloat(pRawData.bonusPctSelect) || 15,
-                    morningShifts: Math.max(0, parseInt(pRawData.morningShifts) || 0),
-                    afternoonShifts: Math.max(0, parseInt(pRawData.afternoonShifts) || 0),
-                    nightShifts: Math.max(0, parseInt(pRawData.nightShifts) || 0),
-                    weekendDays: Math.max(0, parseInt(pRawData.weekendDays) || 0),
-                    overtimeDays: Math.max(0, parseFloat(pRawData.overtimeDays) || 0),
-                    vacationDays: 0, urlopBonusManual: 0, bloodDonationDays: 0, bloodBonusManual: 0, l4Days: 0, l4MissedShifts: 0,
-                    isUnder26: false, ppkActive: false, extraInsurance: 0
-                };
-
-                const res = calculatePayroll(pData);
-                totalNetBase += res.gross * (1 - CONFIG.ZUS);
-                monthsFound++;
-            }
+    /* ==========================================
+       2. ДЕКЛАРАТИВНА ЛОКАЛІЗАЦІЯ (I18N)
+       ========================================== */
+    const dict = {
+        uk: {
+            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
+            schedDays: "Графік", bonus: "Премія за якість (макс 10%)", morning: "Ранкові зміни (шт)", 
+            afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
+            overtime: "Надгодини (днів)", overtimeMorning: "З них ранкових (змін) ☀️", overtimeNight: "З них нічних (змін) 🌙", 
+            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
+            bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
+            l4Days: "Лікарняний L4 (календ.)", l4Missed: "Пропущено змін (шт) ℹ️",
+            under26: "Вік до 26 років", ppk: "Участь у PPK", insurance: "Дод. страхування", 
+            yes: "Так", no: "Ні", menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема",
+            optThemeLight: "Світла", optThemeDark: "Темна", cloudHeader: "Акаунт & Хмара",
+            btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць ☁️",
+            btnLoadCloud: "Завантажити місяць 📥", btnLogout: "Вийти (Гостьовий режим)",
+            swipeHintLeft: "← Свайп вліво для деталей та розрахунку",
+            swipeHintRight: "Свайп вправо для повернення →", detailsTitle: "Деталі та розрахунок 📊",
+            breakdownHeader: "Деталізація нарахувань", infoBasePay: "Базова ставка (з урахув. L4):",
+            infoPresenceBonus: "Премія за присутність", infoQualityBonus: "Премія за якість",
+            infoNightTime: "Доплата за нічний час", infoNightShift: "Доплата за нічну зміну",
+            infoWeekend: "Робота у вікенди:", infoOvertime: "Надгодини:", infoVacation: "Оплата відпустки:",
+            infoBlood: "Оплата донації крові:", infoL4: "Лікарняний L4 (компенс.):",
+            infoWorkedDays: "Відпрацьовано планових змін:", infoTotalDays: "Всього задіяних днів:",
+            infoSched: "Дні за графіком (норма):", infoNightTariff: "Нічний тариф:",
+            monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"]
+        },
+        pl: {
+            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
+            schedDays: "Grafik", bonus: "Premia za jakość (max 10%)", morning: "Poranne zmiany (szt)", 
+            afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
+            overtime: "Nadgodziny (dni)", overtimeMorning: "W tym porannych (zmian) ☀️", overtimeNight: "W tym nocnych (zmian) 🌙", 
+            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa ℹ️",
+            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
+            l4Days: "L4 (dni kalendarzowe)", l4Missed: "Opuszczone zmiany ℹ️",
+            under26: "Wiek < 26 lat", ppk: "PPK", insurance: "Dod. ubezpieczenie", 
+            yes: "Tak", no: "Nie", menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
+            optThemeLight: "Jasny", optThemeDark: "Ciemny", cloudHeader: "Konto & Chmura",
+            btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc ☁️",
+            btnLoadCloud: "Pobierz miesiąc 📥", btnLogout: "Wyloguj (Tryb gościa)",
+            swipeHintLeft: "← Przesuń w lewo po szczegóły",
+            swipeHintRight: "Przesuń w prawo aby wrócić →", detailsTitle: "Szczegóły wyliczenia 📊",
+            breakdownHeader: "Struktura naliczeń", infoBasePay: "Stawka bazowa (po L4):",
+            infoPresenceBonus: "Premia za frekwencję", infoQualityBonus: "Premia za jakość",
+            infoNightTime: "Dodatek nocny (czas)", infoNightShift: "Dodatek nocny (zmiana)",
+            infoWeekend: "Praca w weekendy:", infoOvertime: "Nadgodziny:", infoVacation: "Wynagrodzenie urlopowe:",
+            infoBlood: "Wynagrodzenie za krew:", infoL4: "Chorobowe L4:",
+            infoWorkedDays: "Przepracowane zmiany:", infoTotalDays: "Łącznie dni:",
+            infoSched: "Grafik (norma):", infoNightTariff: "Stawka nocna:",
+            monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
         }
-        return monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
-    }
-
-    function calculateHistoricalUrlopBonus(currentYear, monthIdx) {
-        let totalExtras = 0; 
-        let totalWorkedDays = 0;
-
-        for (let i = 1; i <= 3; i++) {
-            let pMonth = monthIdx + 1 - i; 
-            let pYear = currentYear;
-            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-            const pastKey = pYear + "-" + String(pMonth).padStart(2, '0');
-
-            const pRawData = window.userMonthsCache[pastKey];
-            if (pRawData) {
-                const pIdx = pMonth - 1;
-                const pData = {
-                    monthVal: pastKey,
-                    year: pYear,
-                    monthIdx: pIdx,
-                    calendarNormDays: STATUTORY_WORKDAY_NORM[pIdx] || 21,
-                    baseSalary: Math.max(0, parseFloat(pRawData.baseSalary) || 5750),
-                    scheduleDays: Math.max(0, parseInt(pRawData.scheduleDays) || 0),
-                    bonusPct: parseFloat(pRawData.bonusPctSelect) || 15,
-                    morningShifts: Math.max(0, parseInt(pRawData.morningShifts) || 0),
-                    afternoonShifts: Math.max(0, parseInt(pRawData.afternoonShifts) || 0),
-                    nightShifts: Math.max(0, parseInt(pRawData.nightShifts) || 0),
-                    weekendDays: Math.max(0, parseInt(pRawData.weekendDays) || 0),
-                    overtimeDays: Math.max(0, parseFloat(pRawData.overtimeDays) || 0),
-                    vacationDays: 0, urlopBonusManual: 0, bloodDonationDays: 0, bloodBonusManual: 0, l4Days: 0, l4MissedShifts: 0,
-                    isUnder26: false, ppkActive: false, extraInsurance: 0
-                };
-
-                const res = calculatePayroll(pData);
-                const regWorked = pData.morningShifts + pData.afternoonShifts + pData.nightShifts;
-                
-                totalExtras += res.totalExtrasSum;
-                totalWorkedDays += (regWorked + pData.overtimeDays);
-            }
-        }
-        return totalWorkedDays > 0 ? (totalExtras / totalWorkedDays) : 0;
-    }
-
-    // ==========================================
-    // UI ТА КОНТРОЛЕР
-    // ==========================================
-    
-    window.calculateSalary = function() {
-        const data = getMonthData();
-        const res = calculatePayroll(data);
-
-        document.getElementById('grossResult').innerText = res.gross.toFixed(2) + ' zł';
-        document.getElementById('netResult').innerText = res.net.toFixed(2) + ' zł';
-
-        document.getElementById('urlopBonusGroup').classList.toggle('hidden', data.vacationDays === 0);
-        document.getElementById('bloodBonusGroup').classList.toggle('hidden', data.bloodDonationDays === 0);
-        document.getElementById('l4MissedGroup').classList.toggle('hidden', data.l4Days === 0);
-
-        if (data.bloodDonationDays > 0 && !document.getElementById('bloodBonus').value) {
-            document.getElementById('bloodBonus').value = res.effectiveBloodDaily.toFixed(2);
-        }
-
-        const totalNightMinutes = Math.round(((data.morningShifts * (10/60)) + (data.nightShifts * CONFIG.DAILY_HOURS)) * 60);
-        const nHours = Math.floor(totalNightMinutes / 60);
-        const nMins = totalNightMinutes % 60;
-        const nightTimeFormatted = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
-
-        const monthSelectEl = document.getElementById('monthSelect');
-        document.getElementById('infoMonth').innerText = monthSelectEl.options[monthSelectEl.selectedIndex]?.text || '-';
-        document.getElementById('infoBase').innerText = data.baseSalary.toFixed(2) + ' zł';
-        document.getElementById('infoBonusAmount').innerText = res.bonusAmount.toFixed(2) + ' zł';
-        document.getElementById('infoSched').innerText = res.schedDays || '-';
-        document.getElementById('infoWorked').innerText = res.regWorkedDays;
-        document.getElementById('infoVacation').innerText = data.vacationDays;
-        document.getElementById('infoBlood').innerText = data.bloodDonationDays;
-        document.getElementById('infoL4').innerText = data.l4Days;
-        document.getElementById('infoTotalDays').innerText = (res.regWorkedDays + data.vacationDays + data.bloodDonationDays) + ' днів';
-        document.getElementById('infoNightHours').innerText = nightTimeFormatted;
-        document.getElementById('infoNightTariff').innerText = res.nightTariff.toFixed(2) + ' zł/год';
-        
-        // Окремі рядки для прозорості надбавок
-        document.getElementById('infoWeekendPay').innerText = res.weekendPremium.toFixed(2) + ' zł';
-        document.getElementById('infoOvertimePay').innerText = res.overtimePay.toFixed(2) + ' zł';
-        document.getElementById('infoTotalExtras').innerText = res.totalExtrasSum.toFixed(2) + ' zł';
     };
 
-    // ==========================================
-    // ФАЙРБЕЙС ТА СИНХРОНІЗАЦІЯ
-    // ==========================================
-    
-    async function fetchAllUserDataToCache() {
-        if (!auth.currentUser) {
-            window.userMonthsCache = {};
-            return;
+    let currentLang = localStorage.getItem('lang') || 'uk';
+    let isPremium = false;
+    let currentActivePage = 1;
+    let requestCounter = 0;
+    let baseTouched = false;
+    window.cachedL4DailyRate = null;
+
+    window.setLang = function(lang) {
+        currentLang = lang;
+        localStorage.setItem('lang', lang);
+        document.documentElement.lang = lang;
+        
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (dict[lang][key]) el.textContent = dict[lang][key];
+        });
+        
+        initMonths(); 
+        calculateSalary();
+    };
+
+    window.setTheme = function(theme) {
+        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : '');
+        localStorage.setItem('theme', theme);
+    };
+
+    /* ==========================================
+       3. СТАН ТА УПРАВЛІННЯ ВІДОБРАЖЕННЯМ (UI)
+       ========================================== */
+    window.switchPage = function(page) {
+        currentActivePage = page;
+        const track = document.getElementById('pagesTrack');
+        const p1 = document.getElementById('page1');
+        const p2 = document.getElementById('page2');
+
+        if (page === 2) {
+            track.style.transform = 'translateX(-50%)';
+            p1.setAttribute('inert', '');
+            p2.removeAttribute('inert');
+        } else {
+            track.style.transform = 'translateX(0)';
+            p2.setAttribute('inert', '');
+            p1.removeAttribute('inert');
         }
-        try {
-            const querySnapshot = await getDocs(collection(db, "users", auth.currentUser.uid, "months"));
-            window.userMonthsCache = {};
-            querySnapshot.forEach((docSnap) => {
-                window.userMonthsCache[docSnap.id] = docSnap.data();
-            });
-        } catch(e) {
-            console.error("Помилка завантаження кешу:", e);
-        }
+    };
+
+    function updateVisibility() {
+        const overtimeVal = Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0);
+        document.getElementById('overtimeSubGroup').classList.toggle('hidden', overtimeVal <= 0);
+
+        const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
+        document.getElementById('urlopBonusGroup').classList.toggle('hidden', vacDays <= 0);
+
+        const bloodDays = Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0);
+        document.getElementById('bloodBonusGroup').classList.toggle('hidden', bloodDays <= 0);
+
+        const l4Days = Math.max(0, parseInt(document.getElementById('l4Days').value) || 0);
+        document.getElementById('l4MissedGroup').classList.toggle('hidden', l4Days <= 0);
     }
 
+    /* ==========================================
+       4. СВАЙП ТА МОБІЛЬНІ ЖЕСТИ
+       ========================================== */
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', e => {
+        if (e.target.closest('input, select, button')) return;
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+        if (e.target.closest('input, select, button')) return;
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const dx = touchEndX - touchStartX;
+        const dy = touchEndY - touchStartY;
+        const sideMenu = document.getElementById('sideMenu');
+
+        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+
+        if (dx > 0) { 
+            if (sideMenu.classList.contains('open')) sideMenu.classList.remove('open');
+            else if (currentActivePage === 2) switchPage(1);
+            else if (currentActivePage === 1) toggleMenu();
+        } else { 
+            if (sideMenu.classList.contains('open')) sideMenu.classList.remove('open');
+            else if (currentActivePage === 1) switchPage(2);
+        }
+    });
+
+    window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); };
+
+    /* ==========================================
+       5. СИНХРОНІЗАЦІЯ З ФІРМОВИМ FIRESTORE
+       ========================================== */
     onAuthStateChanged(auth, async (user) => {
         isPremium = !!user;
         document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
@@ -770,44 +678,25 @@
         document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
         
         const infoSyncContainer = document.getElementById('info-sync-container');
-        if(infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
+        if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
 
-        if(user) {
+        if (user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
-            await fetchAllUserDataToCache();
-            await loadCloudDataForSelectedMonth();
+            await loadCloudData(); 
         } else {
-            clearInputs();
+            loadLocalGuestData();
         }
         calculateSalary();
     });
 
-    async function loadCloudDataForSelectedMonth() {
-        const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) return;
-
-        const cached = window.userMonthsCache[monthVal];
-        if (cached) {
-            document.querySelectorAll('input, select').forEach(el => {
-                if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && cached[el.id] !== undefined) {
-                    el.value = cached[el.id];
-                }
-            });
-        } else {
-            clearInputs();
-        }
-        calculateSalary();
-    }
-
     async function handleSyncUp() {
         if (!auth.currentUser) return;
         const monthVal = document.getElementById('monthSelect').value;
-        if (!monthVal) { alert("Оберіть місяць!"); return; }
+        if (!monthVal) return showToast("Оберіть місяць!");
 
         const btn1 = document.getElementById('btn-sync-up');
         const btn2 = document.getElementById('btn-sync-up-info');
-        if(btn1) btn1.innerText = "Збереження... ☁️"; 
-        if(btn2) btn2.innerText = "Збереження... ☁️"; 
+        if(btn1) btn1.disabled = true; if(btn2) btn2.disabled = true;
 
         const data = { updatedAt: new Date().toISOString() };
         document.querySelectorAll('input, select').forEach(el => {
@@ -816,93 +705,124 @@
 
         try {
             await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
-            window.userMonthsCache[monthVal] = data; 
-            alert("Дані збережені у хмару! ☁️");
+            showToast("Дані збережені у хмару! ☁️");
+            await updateL4Cache(monthVal);
         } catch (error) { 
-            alert("Помилка збереження: " + error.message); 
+            console.warn("Помилка збереження Cloud:", error);
+            showToast("Помилка збереження: " + error.message); 
         } finally {
-            if(btn1) btn1.innerText = "Зберегти місяць ☁️";
-            if(btn2) btn2.innerText = "Зберегти поточний місяць ☁️";
+            if(btn1) btn1.disabled = false; if(btn2) btn2.disabled = false;
         }
+    }
+
+    document.getElementById('btn-sync-up').addEventListener('click', handleSyncUp);
+    const btnSyncInfo = document.getElementById('btn-sync-up-info');
+    if (btnSyncInfo) btnSyncInfo.addEventListener('click', handleSyncUp);
+
+    document.getElementById('btn-login').addEventListener('click', async () => {
+        try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+        catch (e) { showToast("Помилка входу: " + e.message); }
+    });
+    document.getElementById('btn-register').addEventListener('click', async () => {
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); showToast("Реєстрація успішна!"); } 
+        catch (e) { showToast("Помилка: " + e.message); }
+    });
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    async function loadCloudData() {
+        if (!auth.currentUser) return;
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return;
+
+        const currentReq = ++requestCounter;
+        const [yStr, mStr] = monthVal.split('-');
+        const cYear = parseInt(yStr);
+        const monthIdx = parseInt(mStr) - 1;
+        const defaultSched = (CONFIG.STATE_WORK_DAYS[cYear] || CONFIG.STATE_WORK_DAYS[2026])[monthIdx];
+
+        try {
+            const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
+            if (currentReq !== requestCounter) return; 
+
+            if (snap.exists()) {
+                const d = snap.data();
+                document.querySelectorAll('input, select').forEach(el => {
+                    if (!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) {
+                        el.value = d[el.id];
+                    }
+                });
+                if (!d.scheduleDays) document.getElementById('scheduleDays').value = defaultSched;
+            } else {
+                clearInputs();
+            }
+            updateVisibility();
+            await updateL4Cache(monthVal);
+            calculateSalary();
+        } catch(e) {
+            console.warn("Помилка завантаження Cloud:", e);
+        }
+    }
+
+    document.getElementById('btn-sync-down').addEventListener('click', async () => {
+        await loadCloudData();
+        showToast("Дані завантажені! 📥");
+    });
+
+    /* ==========================================
+       6. ЛОКАЛЬНЕ ЗБЕРЕЖЕННЯ ДЛЯ ГОСТЕЙ
+       ========================================== */
+    function saveLocalGuestData() {
+        if (auth.currentUser) return;
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return;
+        
+        const data = {};
+        document.querySelectorAll('input, select').forEach(el => {
+            if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) data[el.id] = el.value;
+        });
+        localStorage.setItem(`guest_month_${monthVal}`, JSON.stringify(data));
+    }
+
+    function loadLocalGuestData() {
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return;
+        
+        const saved = localStorage.getItem(`guest_month_${monthVal}`);
+        if (saved) {
+            const d = JSON.parse(saved);
+            document.querySelectorAll('input, select').forEach(el => {
+                if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id) && d[el.id] !== undefined) el.value = d[el.id];
+            });
+        } else {
+            clearInputs();
+        }
+        updateVisibility();
     }
 
     function clearInputs() {
         document.querySelectorAll('input[type=number]').forEach(el => {
-            el.value = '';
+            if(el.id !== 'scheduleDays') el.value = '';
         });
-        document.getElementById('bonusPctSelect').value = "15";
+        document.getElementById('bonusPctSelect').value = "10";
+        baseTouched = false;
+        const monthVal = document.getElementById('monthSelect').value;
+        if(monthVal) {
+            setDefaultBaseSalary(monthVal);
+            const [y, m] = monthVal.split('-');
+            const mIdx = parseInt(m) - 1;
+            document.getElementById('scheduleDays').value = (CONFIG.STATE_WORK_DAYS[parseInt(y)] || CONFIG.STATE_WORK_DAYS[2026])[mIdx];
+        }
     }
 
-    // Слухачі авторизації з перевіркою порожніх полів
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        const email = document.getElementById('email').value.trim();
-        const pass = document.getElementById('password').value.trim();
-        if (!email || !pass) {
-            alert("Будь ласка, введіть Email та Пароль!");
-            return;
-        }
-        try { 
-            await signInWithEmailAndPassword(auth, email, pass); 
-        } catch (e) { 
-            alert("Помилка входу: " + e.message); 
-        }
-    });
-    
-    document.getElementById('btn-register').addEventListener('click', async () => {
-        const email = document.getElementById('email').value.trim();
-        const pass = document.getElementById('password').value.trim();
-        if (!email || !pass) {
-            alert("Будь ласка, введіть Email та Пароль для реєстрації!");
-            return;
-        }
-        try { 
-            await createUserWithEmailAndPassword(auth, email, pass); 
-            alert("Реєстрація успішна!"); 
-        } catch (e) { 
-            alert("Помилка реєстрації: " + e.message); 
-        }
-    });
-
-    document.getElementById('btn-sync-up').addEventListener('click', handleSyncUp);
-    const btnSyncInfo = document.getElementById('btn-sync-up-info');
-    if(btnSyncInfo) btnSyncInfo.addEventListener('click', handleSyncUp);
-    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
-
-    document.getElementById('btn-sync-down').addEventListener('click', async () => {
-        await fetchAllUserDataToCache();
-        await loadCloudDataForSelectedMonth();
-        alert("Дані завантажені з хмари! 📥");
-    });
-
-    document.getElementById('l4Days').addEventListener('input', function() {
-        if(isPremium) {
-            const l4 = Math.max(0, parseInt(this.value) || 0);
-            const bonusSelect = document.getElementById('bonusPctSelect');
-            if (l4 === 0) bonusSelect.value = "15";
-            else if (l4 <= 2) bonusSelect.value = "12.5";
-            else bonusSelect.value = "10";
-            calculateSalary();
-        }
-    });
-
-    window.setLang = function(lang) {
-        currentLang = lang; const d = dict[lang];
-        document.getElementById('lblTitle').innerHTML = d.title + ' <span class="premium-badge">PRO</span>';
-        document.getElementById('lblMonth').innerText = d.month; document.getElementById('lblBase').innerText = d.base;
-        document.getElementById('lblScheduleDays').innerText = d.schedDays;
-        document.getElementById('lblVacationDays').innerText = d.vacationDays; document.getElementById('lblUrlopBonus').innerText = d.urlopBonus;
-        document.getElementById('lblBloodDonation').innerText = d.bloodDonation; document.getElementById('lblBloodBonus').innerText = d.bloodBonus;
-        document.getElementById('lblL4Days').innerText = d.l4Days; 
-        document.getElementById('lblBonus').innerText = d.bonus; document.getElementById('lblMorning').innerText = d.morning;
-        document.getElementById('lblAfternoon').innerText = d.afternoon; document.getElementById('lblNight').innerText = d.night; 
-        document.getElementById('lblWeekend').innerText = d.weekend; document.getElementById('lblOvertime').innerText = d.overtime; 
-        document.getElementById('lblUnder26').innerText = d.under26; document.getElementById('lblPPK').innerText = d.ppk; 
-        document.getElementById('lblInsurance').innerText = d.insurance; document.getElementById('menuTitle').innerText = d.menuTitle; 
-        document.getElementById('lblMenuLang').innerText = d.menuLang; document.getElementById('lblMenuTheme').innerText = d.menuTheme; 
-        document.getElementById('optU26Yes').innerText = d.yes; document.getElementById('optU26No').innerText = d.no; 
-        document.getElementById('optPpkYes').innerText = d.yes; document.getElementById('optPpkNo').innerText = d.no; 
-        document.getElementById('optInsYes').innerText = d.yes; document.getElementById('optInsNo').innerText = d.no;
-        initMonths(); calculateSalary();
+    function setDefaultBaseSalary(monthVal) {
+        if (baseTouched) return;
+        const [y, m] = monthVal.split('-');
+        const monthIdx = parseInt(m) - 1;
+        let autoBase = CONFIG.BASE_SALARIES["2026_early"];
+        if (parseInt(y) === 2026 && monthIdx >= 9) autoBase = CONFIG.BASE_SALARIES["2026_late"];
+        else if (parseInt(y) < 2026) autoBase = CONFIG.BASE_SALARIES["2025"];
+        
+        document.getElementById('baseSalary').value = autoBase;
     }
 
     function initMonths() {
@@ -926,27 +846,185 @@
             opt.text = dNames[m] + " " + y;
             select.appendChild(opt);
         }
+        
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
-    document.querySelectorAll('input, select').forEach(el => {
-        if(!['langSelect', 'themeSelect', 'email', 'password'].includes(el.id)) {
-            el.addEventListener('input', calculateSalary);
-            el.addEventListener('change', calculateSalary);
+    /* ==========================================
+       7. ОПТИМІЗОВАНИЙ ПАРАЛЕЛЬНИЙ L4 KЕШ (PROMISE.ALL)
+       ========================================== */
+    async function updateL4Cache(currentMonthVal) {
+        if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
+        
+        try {
+            const snaps = await getDocs(collection(db, "users", auth.currentUser.uid, "months"));
+            let totalNetBase = 0; let monthsFound = 0;
+
+            snaps.forEach(docSnap => {
+                if (docSnap.id < currentMonthVal) {
+                    const data = docSnap.data();
+                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    let pPct = parseFloat(data.bonusPctSelect); if (isNaN(pPct)) pPct = 10;
+                    
+                    const mS = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nS = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const overM = Math.max(0, parseInt(data.overtimeMorningShifts) || 0);
+                    const overN = Math.max(0, parseInt(data.overtimeNightShifts) || 0);
+                    const over = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const pSched = parseInt(data.scheduleDays) || 21;
+                    
+                    const res = compute({
+                        baseSalary: pBase, stateDays: pSched, schedDays: pSched, regWorkedDays: mS + aS + nS,
+                        morningShifts: mS, nightShifts: nS, overtimeMorningShifts: overM, overtimeNightShifts: overN,
+                        weekendDays: wknd, overtimeDays: over, vacDays: 0, dailyUrlopBonus: 0,
+                        bloodDonationDays: 0, bloodBonusOverride: 0, l4Days: 0, isPremium: false,
+                        isUnder26: false, ppkActive: false, insuranceActive: false, qualityBonusPct: pPct
+                    });
+
+                    totalNetBase += (res.gross * (1 - CONFIG.ZUS));
+                    monthsFound++;
+                }
+            });
+
+            window.cachedL4DailyRate = monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
+        } catch(e) {
+            console.warn("Помилка кешування L4:", e);
+        }
+    }
+
+    /* ==========================================
+       8. ГОЛОВНА ФУНКЦІЯ ОБРОБКИ ТА ОНОВЛЕННЯ DOM
+       ========================================== */
+    function calculateSalary() {
+        updateVisibility();
+
+        const monthVal = document.getElementById('monthSelect').value;
+        if (!monthVal) return updateUI(0, 0);
+        
+        const [yStr, mStr] = monthVal.split('-');
+        const cYear = parseInt(yStr);
+        const monthIdx = parseInt(mStr) - 1;
+        const stateDays = (CONFIG.STATE_WORK_DAYS[cYear] || CONFIG.STATE_WORK_DAYS[2026])[monthIdx];
+        
+        setDefaultBaseSalary(monthVal);
+        let baseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || 5750);
+
+        const schedInput = document.getElementById('scheduleDays');
+        if (!schedInput.value) schedInput.value = stateDays;
+
+        const inputs = {
+            baseSalary, stateDays,
+            schedDays: parseInt(schedInput.value) || stateDays,
+            morningShifts: Math.max(0, parseInt(document.getElementById('morningShifts').value) || 0),
+            afternoonShifts: Math.max(0, parseInt(document.getElementById('afternoonShifts').value) || 0),
+            nightShifts: Math.max(0, parseInt(document.getElementById('nightShifts').value) || 0),
+            overtimeDays: Math.max(0, parseFloat(document.getElementById('overtimeDays').value) || 0),
+            overtimeMorningShifts: Math.max(0, parseInt(document.getElementById('overtimeMorningShifts').value) || 0),
+            overtimeNightShifts: Math.max(0, parseInt(document.getElementById('overtimeNightShifts').value) || 0),
+            weekendDays: Math.max(0, parseInt(document.getElementById('weekendDays').value) || 0),
+            vacDays: isPremium ? Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0) : 0,
+            dailyUrlopBonus: isPremium ? Math.max(0, parseFloat(document.getElementById('urlopBonus').value) || 0) : 0,
+            bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
+            bloodBonusOverride: isPremium ? Math.max(0, parseFloat(document.getElementById('bloodBonus').value) || 0) : 0,
+            l4Days: isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0,
+            qualityBonusPct: parseFloat(document.getElementById('bonusPctSelect').value) || 0,
+            isUnder26: document.getElementById('under26Select').value === 'yes',
+            ppkActive: document.getElementById('ppkSelect').value === 'yes',
+            insuranceActive: document.getElementById('insuranceSelect').value === 'yes',
+            isPremium
+        };
+
+        inputs.regWorkedDays = inputs.morningShifts + inputs.afternoonShifts + inputs.nightShifts;
+
+        const res = compute(inputs);
+
+        if (inputs.bloodDonationDays > 0 && !inputs.bloodBonusOverride) {
+            document.getElementById('bloodBonus').value = res.autoDailyBlood.toFixed(2);
+        }
+
+        updateUI(res.gross, res.net);
+
+        // Відображення деталей на 2-й сторінці
+        const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * CONFIG.DAILY_HOURS)) * 60);
+        const nHours = Math.floor(totalNightMinutes / 60);
+        const nMins = totalNightMinutes % 60;
+        document.getElementById('infoNightHours').innerText = nHours > 0 ? `${nHours} год ${nMins} хв` : `${nMins} хв`;
+
+        document.getElementById('infoPresencePct').innerText = res.presenceBonusPct + '%';
+        document.getElementById('infoQualityPct').innerText = res.qualityBonusPct + '%';
+        document.getElementById('infoNightShiftsCount').innerText = res.totalNightShifts;
+
+        setFormatSum('infoBasePayVal', res.adjustedBase);
+        setFormatSum('infoPresenceBonusSum', res.presenceBonusAmount, true);
+        setFormatSum('infoQualityBonusSum', res.qualityBonusAmount, true);
+        setFormatSum('infoNightTimeSum', res.totalNightTimePay);
+        setFormatSum('infoNightShiftSum', res.totalNightShiftPay);
+        setFormatSum('infoWeekendSum', res.totalWeekendPay);
+        setFormatSum('infoOvertimeSum', res.totalOvertimePay);
+        setFormatSum('infoOvertimeNetSum', res.totalOvertimeNet, true);
+        setFormatSum('infoVacationSum', res.totalUrlopBonus);
+        setFormatSum('infoBloodSum', res.bloodDonationPay);
+        setFormatSum('infoL4Sum', res.l4Pay);
+        
+        document.getElementById('infoTotalBrutto').innerText = formatPLN(res.gross);
+        document.getElementById('infoTotalNetto').innerText = formatPLN(res.net);
+
+        document.getElementById('infoWorkedDaysVal').innerText = res.regWorkedDays;
+        document.getElementById('infoTotalDaysVal').innerText = res.totalEngagedDays;
+        document.getElementById('infoSchedVal').innerText = inputs.schedDays;
+        document.getElementById('infoNightTariffVal').innerText = formatPLN(res.nightTariff) + '/год';
+
+        saveLocalGuestData();
+    }
+
+    function setFormatSum(id, val, isHighlight = false) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerText = formatPLN(val);
+            el.style.color = val === 0 ? 'var(--text-muted)' : (isHighlight ? 'var(--success)' : 'var(--text-main)');
+        }
+    }
+
+    function updateUI(g, n) {
+        document.getElementById('grossResult').innerText = formatPLN(g);
+        document.getElementById('netResult').innerText = formatPLN(n);
+    }
+
+    /* ==========================================
+       9. ЕФЕКТИВНЕ ДЕЛЕГУВАННЯ ПОДІЙ ВВОДУ (SELECT-ON-FOCUS)
+       ========================================== */
+    const appBody = document.getElementById('app-body');
+
+    appBody.addEventListener('focusin', e => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+            e.target.select();
         }
     });
 
-    document.getElementById('monthSelect').addEventListener('change', async () => {
-        if (auth.currentUser) {
-            await loadCloudDataForSelectedMonth();
-        } else {
-            clearInputs();
-        }
+    appBody.addEventListener('input', e => {
+        if (e.target.id === 'baseSalary') baseTouched = true;
+        if (['langSelect', 'themeSelect', 'email', 'password'].includes(e.target.id)) return;
         calculateSalary();
     });
 
+    appBody.addEventListener('change', e => {
+        if (e.target.id === 'monthSelect') {
+            const monthVal = e.target.value;
+            const [y, m] = monthVal.split('-');
+            const mIdx = parseInt(m) - 1;
+            document.getElementById('scheduleDays').value = (CONFIG.STATE_WORK_DAYS[parseInt(y)] || CONFIG.STATE_WORK_DAYS[2026])[mIdx];
+            if (auth.currentUser) loadCloudData();
+            else loadLocalGuestData();
+        }
+        if (['langSelect', 'themeSelect', 'email', 'password'].includes(e.target.id)) return;
+        calculateSalary();
+    });
+
+    // Ініціалізація
     setTheme(localStorage.getItem('theme') || 'light');
-    window.setLang('ua');
+    window.setLang(currentLang);
 </script>
 </body>
 </html>
