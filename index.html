@@ -455,7 +455,8 @@
         const totalMorningShifts = morningShifts + overtimeMorningShifts;
         const totalNightShifts = nightShifts + overtimeNightShifts;
 
-        const totalNightTimePay = Math.round(((totalMorningShifts * (10/60) * nightTariff) + (totalNightShifts * CONFIG.DAILY_HOURS * nightTariff)) * 100) / 100;
+        // ВИПРАВЛЕНО: Рівно 8 годин нічного часу за нічну зміну (замість CONFIG.DAILY_HOURS = 8.1666)
+        const totalNightTimePay = Math.round(((totalMorningShifts * (10/60) * nightTariff) + (totalNightShifts * 8 * nightTariff)) * 100) / 100;
         const totalNightShiftPay = totalNightShifts * CONFIG.NIGHT_SHIFT_BONUS;
         const totalNightPay = totalNightTimePay + totalNightShiftPay;
 
@@ -988,7 +989,8 @@
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * CONFIG.DAILY_HOURS)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
-                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * CONFIG.DAILY_HOURS * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
+                    // ВИПРАВЛЕНО: Рівно 8 годин нічного часу за нічну зміну
+                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
                     const pastOver = over * ((pastBase / stDays) * 1.5);
 
@@ -1114,7 +1116,8 @@
 
         updateUI(res.gross, res.net);
 
-        const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * CONFIG.DAILY_HOURS)) * 60);
+        // ВИПРАВЛЕНО: Рівно 8 годин за кожну нічну зміну для відображення в деталях
+        const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * 8)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60);
         const nMins = totalNightMinutes % 60;
         document.getElementById('infoNightHours').innerText = nHours > 0 
