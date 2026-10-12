@@ -64,7 +64,7 @@
         .side-menu.open { transform: translateX(0); }
         .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .menu-item { margin-bottom: 15px; }
-        .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; }
+        .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; cursor: default; user-select: none; }
 
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; }
         h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
@@ -91,7 +91,7 @@
         .is-logged-in .premium-badge { display: inline-block; }
         
         .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--primary); }
-        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; cursor: pointer; }
+        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; cursor: default; user-select: none; }
         .sub-group label { font-size: 13px; font-weight: 600; color: var(--text-main); }
 
         input, select { 
@@ -155,14 +155,14 @@
         </div>
 
         <div class="menu-item">
-            <label for="langSelect" data-i18n="menuLang">Мова</label>
+            <label data-i18n="menuLang">Мова</label>
             <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
                 <option value="uk">Українська</option>
                 <option value="pl">Polski</option>
             </select>
         </div>
         <div class="menu-item">
-            <label for="themeSelect" data-i18n="menuTheme">Тема</label>
+            <label data-i18n="menuTheme">Тема</label>
             <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
                 <option value="light" data-i18n="optThemeLight">Світла</option>
                 <option value="dark" data-i18n="optThemeDark">Темна</option>
@@ -203,17 +203,17 @@
             </div>
             
             <div class="form-group">
-                <label for="monthSelect" data-i18n="month">Місяць</label>
+                <label data-i18n="month">Місяць</label>
                 <select id="monthSelect"></select>
             </div>
 
             <div class="form-group">
-                <label for="baseSalary" data-i18n="base">Загальна ставка (zł)</label>
+                <label data-i18n="base">Загальна ставка (zł)</label>
                 <input type="number" inputmode="decimal" id="baseSalary" min="0">
             </div>
 
             <div class="form-group">
-                <label for="bonusPctSelect" data-i18n="bonus">Премія за якість (макс 10%)</label>
+                <label data-i18n="bonus">Премія за якість (макс 10%)</label>
                 <select id="bonusPctSelect">
                     <option value="10" selected>10%</option>
                     <option value="5">5%</option>
@@ -224,84 +224,84 @@
             <div class="divider"></div>
 
             <div class="form-group">
-                <label for="morningShifts" data-i18n="morning">Ранкові зміни (шт)</label>
+                <label data-i18n="morning">Ранкові зміни (шт)</label>
                 <input type="number" inputmode="decimal" id="morningShifts" placeholder="-" min="0">
             </div>
             <div class="form-group">
-                <label for="afternoonShifts" data-i18n="afternoon">Денні зміни (шт)</label>
+                <label data-i18n="afternoon">Денні зміни (шт)</label>
                 <input type="number" inputmode="decimal" id="afternoonShifts" placeholder="-" min="0">
             </div>
             <div class="form-group">
-                <label for="nightShifts" data-i18n="night">Нічні зміни (шт)</label>
+                <label data-i18n="night">Нічні зміни (шт)</label>
                 <input type="number" inputmode="decimal" id="nightShifts" placeholder="-" min="0">
             </div>
 
             <div class="form-group" style="margin-top: 15px;">
-                <label for="weekendDays" data-i18n="weekend">Робочі сб / нд (днів)</label>
+                <label data-i18n="weekend">Робочі сб / нд (днів)</label>
                 <input type="number" inputmode="decimal" id="weekendDays" placeholder="-" min="0">
             </div>
 
             <div class="form-group">
-                <label for="overtimeDays" data-i18n="overtime">Надгодини (днів)</label>
+                <label data-i18n="overtime">Надгодини (днів)</label>
                 <input type="number" inputmode="decimal" id="overtimeDays" placeholder="-" min="0" step="0.5">
             </div>
 
             <div id="overtimeSubGroup" class="hidden">
                 <div class="form-group sub-group">
-                    <label for="overtimeMorningShifts" data-i18n="overtimeMorning">З них ранкових (змін) ☀️</label>
+                    <label data-i18n="overtimeMorning">З них ранкових (змін) ☀️</label>
                     <input type="number" inputmode="decimal" id="overtimeMorningShifts" placeholder="0" min="0" style="color:var(--primary);">
                 </div>
                 <div class="form-group sub-group">
-                    <label for="overtimeNightShifts" data-i18n="overtimeNight">З них нічних (змін) 🌙</label>
+                    <label data-i18n="overtimeNight">З них нічних (змін) 🌙</label>
                     <input type="number" inputmode="decimal" id="overtimeNightShifts" placeholder="0" min="0" style="color:var(--primary);">
                 </div>
             </div>
 
             <div class="form-group premium-field" style="margin-top: 15px;">
-                <label for="vacationDays" data-i18n="vacationDays">Відпустка (днів)</label>
+                <label data-i18n="vacationDays">Відпустка (днів)</label>
                 <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
             </div>
             <div class="form-group sub-group hidden" id="urlopBonusGroup">
-                <label for="urlopBonus" data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
+                <label data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
                 <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
             </div>
 
             <div class="form-group premium-field">
-                <label for="bloodDonationDays" data-i18n="bloodDonation">Донація крові (днів)</label>
+                <label data-i18n="bloodDonation">Донація крові (днів)</label>
                 <input type="number" inputmode="decimal" id="bloodDonationDays" placeholder="0" min="0">
             </div>
             <div class="form-group sub-group hidden" id="bloodBonusGroup">
-                <label for="bloodBonus" data-i18n="bloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
+                <label data-i18n="bloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
                 <input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" min="0" style="color:var(--primary);" readonly>
             </div>
 
             <div class="form-group premium-field">
-                <label for="l4Days" data-i18n="l4Days">Лікарняний L4 (календ.)</label>
+                <label data-i18n="l4Days">Лікарняний L4 (календ.)</label>
                 <input type="number" inputmode="decimal" id="l4Days" placeholder="0" min="0">
             </div>
             <div class="form-group sub-group hidden" id="l4MissedGroup">
-                <label for="l4MissedShifts" data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
+                <label data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
                 <input type="number" inputmode="decimal" id="l4MissedShifts" placeholder="0" min="0" style="color:var(--primary);">
             </div>
 
             <div class="divider"></div>
 
             <div class="form-group">
-                <label for="under26Select" data-i18n="under26">Вік до 26 років</label>
+                <label data-i18n="under26">Вік до 26 років</label>
                 <select id="under26Select">
                     <option value="no" data-i18n="no" selected>Ні</option>
                     <option value="yes" data-i18n="yes">Так</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="ppkSelect" data-i18n="ppk">Участь у PPK</label>
+                <label data-i18n="ppk">Участь у PPK</label>
                 <select id="ppkSelect">
                     <option value="no" data-i18n="no" selected>Ні</option>
                     <option value="yes" data-i18n="yes">Так</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="insuranceSelect" data-i18n="insurance">Додаткове страхування</label>
+                <label data-i18n="insurance">Додаткове страхування</label>
                 <select id="insuranceSelect">
                     <option value="yes" data-i18n="yes" selected>Так</option>
                     <option value="no" data-i18n="no">Ні</option>
