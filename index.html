@@ -959,7 +959,6 @@
                     const data = docObj.data;
                     const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
                     
-                    // ВИПРАВЛЕНО: Рахуємо і Якість (з поля) і Присутність (автоматично, враховуючи минулі L4)
                     let qualityPct = parseFloat(data.bonusPctSelect); if (isNaN(qualityPct)) qualityPct = 10;
                     let l4DaysPast = Math.max(0, parseInt(data.l4Days) || 0);
                     let presencePct = (l4DaysPast > 0) ? (l4DaysPast <= 2 ? 2.5 : 0) : 5;
@@ -973,15 +972,18 @@
                     const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
                     const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
 
-                    let regWorked = mShifts + aShifts + nShifts;
                     const pYear = parseInt(docObj.id.split('-')[0]);
                     const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
                     const stDays = getStateDays(pYear, pMonthIdx);
+                    
+                    // ВИПРАВЛЕННЯ 1: Беремо графік для розрахунку премій та вартості надгодин
                     const pastSched = parseInt(data.scheduleDays) || stDays;
+                    
                     const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
                     const vac = Math.max(0, parseInt(data.vacationDays) || 0);
                     const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
 
+                    let regWorked = mShifts + aShifts + nShifts;
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
                         regWorked = Math.max(0, pastSched - vac - blood - l4m);
                     }
@@ -989,19 +991,18 @@
                     const over = Math.min(rawOver, regWorked);
                     let pActual = regWorked + over;
 
-                    // ВИПРАВЛЕНО: Відсоток премії тепер включає обидві премії
                     const pastBonusVal = pastSched > 0 ? (pastBase * (totalBonusPct / 100)) / pastSched * regWorked : 0;
                     
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * CONFIG.DAILY_HOURS)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
                     
-                    // ВИПРАВЛЕНО: Рівно 8 годин нічного часу за нічну зміну
-                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
+                    // ВИПРАВЛЕННЯ 2: Прибрано 30zł (CONFIG.NIGHT_SHIFT_BONUS) з бази відпускних
+                    const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff);
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
                     
-                    // ВИПРАВЛЕНО: Множник надгодин змінено з 1.5 на 2.0
-                    const pastOver = over * ((pastBase / stDays) * 2);
+                    // ВИПРАВЛЕННЯ 3: Вартість надгодин рахується від вашого графіка (pastSched), а не державного (stDays)
+                    const pastOver = over * ((pastBase / pastSched) * 2);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
                     totalWorkedDays += pActual;
@@ -1014,7 +1015,7 @@
         if (totalWorkedDays === 0) return 0;
         return (totalExtras / totalWorkedDays);
     }
-
+    
     async function autoFillUrlopBonus(monthVal) {
         const vacDays = Math.max(0, parseInt(document.getElementById('vacationDays').value) || 0);
         const urlopInput = document.getElementById('urlopBonus');
