@@ -455,7 +455,6 @@
         const totalMorningShifts = morningShifts + overtimeMorningShifts;
         const totalNightShifts = nightShifts + overtimeNightShifts;
 
-        // ВИПРАВЛЕНО: Рівно 8 годин нічного часу за нічну зміну (замість CONFIG.DAILY_HOURS = 8.1666)
         const totalNightTimePay = Math.round(((totalMorningShifts * (10/60) * nightTariff) + (totalNightShifts * 8 * nightTariff)) * 100) / 100;
         const totalNightShiftPay = totalNightShifts * CONFIG.NIGHT_SHIFT_BONUS;
         const totalNightPay = totalNightTimePay + totalNightShiftPay;
@@ -959,7 +958,12 @@
                 if (targetMonths.includes(docObj.id)) {
                     const data = docObj.data;
                     const pastBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
-                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 10;
+                    
+                    // ВИПРАВЛЕНО: Рахуємо і Якість (з поля) і Присутність (автоматично, враховуючи минулі L4)
+                    let qualityPct = parseFloat(data.bonusPctSelect); if (isNaN(qualityPct)) qualityPct = 10;
+                    let l4DaysPast = Math.max(0, parseInt(data.l4Days) || 0);
+                    let presencePct = (l4DaysPast > 0) ? (l4DaysPast <= 2 ? 2.5 : 0) : 5;
+                    let totalBonusPct = qualityPct + presencePct;
 
                     const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
                     const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
@@ -985,14 +989,19 @@
                     const over = Math.min(rawOver, regWorked);
                     let pActual = regWorked + over;
 
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorked : 0;
+                    // ВИПРАВЛЕНО: Відсоток премії тепер включає обидві премії
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (totalBonusPct / 100)) / pastSched * regWorked : 0;
+                    
                     const nTariff = ((CONFIG.NIGHT_BASE_SALARY / (stDays * CONFIG.DAILY_HOURS)) * 0.20);
                     const totalM = mShifts + overMShifts;
                     const totalN = nShifts + overNShifts;
+                    
                     // ВИПРАВЛЕНО: Рівно 8 годин нічного часу за нічну зміну
                     const pastNight = (totalM * (10/60) * nTariff) + (totalN * 8 * nTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
                     const pastWknd = wknd * CONFIG.WEEKEND_DAY_RATE;
-                    const pastOver = over * ((pastBase / stDays) * 1.5);
+                    
+                    // ВИПРАВЛЕНО: Множник надгодин змінено з 1.5 на 2.0
+                    const pastOver = over * ((pastBase / stDays) * 2);
 
                     totalExtras += (pastBonusVal + pastNight + pastWknd + pastOver);
                     totalWorkedDays += pActual;
@@ -1003,7 +1012,7 @@
         }
 
         if (totalWorkedDays === 0) return 0;
-        return (totalExtras / totalWorkedDays) * (8.1666 / CONFIG.DAILY_HOURS);
+        return (totalExtras / totalWorkedDays);
     }
 
     async function autoFillUrlopBonus(monthVal) {
