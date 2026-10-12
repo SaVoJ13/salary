@@ -722,6 +722,18 @@
 
     window.toggleMenu = function() { document.getElementById('sideMenu').classList.toggle('open'); };
 
+    // Закриття меню при кліку (тапі) поза ним
+    document.addEventListener('click', e => {
+        const sideMenu = document.getElementById('sideMenu');
+        const menuBtn = document.getElementById('btn-open-menu');
+        
+        if (sideMenu && sideMenu.classList.contains('open')) {
+            if (!sideMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+                sideMenu.classList.remove('open');
+            }
+        }
+    });
+
     /* FIRESTORE ТА КЕШУВАННЯ */
     async function getCachedMonths() {
         if (monthsCollectionCache) return monthsCollectionCache;
@@ -1150,18 +1162,28 @@
     /* ДЕЛЕГУВАННЯ ПОДІЙ ТА ОБРОБНИКИ */
     const appBody = document.getElementById('app-body');
 
+    // Очищення поля при тапі (виборі)
     appBody.addEventListener('focusin', e => {
-        if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-            e.target.select();
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
+            e.target.dataset.prevVal = e.target.value; // Зберігаємо старе значення як страховку
+            e.target.value = ''; // Робимо поле пустим
         }
     });
 
+    // Повернення значення, якщо тапнули і залишили пустим
     appBody.addEventListener('focusout', e => {
-        if (e.target.id === 'scheduleDays' && !e.target.value) {
-            const monthVal = document.getElementById('monthSelect').value;
-            const [yStr, mStr] = monthVal.split('-');
-            e.target.value = getStateDays(parseInt(yStr), parseInt(mStr) - 1);
-            calculateSalary();
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
+            if (e.target.value === '' && e.target.dataset.prevVal !== undefined) {
+                e.target.value = e.target.dataset.prevVal; // Відновлюємо дані, якщо нічого не ввели
+            }
+            
+            if (e.target.id === 'scheduleDays' && !e.target.value) {
+                const monthVal = document.getElementById('monthSelect').value;
+                const [yStr, mStr] = monthVal.split('-');
+                e.target.value = getStateDays(parseInt(yStr), parseInt(mStr) - 1);
+                calculateSalary();
+            }
+            delete e.target.dataset.prevVal;
         }
     });
 
