@@ -69,8 +69,8 @@
         .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; cursor: default; user-select: none; }
 
         .profile-section { background: var(--profile-bg); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); }
-        .profile-section input, .profile-section select { width: 100%; padding: 8px; font-size: 14px; text-align: left; background: var(--panel-bg); margin-bottom: 10px;}
-        .profile-section label { color: var(--text-main); font-weight: 600; margin-bottom: 4px; }
+        .profile-section input, .profile-section select { width: 100%; padding: 8px; font-size: 14px; text-align: left; background: var(--panel-bg); margin-bottom: 10px; border-radius: 6px;}
+        .profile-section label { color: var(--text-main); font-weight: 600; margin-bottom: 4px; display: block;}
 
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; }
         h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
@@ -162,7 +162,7 @@
         </div>
 
         <div class="profile-section">
-            <label style="display: block; text-align: center; margin-bottom: 12px; text-transform: uppercase; font-size: 12px;" data-i18n="profHeader">👤 Мій профіль (Глобально)</label>
+            <label style="display: block; text-align: center; margin-bottom: 12px; text-transform: uppercase; font-size: 12px;" data-i18n="profHeader">👤 Мій профіль</label>
             
             <label data-i18n="profBase">Стандартна ставка (zł)</label>
             <input type="number" inputmode="decimal" id="profBaseSalary" placeholder="Напр., 5750">
@@ -325,30 +325,6 @@
 
             <div class="divider"></div>
 
-            <div class="form-group">
-                <label data-i18n="under26">Вік до 26 років (Цей місяць)</label>
-                <select id="under26Select">
-                    <option value="no" data-i18n="no" selected>Ні</option>
-                    <option value="yes" data-i18n="yes">Так</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label data-i18n="ppk">Участь у PPK (Цей місяць)</label>
-                <select id="ppkSelect">
-                    <option value="no" data-i18n="no" selected>Ні</option>
-                    <option value="yes" data-i18n="yes">Так</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label data-i18n="insurance">Страхування (Цей місяць)</label>
-                <select id="insuranceSelect">
-                    <option value="yes" data-i18n="yes" selected>Так</option>
-                    <option value="no" data-i18n="no">Ні</option>
-                </select>
-            </div>
-
-            <div class="divider"></div>
-
             <div class="results-panel">
                 <div class="result-box brutto">
                     <div class="result-title">BRUTTO</div>
@@ -433,7 +409,7 @@
         ZUS: 0.1371, NFZ: 0.09, PIT: 0.12, KWOTA_WOLNA: 300.00,
         LAUNDRY_MAX: 16.00, BENEFIT_ZUS_NFZ: 30.25, BENEFIT_TAX: 54.00,
         EXTRA_INSURANCE_RATE: 36.70, NIGHT_SHIFT_BONUS: 30.00, WEEKEND_DAY_RATE: 100.00, DAILY_HOURS: 8, 
-        MIN_WAGES: { 2024: 4300, 2025: 4666, 2026: 4806 } // Історія мінімальних зарплат для нічних
+        MIN_WAGES: { 2024: 4300, 2025: 4666, 2026: 4806 }
     };
 
     function getEaster(year) {
@@ -470,7 +446,7 @@
             const isHoliday = holidays.some(h => h.getDate() === d && h.getMonth() === monthIdx);
             if (isHoliday) {
                 if (dow >= 1 && dow <= 5) wdHolidays++;
-                if (dow === 6) satHolidays++; // Свято в суботу зменшує норму
+                if (dow === 6) satHolidays++; 
             }
         }
         return 8 * (workDays - wdHolidays - satHolidays);
@@ -527,7 +503,6 @@
         const pitOvertime = isUnder26 ? 0 : (healthBaseOvertime * CONFIG.PIT);
         const totalOvertimeNet = Math.max(0, totalOvertimePay - zusOvertime - nfzOvertime - pitOvertime);
 
-        // Оплата донації крові - строго з бази поточного місяця (знаменник W + WH)
         const currentVariables = bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay;
         const currentTotalHours = (regWorkedDays * 8) + (overtimeDays * 8);
         const autoDailyBlood = (isPremium && currentTotalHours > 0) ? Math.round((currentVariables / currentTotalHours) * 8 * 100) / 100 : 0;
@@ -596,9 +571,8 @@
             vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
             bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
             l4Days: "Лікарняний L4 (календ.)", l4Missed: "Пропущено змін (шт) ℹ️",
-            under26: "Вік до 26 років (Цей місяць)", ppk: "Участь у PPK (Цей місяць)", insurance: "Страхування (Цей місяць)", 
             yes: "Так", no: "Ні", menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема",
-            profHeader: "👤 Мій профіль (Глобально)", profBase: "Стандартна ставка (zł)", profAge: "Вік до 26 років", profPpk: "Участь у PPK", profIns: "Додаткове страхування", btnSaveProfile: "Зберегти профіль 💾", toastProfOk: "Профіль збережено!",
+            profHeader: "👤 Мій профіль", profBase: "Стандартна ставка (zł)", profAge: "Вік до 26 років", profPpk: "Участь у PPK", profIns: "Додаткове страхування", btnSaveProfile: "Зберегти профіль 💾", toastProfOk: "Профіль збережено!",
             optThemeLight: "Світла", optThemeDark: "Темна", cloudHeader: "Акаунт & Хмара",
             btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць ☁️",
             btnLoadCloud: "Завантажити місяць 📥", btnLogout: "Вийти (Гостьовий режим)",
@@ -626,9 +600,8 @@
             vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (dzień) ℹ️",
             bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
             l4Days: "L4 (dni kalendarzowe)", l4Missed: "Opuszczone zmiany ℹ️",
-            under26: "Wiek < 26 lat (Ten miesiąc)", ppk: "PPK (Ten miesiąc)", insurance: "Ubezpieczenie (Ten miesiąc)", 
             yes: "Tak", no: "Nie", menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
-            profHeader: "👤 Mój Profil (Globalnie)", profBase: "Standardowa stawka (zł)", profAge: "Wiek < 26 lat", profPpk: "PPK", profIns: "Ubezpieczenie", btnSaveProfile: "Zapisz profil 💾", toastProfOk: "Profil zapisany!",
+            profHeader: "👤 Mój Profil", profBase: "Standardowa stawka (zł)", profAge: "Wiek < 26 lat", profPpk: "PPK", profIns: "Ubezpieczenie", btnSaveProfile: "Zapisz profil 💾", toastProfOk: "Profil zapisany!",
             optThemeLight: "Jasny", optThemeDark: "Ciemny", cloudHeader: "Konto & Chmura",
             btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc ☁️",
             btnLoadCloud: "Pobierz miesiąc 📥", btnLogout: "Wyloguj (Tryb gościa)",
@@ -681,15 +654,12 @@
         if (!localStorage.getItem(`guest_month_${monthVal}`) && (!auth.currentUser || !monthsCollectionCache?.some(d => d.id === monthVal))) {
             applyProfileToMain(); 
         }
+        calculateSalary();
         showToast(dict[currentLang].toastProfOk);
     });
 
     function applyProfileToMain() {
         document.getElementById('baseSalary').value = userProfile.baseSalary;
-        document.getElementById('under26Select').value = userProfile.under26;
-        document.getElementById('ppkSelect').value = userProfile.ppk;
-        document.getElementById('insuranceSelect').value = userProfile.insurance;
-        calculateSalary();
     }
 
     window.setLang = function(lang) {
@@ -940,7 +910,7 @@
 
     function clearInputs() {
         document.querySelectorAll('input[type=number]').forEach(el => {
-            if(el.id !== 'scheduleDays' && el.id !== 'profBaseSalary') el.value = '';
+            if(el.id !== 'scheduleDays' && el.id !== 'profBaseSalary' && el.id !== 'baseSalary') el.value = '';
         });
         document.getElementById('bonusPctSelect').value = "10";
         const monthVal = document.getElementById('monthSelect').value;
@@ -977,7 +947,7 @@
         }
 
         let totalValIncome = 0; let totalActualWorkedHours = 0;
-        const curBaseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || 5750);
+        const curBaseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || userProfile.baseSalary);
         const curNormHours = getNormHours(cYear, cMonth - 1);
         const curMinWage = getMinWage(cYear);
 
@@ -1007,12 +977,10 @@
                     if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
 
                     const overDays = Math.min(rawOver, regWorkedShifts);
-                    // Знаменник: Точно відпрацьовані планові + надгодини
                     totalActualWorkedHours += (regWorkedShifts + overDays) * 8;
 
-                    // Валоризація премій: дотягуємо до поточних ставок
-                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0; // Премії залишаємо пропорційно
-                    const valOvertimePay = overDays * ((curBaseSalary / (curNormHours / 8)) * 2); // Надгодини за ПОТОЧНОЮ ставкою і нормою
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0; 
+                    const valOvertimePay = overDays * ((curBaseSalary / (curNormHours / 8)) * 2); 
                     const valNightTariff = (curMinWage / curNormHours) * 0.20;
                     const totalM = mShifts + overMShifts; const totalN = nShifts + overNShifts;
                     const valNightPay = (totalM * (10/60) * valNightTariff) + (totalN * 8 * valNightTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
@@ -1021,7 +989,7 @@
                     totalValIncome += (pastBonusVal + valNightPay + valWkndPay + valOvertimePay);
                 }
             });
-        } catch (e) { console.warn(e); }
+        } catch (e) {}
 
         if (totalActualWorkedHours === 0) return 0;
         return (totalValIncome / totalActualWorkedHours) * 8;
@@ -1052,7 +1020,7 @@
             docs.forEach(docObj => {
                 if (targetMonths.includes(docObj.id)) {
                     const data = docObj.data;
-                    const pBase = Math.max(0, parseFloat(data.baseSalary) || 5750);
+                    const pBase = Math.max(0, parseFloat(data.baseSalary) || userProfile.baseSalary);
                     let pPct = parseFloat(data.bonusPctSelect); if (isNaN(pPct)) pPct = 10;
                     
                     const mS = Math.max(0, parseInt(data.morningShifts) || 0);
@@ -1072,8 +1040,10 @@
                         morningShifts: mS, nightShifts: nS, overtimeMorningShifts: overM, overtimeNightShifts: overN,
                         weekendDays: wknd, overtimeDays: over, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 0,
                         bloodDonationDays: 0, l4Days: 0, isPremium: false,
-                        isUnder26: false, ppkActive: false, insuranceActive: false, qualityBonusPct: pPct,
-                        presenceBonusPctOverride: 0, year: pYear 
+                        isUnder26: userProfile.under26 === 'yes', 
+                        ppkActive: userProfile.ppk === 'yes', 
+                        insuranceActive: userProfile.insurance === 'yes', 
+                        qualityBonusPct: pPct, presenceBonusPctOverride: 0, year: pYear 
                     });
 
                     totalNetBase += (res.gross * (1 - CONFIG.ZUS)); monthsFound++;
@@ -1110,9 +1080,12 @@
             bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
             l4Days: isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0,
             qualityBonusPct: parseFloat(document.getElementById('bonusPctSelect').value) || 0,
-            isUnder26: document.getElementById('under26Select').value === 'yes',
-            ppkActive: document.getElementById('ppkSelect').value === 'yes',
-            insuranceActive: document.getElementById('insuranceSelect').value === 'yes',
+            
+            // Тепер читаємо значення суворо з профілю користувача
+            isUnder26: userProfile.under26 === 'yes',
+            ppkActive: userProfile.ppk === 'yes',
+            insuranceActive: userProfile.insurance === 'yes',
+            
             isPremium, l4DailyRateCached: window.cachedL4DailyRate
         };
 
