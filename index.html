@@ -667,66 +667,89 @@ select.appendChild(opt);
 select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
 }
 
+
 /* АЛГОРИТМ ВАЛОРИЗАЦІЇ ВІДПУСКНИХ */
+const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+
+function shiftMonthId(monthVal, delta) {
+    const [y, m] = monthVal.split('-').map(Number);
+    const idx = y * 12 + (m - 1) - delta;
+    return Math.floor(idx / 12) + '-' + String((idx % 12) + 1).padStart(2, '0');
+}
+
+function vacationWindowIds(monthVal, lag = 2, count = 3) {
+    return Array.from({ length: count }, (_, i) => shiftMonthId(monthVal, lag + i));
+}
+
+function buildVacationEntry(monthId, data, fallbackBase) {
+    const [y, m] = monthId.split('-').map(Number);
+    const normHours = getNormHours(y, m - 1);
+    const n = k => Math.max(0, parseFloat(data[k]) || 0);
+
+    const sched = parseInt(data.scheduleDays) || normHours / 8;
+    const base = n('baseSalary') || fallbackBase;
+    const qPct = isNaN(parseFloat(data.bonusPctSelect)) ? 10 : parseFloat(data.bonusPctSelect);
+    
+    let presencePct = parseFloat(data.presencePctSelect);
+    if (isNaN(presencePct)) {
+        const l4 = n('l4Days');
+        presencePct = l4 > 0 ? (l4 <= 2 ? 2.5 : 0) : 5;
+    }
+
+    const morning = n('morningShifts'), afternoon = n('afternoonShifts'), night = n('nightShifts');
+    let worked = morning + afternoon + night;
+    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
+        worked = Math.max(0, sched - n('vacationDays') - n('bloodDonationDays') - n('l4MissedShifts'));
+    }
+    
+    const otDays = Math.min(n('overtimeDays'), worked);
+    const nightAll = night + n('overtimeNightShifts');
+    const morningAll = morning + n('overtimeMorningShifts');
+
+    return {
+        normHours,
+        workedHours: worked * 8,
+        otHours: otDays * 8,
+        nightHours: morningAll * (10 / 60) + nightAll * 8,
+        bonus: sched > 0 ? (base * (presencePct + qPct) / 100) / sched * worked : 0,
+        nightBonus: nightAll * CONFIG.NIGHT_SHIFT_BONUS,
+        weekendPay: n('weekendDays') * CONFIG.WEEKEND_DAY_RATE
+    };
+}
+
+function vacationHourlyRate(entries, cur) {
+    let num = 0, den = 0;
+    for (const e of entries) {
+        const nightTariff = r2(cur.minWage * 0.20 / e.normHours);
+        const otHourly = r2(cur.baseSalary / e.normHours);
+        num += e.bonus + e.nightBonus + e.weekendPay
+             + r2(e.nightHours * nightTariff)
+             + 2 * e.otHours * otHourly;
+        den += e.workedHours + e.otHours;
+    }
+    return den > 0 ? r2(num / den) : 0;
+}
+
+function computeDailyUrlopBonus(records, monthVal, cur, lag = 2) {
+    const entries = vacationWindowIds(monthVal, lag)
+        .filter(id => records[id])
+        .map(id => buildVacationEntry(id, records[id], cur.baseSalary));
+    return r2(vacationHourlyRate(entries, cur) * 8);
+}
+
 async function getAutoDailyUrlopBonus(currentMonthVal) {
-if (!auth.currentUser) return 0;
-const [yStr, mStr] = currentMonthVal.split('-');
-let cYear = parseInt(yStr); let cMonth = parseInt(mStr);
-let targetMonths = [];
-for (let i = 1; i <= 3; i++) {
-let pMonth = cMonth - i; let pYear = cYear;
-if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
-targetMonths.push(pYear + "-" + String(pMonth).padStart(2, '0'));
-}
-
-let totalValIncome = 0; let totalActualWorkedHours = 0;
-const curBaseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || userProfile.baseSalary);
-const curNormHours = getNormHours(cYear, cMonth - 1);
-const curMinWage = getMinWage(cYear);
-
-try {
-const docs = await getCachedMonths();
-docs.forEach(docObj => {
-if (targetMonths.includes(docObj.id)) {
-const data = docObj.data;
-const pYear = parseInt(docObj.id.split('-')[0]); const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
-const stDays = getNormHours(pYear, pMonthIdx) / 8;
-const pastSched = parseInt(data.scheduleDays) || stDays;
-const pastBase = Math.max(0, parseFloat(data.baseSalary) || curBaseSalary);
-let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 10;
-let pastPPct = parseFloat(data.presencePctSelect); if (isNaN(pastPPct)) pastPPct = parseInt(data.l4Days) > 0 ? 0 : 5;
-
-const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
-const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
-const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
-const overMShifts = Math.max(0, parseInt(data.overtimeMorningShifts) || 0);
-const overNShifts = Math.max(0, parseInt(data.overtimeNightShifts) || 0);
-const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
-const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
-const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
-const vac = Math.max(0, parseInt(data.vacationDays) || 0);
-const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
-
-let regWorkedShifts = mShifts + aShifts + nShifts;
-if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
-
-const overDays = Math.min(rawOver, regWorkedShifts);
-totalActualWorkedHours += (regWorkedShifts + overDays) * 8;
-
-const pastBonusVal = pastSched > 0 ? (pastBase * ((pastPct + pastPPct) / 100)) / pastSched * regWorkedShifts : 0;
-const valOvertimePay = overDays * ((curBaseSalary / (curNormHours / 8)) * 2);
-const valNightTariff = (curMinWage / curNormHours) * 0.20;
-const totalM = mShifts + overMShifts; const totalN = nShifts + overNShifts;
-const valNightPay = (totalM * (10/60) * valNightTariff) + (totalN * 8 * valNightTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
-const valWkndPay = wknd * CONFIG.WEEKEND_DAY_RATE;
-
-totalValIncome += (pastBonusVal + valNightPay + valWkndPay + valOvertimePay);
-}
-});
-} catch (e) {}
-
-if (totalActualWorkedHours === 0) return 0;
-return (totalValIncome / totalActualWorkedHours) * 8;
+    if (!auth.currentUser) return 0;
+    const year = parseInt(currentMonthVal.split('-')[0]);
+    const cur = {
+        baseSalary: Math.max(0, parseFloat(document.getElementById('baseSalary').value) || Number(userProfile.baseSalary)),
+        minWage: getMinWage(year)
+    };
+    try {
+        const docs = await getCachedMonths();
+        const records = {};
+        docs.forEach(d => { records[d.id] = d.data; });
+        return computeDailyUrlopBonus(records, currentMonthVal, cur);
+    } catch (e) { return 0; }
 }
 
 async function autoFillUrlopBonus(monthVal) {
