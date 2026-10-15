@@ -3,8 +3,8 @@ const STATIC_ASSETS = [
     './',
     './index.html',
     './manifest.json',
-    './icon-192.png',
-    './icon-512.png'
+    './android-chrome-192x192.png',
+    './android-chrome-512x512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -19,7 +19,6 @@ self.addEventListener('fetch', event => {
             if (cachedResponse) return cachedResponse;
 
             return fetch(event.request).then(networkResponse => {
-                // Динамічно кешуємо скрипти Firebase для офлайн-роботи
                 if (event.request.url.includes('gstatic.com')) {
                     const responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then(cache => {
@@ -28,8 +27,6 @@ self.addEventListener('fetch', event => {
                 }
                 return networkResponse;
             });
-        }).catch(() => {
-            // Якщо немає інтернету і файлу немає в кеші (офлайн фолбек)
-        })
+        }).catch(() => {})
     );
 });
