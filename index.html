@@ -1221,5 +1221,20 @@
     window.setLang(currentLang);
     loadProfile();
 </script>
+    <script>
+    // Реєстрація Service Worker для PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker успішно зареєстровано з областю видимості:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Помилка реєстрації ServiceWorker:', error);
+                });
+        });
+    }
+</script>
+
 </body>
 </html>
