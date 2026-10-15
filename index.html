@@ -2,1029 +2,776 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salary Calculator</title>
-    
-    <!-- PWA Налаштування -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#e3000f">
-    <link rel="apple-touch-icon" href="android-chrome-192x192.png">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Калькулятор ЗП</title>
     <style>
         :root {
-            --primary: #e3000f; 
-            --bg-color: #f4f6f9;
-            --panel-bg: #ffffff;
-            --text-main: #2c3e50;
-            --text-muted: #7f8c8d;
-            --border-color: #e0e5ec;
-            --success: #27ae60;
-            --premium-bg: #fff9e6;
-            --premium-border: #f1c40f;
-            --profile-bg: #e8f4fd;
-            
-/* ==========================================
-   MODERN FINANCE UI — VISUAL REDESIGN
-   Розрахункові алгоритми не змінюються
-   ========================================== */
-
-:root {
-    --primary: #635bff;
-    --primary-soft: #eeedff;
-    --bg-color: #f5f6fa;
-    --panel-bg: #ffffff;
-    --text-main: #182230;
-    --text-muted: #7b8495;
-    --border-color: #e8ebf2;
-    --success: #15966a;
-    --premium-bg: #f3f0ff;
-    --premium-border: #b7aaff;
-    --profile-bg: #f5f6fa;
-    --shadow-card: 0 8px 30px rgba(20, 31, 56, .055);
-    --input-bg: #f8f9fc;
-}
-
-[data-theme="dark"] {
-    --primary: #a59cff;
-    --primary-soft: #302c50;
-    --bg-color: #10131b;
-    --panel-bg: #191e29;
-    --text-main: #f1f3f9;
-    --text-muted: #9ca6b8;
-    --border-color: #2b3342;
-    --success: #42d6a0;
-    --premium-bg: #302c24;
-    --premium-border: #8f7b42;
-    --profile-bg: #202634;
-    --shadow-card: 0 8px 30px rgba(0, 0, 0, .2);
-    --input-bg: #141924;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-html {
-    scroll-behavior: smooth;
-    -webkit-text-size-adjust: 100%;
-}
-
-body {
-    margin: 0;
-    padding: 24px 14px;
-    min-height: 100dvh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    background: var(--bg-color);
-    color: var(--text-main);
-    font-family: Inter, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, sans-serif;
-    transition: background .2s, color .2s;
-}
-
-.calculator-wrapper {
-    width: 100%;
-    max-width: 540px;
-    background: var(--panel-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    box-shadow: var(--shadow-card);
-    overflow: hidden;
-}
-
-.pages-track {
-    width: 200%;
-    align-items: stretch;
-    transition: transform .3s ease;
-}
-
-.calculator-page {
-    width: 50%;
-    padding: 26px 24px 30px;
-    max-height: 94dvh;
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-}
-
-/* Header */
-
-.header-row {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 26px;
-}
-
-h2 {
-    font-size: 19px;
-    font-weight: 750;
-    letter-spacing: -.5px;
-    line-height: 1.25;
-    gap: 7px;
-}
-
-.menu-btn,
-.close-menu {
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-color);
-    border-radius: 13px;
-    background: var(--input-bg);
-    color: var(--text-main);
-    font-size: 19px;
-    transition: background .2s, transform .15s;
-}
-
-.menu-btn:active,
-.close-menu:active {
-    transform: scale(.96);
-}
-
-.premium-badge {
-    padding: 4px 7px;
-    border-radius: 7px;
-    background: var(--premium-bg);
-    border: 1px solid var(--premium-border);
-    color: var(--text-main);
-    font-size: 9px;
-    letter-spacing: .5px;
-}
-
-/* Schedule indicator */
-
-.schedule-badge {
-    min-width: 65px;
-    padding: 7px 9px;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    background: var(--input-bg);
-}
-
-.schedule-badge span {
-    font-size: 9px;
-    letter-spacing: .8px;
-}
-
-.schedule-badge input {
-    font-size: 18px;
-    color: var(--primary);
-}
-
-/* Input groups */
-
-.form-group {
-    min-height: 58px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin: 0 0 9px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 13px;
-    background: var(--panel-bg);
-    transition: border-color .2s, background .2s;
-}
-
-.form-group:focus-within {
-    border-color: var(--primary);
-    background: var(--input-bg);
-}
-
-.form-group label {
-    width: auto;
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
-    line-height: 1.45;
-    font-weight: 550;
-}
-
-input,
-select {
-    width: 38%;
-    min-width: 90px;
-    min-height: 42px;
-    padding: 9px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    background-color: var(--input-bg);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 650;
-    text-align: center;
-    appearance: none;
-}
-
-select {
-    padding-right: 24px;
-}
-
-input:focus,
-select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99, 91, 255, .12);
-}
-
-input[readonly] {
-    opacity: .85;
-}
-
-input::placeholder {
-    color: var(--text-muted);
-    opacity: .7;
-}
-
-.divider {
-    height: 1px;
-    border: 0;
-    background: var(--border-color);
-    margin: 23px 0;
-}
-
-/* Premium fields */
-
-.premium-field {
-    display: none;
-}
-
-.is-logged-in .premium-field {
-    display: flex;
-}
-
-.sub-group {
-    margin: 0 0 10px 12px;
-    padding: 10px 10px 10px 13px;
-    border: 0;
-    border-left: 3px solid var(--primary);
-    border-radius: 0 12px 12px 0;
-    background: var(--primary-soft);
-}
-
-.sub-group label {
-    font-size: 12px;
-}
-
-.sub-group input {
-    background: var(--panel-bg);
-}
-
-/* Results: NETTO first */
-
-.results-panel {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 10px;
-    margin-top: 24px;
-}
-
-.result-box {
-    border-radius: 18px;
-    text-align: left;
-    padding: 17px 20px;
-}
-
-.result-box.netto {
-    position: relative;
-    padding: 24px 22px;
-    background: var(--success);
-    border: 1px solid var(--success);
-    color: #fff;
-    box-shadow: 0 8px 22px rgba(21, 150, 106, .16);
-}
-
-.netto .result-title {
-    color: rgba(255, 255, 255, .85);
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    margin-bottom: 9px;
-}
-
-.netto .result-value {
-    color: #fff;
-    font-size: clamp(30px, 7vw, 38px);
-    line-height: 1.15;
-    font-weight: 800;
-    letter-spacing: -1px;
-    overflow-wrap: anywhere;
-    font-variant-numeric: tabular-nums;
-}
-
-.result-box.brutto {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 13px 17px;
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-}
-
-.brutto .result-title {
-    margin: 0;
-    font-size: 10px;
-    letter-spacing: 1px;
-}
-
-.brutto .result-value {
-    font-size: 17px;
-    font-weight: 750;
-    font-variant-numeric: tabular-nums;
-}
-
-/* Navigation hint */
-
-.swipe-hint {
-    padding: 13px 8px 0;
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-/* Detail page */
-
-#page2 .info-card {
-    padding: 17px;
-    margin-bottom: 13px;
-    border: 1px solid var(--border-color);
-    border-radius: 17px;
-    background: var(--input-bg);
-}
-
-#page2 .info-card > div:first-child {
-    letter-spacing: .6px;
-    font-size: 11px !important;
-    line-height: 1.5;
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 12px;
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-.info-row > span:first-child {
-    flex: 1;
-    min-width: 0;
-    color: var(--text-muted);
-}
-
-.info-row > strong,
-.info-row > span > strong {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    overflow-wrap: anywhere;
-}
-
-.info-row strong {
-    font-weight: 700;
-}
-
-.total-row {
-    align-items: center;
-    margin-top: 15px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-color);
-    font-size: 13px;
-}
-
-.total-row strong {
-    font-size: 15px;
-}
-
-#infoTotalNetto {
-    font-size: 18px !important;
-}
-
-#page2 .info-card:nth-of-type(2) {
-    background: var(--panel-bg);
-}
-
-#page2 .info-card:nth-of-type(2) .info-row {
-    margin-bottom: 9px;
-}
-
-/* Side menu */
-
-.side-menu {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: min(330px, 88%);
-    height: 100%;
-    padding: 20px 16px;
-    background: var(--panel-bg);
-    border-radius: 0 20px 20px 0;
-    border-right: 1px solid var(--border-color);
-    box-shadow: 12px 0 35px rgba(0, 0, 0, .15);
-    z-index: 20;
-    transform: translateX(-105%);
-    transition: transform .28s ease;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
-.side-menu.open {
-    transform: translateX(0);
-}
-
-.menu-header {
-    min-height: 45px;
-    padding-bottom: 14px;
-    margin-bottom: 18px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.menu-item {
-    margin-bottom: 17px;
-}
-
-.menu-item > label {
-    display: block;
-    width: 100%;
-    margin-bottom: 7px;
-    font-size: 11px;
-    font-weight: 750;
-    letter-spacing: .6px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-.profile-section,
-.cloud-section {
-    padding: 15px;
-    margin-bottom: 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    background: var(--input-bg);
-}
-
-.profile-section label {
-    display: block;
-    width: 100%;
-    margin-bottom: 5px;
-    font-size: 12px;
-}
-
-.profile-section input,
-.profile-section select {
-    width: 100%;
-    margin-bottom: 13px;
-    text-align: left;
-}
-
-.profile-section input:last-of-type {
-    margin-bottom: 13px;
-}
-
-.cloud-section > label {
-    font-size: 12px;
-}
-
-.cloud-section input {
-    min-height: 43px;
-}
-
-.action-btn {
-    min-height: 44px;
-    margin-top: 7px;
-    padding: 12px 14px;
-    border: 0;
-    border-radius: 11px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    transition: opacity .2s, transform .15s;
-}
-
-.action-btn:active {
-    transform: scale(.985);
-}
-
-.action-btn:disabled {
-    opacity: .55;
-}
-
-.btn-auth-action,
-.btn-profile {
-    background: var(--primary);
-    color: #fff;
-}
-
-.btn-sync {
-    background: var(--success);
-    color: #fff;
-}
-
-.btn-logout {
-    background: var(--text-muted);
-    color: #fff;
-}
-
-/* Feedback */
-
-.toast {
-    z-index: 1000;
-    bottom: max(18px, env(safe-area-inset-bottom));
-    width: max-content;
-    max-width: calc(100vw - 32px);
-    padding: 13px 18px;
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px;
-    background: #202634;
-    color: #fff;
-    box-shadow: 0 8px 28px rgba(0,0,0,.2);
-    font-size: 12px;
-    text-align: center;
-}
-
-/* Responsive layout */
-
-@media (max-width: 480px) {
-    body {
-        padding: 0;
-        align-items: stretch;
-    }
-
-    .calculator-wrapper {
-        max-width: none;
-        min-height: 100dvh;
-        border: 0;
-        border-radius: 0;
-        box-shadow: none;
-    }
-
-    .calculator-page {
-        padding: 20px 16px calc(26px + env(safe-area-inset-bottom));
-        max-height: 100dvh;
-    }
-
-    .header-row {
-        gap: 10px;
-        margin-bottom: 21px;
-    }
-
-    h2 {
-        font-size: 17px;
-    }
-
-    .form-group {
-        min-height: 56px;
-        gap: 8px;
-        padding: 9px 10px;
-    }
-
-    .form-group label {
-        font-size: 12px;
-    }
-
-    input,
-    select {
-        width: 36%;
-        min-width: 82px;
-        padding: 8px 7px;
-        font-size: 14px;
-    }
-
-    .result-box.netto {
-        padding: 23px 19px;
-    }
-
-    .netto .result-value {
-        font-size: clamp(28px, 8vw, 36px);
-    }
-
-    .brutto .result-value {
-        font-size: 16px;
-    }
-
-    #page2 .info-card {
-        padding: 14px;
-    }
-
-    .info-row {
-        gap: 8px;
-        font-size: 11px;
-    }
-
-    .side-menu {
-        width: min(340px, 92%);
-        border-radius: 0 20px 20px 0;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-        transition-duration: .01ms !important;
-        animation-duration: .01ms !important;
-    }
-}
-
+            --primary: #2563eb;
+            --primary-soft: rgba(37, 99, 235, 0.12);
+            --success: #059669;
+            --success-soft: rgba(5, 150, 105, 0.12);
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         [data-theme="dark"] {
-            --primary: #ff4d57;
-            --bg-color: #121212;
-            --panel-bg: #1e1e1e;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --border-color: #333333;
-            --success: #2ecc71;
-            --premium-bg: #2a2411;
-            --premium-border: #d4ac0d;
-            --profile-bg: #1a2a3a;
+            --primary: #3b82f6;
+            --primary-soft: rgba(59, 130, 246, 0.18);
+            --success: #10b981;
+            --success-soft: rgba(16, 185, 129, 0.18);
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 15px; 
-            box-sizing: border-box; display: flex; justify-content: center; align-items: center; 
-            min-height: 100dvh; transition: background 0.3s, color 0.3s;
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 12px;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            transition: background 0.25s, color 0.25s;
         }
 
-        .calculator-wrapper { 
-            width: 100%; max-width: 420px; background: var(--panel-bg); 
-            border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); 
-            box-sizing: border-box; position: relative; overflow: hidden; 
+        .app {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            margin: 8px 0 24px;
         }
 
-        .pages-track {
-            display: flex; width: 200%;
-            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .calculator-page {
-            width: 50%; padding: 24px 20px; box-sizing: border-box;
-            flex-shrink: 0; position: relative; overflow-y: auto; max-height: 90dvh;
-        }
-
-        .menu-btn, .close-menu { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-main); padding: 0; }
-        
+        /* ===== SIDE MENU ===== */
         .side-menu {
-            position: absolute; top: 0; left: 0; width: 280px; height: 100%;
-            background: var(--panel-bg); box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-            border-radius: 16px 0 0 16px; z-index: 10; display: flex; flex-direction: column;
-            padding: 20px; box-sizing: border-box; transition: transform 0.3s ease;
-            transform: translateX(-100%); overflow-y: auto;
+            position: absolute;
+            inset: 0;
+            width: min(300px, 85%);
+            background: var(--surface);
+            z-index: 50;
+            transform: translateX(-105%);
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 8px 0 32px rgba(0,0,0,0.12);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .side-menu.open { transform: translateX(0); }
-        .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .menu-item { margin-bottom: 15px; }
-        .menu-item label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; width: 100%; cursor: default; user-select: none; }
 
-        .profile-section { background: var(--profile-bg); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); }
-        .profile-section input, .profile-section select { width: 100%; padding: 8px; font-size: 14px; text-align: left; background: var(--panel-bg); margin-bottom: 10px; border-radius: 6px;}
-        .profile-section label { color: var(--text-main); font-weight: 600; margin-bottom: 4px; display: block;}
-
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; position: relative; }
-        h2 { margin: 0; font-size: 20px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;}
-        .premium-badge { background: var(--premium-border); color: #000; font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: none; }
-
-        .schedule-badge {
-            background: var(--premium-bg); border: 1px solid var(--premium-border);
-            border-radius: 8px; padding: 4px 6px; display: none; 
-            flex-direction: column; align-items: center; justify-content: center;
-            min-width: 45px;
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border);
         }
-        .is-logged-in .schedule-badge { display: flex; }
-        .schedule-badge span { font-size: 9px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
-        .schedule-badge input {
-            width: 100%; padding: 0; background: transparent; border: none;
-            font-size: 16px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
+        .menu-header span { font-size: 17px; font-weight: 700; }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 6px;
+            line-height: 1;
+            border-radius: 8px;
         }
-        .schedule-badge input:focus { box-shadow: none; outline: none; }
+        .icon-btn:active { background: var(--surface-2); }
 
-        .form-group { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .premium-field { display: none; }
-        .is-logged-in .premium-field { display: flex; }
-        .is-logged-in .premium-badge { display: inline-block; }
-        
-        .sub-group { margin-top: -6px; margin-bottom: 14px; padding-left: 15px; border-left: 2px solid var(--primary); }
-        label { font-size: 14px; font-weight: 500; color: var(--text-main); width: 60%; cursor: default; user-select: none; }
-        .sub-group label { font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .menu-body { padding: 16px 20px 32px; flex: 1; }
 
-        input, select { 
-            width: 38%; padding: 10px; border: 1px solid var(--border-color); 
-            border-radius: 8px; font-size: 16px; text-align: center; 
-            background: var(--bg-color); color: var(--text-main);
-            font-weight: 600; box-sizing: border-box; appearance: none;
+        .profile-card {
+            background: var(--primary-soft);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 20px;
         }
-        
-        select {
-            text-align-last: center; padding-right: 20px;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%0-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 8px auto;
+        .profile-card .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            margin-bottom: 14px;
+            text-align: center;
         }
-        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1); }
-        input::placeholder { color: var(--text-muted); font-weight: 400; }
-        input[readonly] { opacity: 0.8; cursor: default; }
+        .profile-card label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .profile-card input,
+        .profile-card select {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--text);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
 
-        .divider { border-top: 1px solid var(--border-color); margin: 20px 0; }
-        
-        .results-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .result-box { border-radius: 12px; padding: 16px 12px; text-align: center; }
-        .result-box.brutto { background: var(--bg-color); border: 1px solid var(--border-color); }
-        .result-box.netto { background: rgba(39, 174, 96, 0.08); border: 1px solid var(--success); }
-        .result-title { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px; }
-        .result-value { font-size: 20px; font-weight: 800; }
-        .brutto .result-value { color: var(--text-main); }
-        .netto .result-value { color: var(--success); }
+        .menu-group { margin-bottom: 18px; }
+        .menu-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .menu-group select {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface-2);
+            color: var(--text);
+            font-weight: 500;
+            appearance: none;
+        }
+
+        .cloud-card {
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+        .cloud-card .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .cloud-card input {
+            width: 100%;
+            padding: 11px 12px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--text);
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            color: #fff;
+        }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-primary { background: var(--primary); }
+        .btn-success { background: var(--success); }
+        .btn-secondary { background: var(--text-secondary); }
+        .btn-dark { background: var(--text); }
+        .btn-blue { background: #0284c7; }
+        .btn + .btn { margin-top: 8px; }
+
+        /* ===== PAGES ===== */
+        .pages-track {
+            display: flex;
+            width: 200%;
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .page {
+            width: 50%;
+            padding: 20px 18px 28px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            max-height: 92dvh;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pro-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 7px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            display: none;
+        }
+        .is-logged-in .pro-badge { display: inline-block; }
+
+        .sched-pill {
+            background: var(--primary-soft);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 6px 10px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            min-width: 52px;
+        }
+        .is-logged-in .sched-pill { display: flex; }
+        .sched-pill span {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+        .sched-pill input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--primary);
+            text-align: center;
+            padding: 0;
+            outline: none;
+        }
+
+        /* ===== CARDS & FIELDS ===== */
+        .card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .field:last-child { margin-bottom: 0; }
+        .field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            flex: 1;
+            padding-right: 10px;
+            user-select: none;
+        }
+        .field input,
+        .field select {
+            width: 110px;
+            min-width: 110px;
+            padding: 10px 8px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            background: var(--surface);
+            color: var(--text);
+            appearance: none;
+        }
+        .field select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+        }
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+        .field input[readonly] { opacity: 0.75; }
+
+        .sub-fields {
+            margin-top: 4px;
+            padding-left: 12px;
+            border-left: 3px solid var(--primary);
+        }
+        .sub-fields .field label { font-size: 13px; font-weight: 600; }
+        .sub-fields input { color: var(--primary); }
+
+        .premium-only { display: none; }
+        .is-logged-in .premium-only { display: flex; }
+        .is-logged-in .premium-block { display: block; }
+
+        /* ===== RESULTS ===== */
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .result-card {
+            border-radius: var(--radius);
+            padding: 18px 14px;
+            text-align: center;
+        }
+        .result-card.brutto {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+        }
+        .result-card.netto {
+            background: var(--success-soft);
+            border: 1px solid var(--success);
+        }
+        .result-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .result-card.netto .result-label { color: var(--success); }
+        .result-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .result-card.netto .result-value {
+            font-size: 22px;
+            color: var(--success);
+        }
+
+        .swipe-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 18px;
+            opacity: 0.8;
+        }
+
+        /* ===== DETAILS PAGE ===== */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 13.5px;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+        .detail-row:last-child { margin-bottom: 0; }
+        .detail-row span:first-child { color: var(--text-secondary); flex: 1; }
+        .detail-row strong { font-weight: 700; text-align: right; white-space: nowrap; }
+        .detail-total {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 2px dashed var(--border);
+            font-size: 15px;
+            font-weight: 800;
+        }
+        .detail-total span:first-child { color: var(--text); }
+        .muted { color: var(--text-secondary) !important; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-item {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .stat-item .stat-val {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+        }
+        .stat-item .stat-lbl {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: calc(24px + var(--safe-bottom));
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 22px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
 
         .hidden { display: none !important; }
-        .action-btn { width: 100%; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 6px; }
-        .btn-sync { background: var(--success); }
-        .btn-auth-action { background: var(--primary); }
-        .btn-logout { background: var(--text-muted); }
-        .btn-profile { background: #2980b9; margin-top: 5px; }
-        .cloud-section { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border-color); }
 
-        .info-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 8px; }
-        .info-row:last-child { margin-bottom: 0; }
-        .total-row { font-size: 15px; font-weight: 800; color: var(--text-main); margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--border-color); }
-        
-        .swipe-hint { text-align: center; margin-top: 15px; font-size: 12px; color: var(--text-muted); }
-
-        .toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: #333; color: #fff; padding: 10px 20px; border-radius: 20px;
-            font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.3s ease; z-index: 1000;
+        /* Mobile polish */
+        @media (max-width: 380px) {
+            .page { padding: 16px 14px 24px; }
+            .field input, .field select { width: 100px; min-width: 100px; font-size: 15px; }
+            .result-card.netto .result-value { font-size: 20px; }
+            .result-value { font-size: 16px; }
         }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
 </head>
 <body id="app-body">
 
 <div id="toast" class="toast"></div>
 
-<div class="calculator-wrapper">
+<div class="app">
+    <!-- SIDE MENU -->
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
-            <span data-i18n="menuTitle" style="font-size: 15px; font-weight: bold;">Меню</span>
-            <button id="btn-close-menu" class="close-menu" onclick="toggleMenu()">✕</button>
+            <span data-i18n="menuTitle">Меню</span>
+            <button id="btn-close-menu" class="icon-btn" onclick="toggleMenu()" aria-label="Close">✕</button>
         </div>
-
-        <div class="profile-section">
-            <label style="display: block; text-align: center; margin-bottom: 12px; text-transform: uppercase; font-size: 12px;" data-i18n="profHeader">👤 Мій профіль</label>
-            
-            <label data-i18n="profBase">Стандартна ставка (zł)</label>
-            <input type="number" inputmode="decimal" id="profBaseSalary" placeholder="Напр., 5750">
-            
-            <label data-i18n="profAge">Вік до 26 років</label>
-            <select id="profUnder26">
-                <option value="no" data-i18n="no">Ні</option>
-                <option value="yes" data-i18n="yes">Так</option>
-            </select>
-            
-            <label data-i18n="profPpk">Участь у PPK</label>
-            <select id="profPpk">
-                <option value="no" data-i18n="no">Ні</option>
-                <option value="yes" data-i18n="yes">Так</option>
-            </select>
-            
-            <label data-i18n="profIns">Додаткове страхування</label>
-            <select id="profIns">
-                <option value="yes" data-i18n="yes">Так</option>
-                <option value="no" data-i18n="no">Ні</option>
-            </select>
-            
-            <button id="btn-save-profile" class="action-btn btn-profile" data-i18n="btnSaveProfile">Зберегти профіль 💾</button>
-        </div>
-
-        <div class="menu-item">
-            <label data-i18n="menuLang">Мова</label>
-            <select id="langSelect" style="width: 100%;" onchange="setLang(this.value)">
-                <option value="uk">Українська</option>
-                <option value="pl">Polski</option>
-            </select>
-        </div>
-        <div class="menu-item">
-            <label data-i18n="menuTheme">Тема</label>
-            <select id="themeSelect" style="width: 100%;" onchange="setTheme(this.value)">
-                <option value="light" data-i18n="optThemeLight">Світла</option>
-                <option value="dark" data-i18n="optThemeDark">Темна</option>
-            </select>
-        </div>
-
-        <div class="divider" style="margin: 10px 0;"></div>
-
-        <div class="cloud-section">
-            <label style="width: 100%; font-weight: bold; margin-bottom: 8px; display: block;" data-i18n="cloudHeader">Акаунт & Хмара</label>
-            <div id="auth-container">
-                <input type="email" id="email" placeholder="Email" style="width: 100%; margin-bottom: 6px; text-align: left;">
-                <input type="password" id="password" data-i18n-ph="pwdPlaceholder" placeholder="Пароль" style="width: 100%; margin-bottom: 8px; text-align: left;">
-                <button id="btn-login" class="action-btn btn-auth-action" data-i18n="btnLogin">Увійти (PRO)</button>
-                <button id="btn-register" class="action-btn" style="background: var(--text-main); margin-top: 4px;" data-i18n="btnRegister">Реєстрація</button>
+        <div class="menu-body">
+            <div class="profile-card">
+                <div class="section-title" data-i18n="profHeader">👤 Мій профіль</div>
+                <label data-i18n="profBase">Стандартна ставка (zł)</label>
+                <input type="number" inputmode="decimal" id="profBaseSalary" placeholder="5750">
+                <label data-i18n="profAge">Вік до 26 років</label>
+                <select id="profUnder26">
+                    <option value="no" data-i18n="no">Ні</option>
+                    <option value="yes" data-i18n="yes">Так</option>
+                </select>
+                <label data-i18n="profPpk">Участь у PPK</label>
+                <select id="profPpk">
+                    <option value="no" data-i18n="no">Ні</option>
+                    <option value="yes" data-i18n="yes">Так</option>
+                </select>
+                <label data-i18n="profIns">Додаткове страхування</label>
+                <select id="profIns">
+                    <option value="yes" data-i18n="yes">Так</option>
+                    <option value="no" data-i18n="no">Ні</option>
+                </select>
+                <button id="btn-save-profile" class="btn btn-blue" data-i18n="btnSaveProfile">Зберегти профіль 💾</button>
             </div>
-            <div id="sync-container" class="hidden">
-                <span id="user-email-display" style="font-size: 11px; display: block; margin-bottom: 8px; word-break: break-all; font-weight: bold;"></span>
-                <button id="btn-sync-up" class="action-btn btn-sync" data-i18n="btnSaveCloud">Зберегти місяць ☁️</button>
-                <button id="btn-sync-down" class="action-btn" style="background: #2980b9; margin-top: 4px;" data-i18n="btnLoadCloud">Завантажити місяць 📥</button>
-                <button id="btn-logout" class="action-btn btn-logout" style="margin-top: 8px;" data-i18n="btnLogout">Вийти (Гостьовий режим)</button>
+
+            <div class="menu-group">
+                <label data-i18n="menuLang">Мова</label>
+                <select id="langSelect" onchange="setLang(this.value)">
+                    <option value="uk">Українська</option>
+                    <option value="pl">Polski</option>
+                </select>
+            </div>
+            <div class="menu-group">
+                <label data-i18n="menuTheme">Тема</label>
+                <select id="themeSelect" onchange="setTheme(this.value)">
+                    <option value="light" data-i18n="optThemeLight">Світла</option>
+                    <option value="dark" data-i18n="optThemeDark">Темна</option>
+                </select>
+            </div>
+
+            <div class="cloud-card">
+                <div class="section-title" data-i18n="cloudHeader">Акаунт & Хмара</div>
+                <div id="auth-container">
+                    <input type="email" id="email" placeholder="Email">
+                    <input type="password" id="password" data-i18n-ph="pwdPlaceholder" placeholder="Пароль">
+                    <button id="btn-login" class="btn btn-primary" data-i18n="btnLogin">Увійти (PRO)</button>
+                    <button id="btn-register" class="btn btn-dark" data-i18n="btnRegister">Реєстрація</button>
+                </div>
+                <div id="sync-container" class="hidden">
+                    <span id="user-email-display" style="font-size:12px;display:block;margin-bottom:10px;word-break:break-all;font-weight:600;"></span>
+                    <button id="btn-sync-up" class="btn btn-success" data-i18n="btnSaveCloud">Зберегти місяць ☁️</button>
+                    <button id="btn-sync-down" class="btn btn-blue" data-i18n="btnLoadCloud">Завантажити місяць 📥</button>
+                    <button id="btn-logout" class="btn btn-secondary" data-i18n="btnLogout">Вийти (Гостьовий режим)</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="pages-track" id="pagesTrack">
-        
-        <!-- СТОРІНКА 1 -->
-        <div class="calculator-page" id="page1">
-            <div class="header-row">
-                <button id="btn-open-menu" class="menu-btn" onclick="toggleMenu()">☰</button>
-                <h2 style="margin-right: auto; margin-left: 15px;"><span data-i18n="title">Калькулятор ЗП</span> <span class="premium-badge">PRO</span></h2>
-                
-                <div class="schedule-badge" id="scheduleBadgeContainer">
+        <!-- PAGE 1: INPUTS -->
+        <div class="page" id="page1">
+            <div class="header">
+                <button id="btn-open-menu" class="icon-btn" onclick="toggleMenu()">☰</button>
+                <h1>
+                    <span data-i18n="title">Калькулятор ЗП</span>
+                    <span class="pro-badge">PRO</span>
+                </h1>
+                <div class="sched-pill" id="scheduleBadgeContainer">
                     <span data-i18n="schedDays">Графік</span>
                     <input type="number" inputmode="decimal" id="scheduleDays" placeholder="0" min="0">
                 </div>
             </div>
-            
-            <div class="form-group">
-                <label data-i18n="month">Місяць</label>
-                <select id="monthSelect"></select>
-            </div>
 
-            <div class="form-group">
-                <label data-i18n="base">Загальна ставка (zł)</label>
-                <input type="number" inputmode="decimal" id="baseSalary" min="0">
-            </div>
-
-            <div class="form-group">
-                <label data-i18n="presenceBonusTitle">Премія за присутність (макс 5%)</label>
-                <select id="presencePctSelect">
-                    <option value="5" selected>5%</option>
-                    <option value="2.5">2.5%</option>
-                    <option value="0">0%</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label data-i18n="bonus">Премія за якість (макс 10%)</label>
-                <select id="bonusPctSelect">
-                    <option value="10" selected>10%</option>
-                    <option value="5">5%</option>
-                    <option value="0">0%</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label data-i18n="extraBonus">Додаткова премія (zł)</label>
-                <input type="number" inputmode="decimal" id="extraBonus" placeholder="0" min="0">
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="form-group">
-                <label data-i18n="morning">Ранкові зміни (шт)</label>
-                <input type="number" inputmode="decimal" id="morningShifts" placeholder="-" min="0">
-            </div>
-            <div class="form-group">
-                <label data-i18n="afternoon">Денні зміни (шт)</label>
-                <input type="number" inputmode="decimal" id="afternoonShifts" placeholder="-" min="0">
-            </div>
-            <div class="form-group">
-                <label data-i18n="night">Нічні зміни (шт)</label>
-                <input type="number" inputmode="decimal" id="nightShifts" placeholder="-" min="0">
-            </div>
-
-            <div class="form-group" style="margin-top: 15px;">
-                <label data-i18n="weekend">Робочі сб / нд (днів)</label>
-                <input type="number" inputmode="decimal" id="weekendDays" placeholder="-" min="0">
-            </div>
-
-            <div class="form-group">
-                <label data-i18n="overtime">Надгодини (днів)</label>
-                <input type="number" inputmode="decimal" id="overtimeDays" placeholder="-" min="0" step="0.5">
-            </div>
-
-            <div id="overtimeSubGroup" class="hidden">
-                <div class="form-group sub-group">
-                    <label data-i18n="overtimeMorning">З них ранкових (змін) ☀️</label>
-                    <input type="number" inputmode="decimal" id="overtimeMorningShifts" placeholder="0" min="0" style="color:var(--primary);">
+            <!-- Main inputs -->
+            <div class="card">
+                <div class="field">
+                    <label data-i18n="month">Місяць</label>
+                    <select id="monthSelect"></select>
                 </div>
-                <div class="form-group sub-group">
-                    <label data-i18n="overtimeNight">З них нічних (змін) 🌙</label>
-                    <input type="number" inputmode="decimal" id="overtimeNightShifts" placeholder="0" min="0" style="color:var(--primary);">
+                <div class="field">
+                    <label data-i18n="base">Загальна ставка (zł)</label>
+                    <input type="number" inputmode="decimal" id="baseSalary" min="0">
+                </div>
+                <div class="field">
+                    <label data-i18n="bonus">Премія за якість (макс 10%)</label>
+                    <select id="bonusPctSelect">
+                        <option value="10" selected>10%</option>
+                        <option value="5">5%</option>
+                        <option value="0">0%</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label data-i18n="extraBonus">Додаткова премія (zł)</label>
+                    <input type="number" inputmode="decimal" id="extraBonus" placeholder="0" min="0">
                 </div>
             </div>
 
-            <div class="form-group premium-field" style="margin-top: 15px;">
-                <label data-i18n="vacationDays">Відпустка (днів)</label>
-                <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
-            </div>
-            <div class="form-group sub-group hidden" id="urlopBonusGroup">
-                <label data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
-                <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0" style="color:var(--primary);">
-            </div>
-
-            <div class="form-group premium-field">
-                <label data-i18n="bloodDonation">Донація крові (днів)</label>
-                <input type="number" inputmode="decimal" id="bloodDonationDays" placeholder="0" min="0">
-            </div>
-            <div class="form-group sub-group hidden" id="bloodBonusGroup">
-                <label data-i18n="bloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
-                <input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" min="0" style="color:var(--primary);" readonly>
-            </div>
-
-            <div class="form-group premium-field">
-                <label data-i18n="l4Days">Лікарняний L4 (календ.)</label>
-                <input type="number" inputmode="decimal" id="l4Days" placeholder="0" min="0">
-            </div>
-            <div class="form-group sub-group hidden" id="l4MissedGroup">
-                <label data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
-                <input type="number" inputmode="decimal" id="l4MissedShifts" placeholder="0" min="0" style="color:var(--primary);">
+            <!-- Shifts -->
+            <div class="card">
+                <div class="card-title">Зміни</div>
+                <div class="field">
+                    <label data-i18n="morning">Ранкові зміни (шт)</label>
+                    <input type="number" inputmode="decimal" id="morningShifts" placeholder="-" min="0">
+                </div>
+                <div class="field">
+                    <label data-i18n="afternoon">Денні зміни (шт)</label>
+                    <input type="number" inputmode="decimal" id="afternoonShifts" placeholder="-" min="0">
+                </div>
+                <div class="field">
+                    <label data-i18n="night">Нічні зміни (шт)</label>
+                    <input type="number" inputmode="decimal" id="nightShifts" placeholder="-" min="0">
+                </div>
             </div>
 
-            <div class="divider"></div>
+            <!-- Extra work -->
+            <div class="card">
+                <div class="card-title">Додатково</div>
+                <div class="field">
+                    <label data-i18n="weekend">Робочі сб / нд (днів)</label>
+                    <input type="number" inputmode="decimal" id="weekendDays" placeholder="-" min="0">
+                </div>
+                <div class="field">
+                    <label data-i18n="overtime">Надгодини (днів)</label>
+                    <input type="number" inputmode="decimal" id="overtimeDays" placeholder="-" min="0" step="0.5">
+                </div>
+                <div id="overtimeSubGroup" class="sub-fields hidden">
+                    <div class="field">
+                        <label data-i18n="overtimeMorning">З них ранкових (змін) ☀️</label>
+                        <input type="number" inputmode="decimal" id="overtimeMorningShifts" placeholder="0" min="0">
+                    </div>
+                    <div class="field">
+                        <label data-i18n="overtimeNight">З них нічних (змін) 🌙</label>
+                        <input type="number" inputmode="decimal" id="overtimeNightShifts" placeholder="0" min="0">
+                    </div>
+                </div>
+            </div>
 
-            <div class="results-panel">
-                <div class="result-box brutto">
-                    <div class="result-title">BRUTTO</div>
+            <!-- Premium: vacation / blood / L4 -->
+            <div class="card premium-block" style="display:none;">
+                <div class="card-title">Відпустка / L4 / Кров</div>
+                <div class="field premium-only">
+                    <label data-i18n="vacationDays">Відпустка (днів)</label>
+                    <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
+                </div>
+                <div class="sub-fields hidden" id="urlopBonusGroup">
+                    <div class="field">
+                        <label data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
+                        <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0">
+                    </div>
+                </div>
+                <div class="field premium-only">
+                    <label data-i18n="bloodDonation">Донація крові (днів)</label>
+                    <input type="number" inputmode="decimal" id="bloodDonationDays" placeholder="0" min="0">
+                </div>
+                <div class="sub-fields hidden" id="bloodBonusGroup">
+                    <div class="field">
+                        <label data-i18n="bloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
+                        <input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" min="0" readonly>
+                    </div>
+                </div>
+                <div class="field premium-only">
+                    <label data-i18n="l4Days">Лікарняний L4 (календ.)</label>
+                    <input type="number" inputmode="decimal" id="l4Days" placeholder="0" min="0">
+                </div>
+                <div class="sub-fields hidden" id="l4MissedGroup">
+                    <div class="field">
+                        <label data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
+                        <input type="number" inputmode="decimal" id="l4MissedShifts" placeholder="0" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="results">
+                <div class="result-card brutto">
+                    <div class="result-label">BRUTTO</div>
                     <div class="result-value" id="grossResult">0,00 zł</div>
                 </div>
-                <div class="result-box netto">
-                    <div class="result-title">NETTO</div>
+                <div class="result-card netto">
+                    <div class="result-label">NETTO</div>
                     <div class="result-value" id="netResult">0,00 zł</div>
                 </div>
             </div>
 
-            <div class="swipe-hint" data-i18n="swipeHintLeft">← Свайп вліво для деталей та розрахунку</div>
+            <div class="swipe-hint" data-i18n="swipeHintLeft">← Свайп вліво для деталей</div>
         </div>
 
-        <!-- СТОРІНКА 2 -->
-        <div class="calculator-page" id="page2" inert>
-            <div class="header-row">
-                <button id="btn-back-main" class="menu-btn" onclick="switchPage(1)">➔</button>
-                <h2 style="margin-right: auto; margin-left: 15px;" data-i18n="detailsTitle">Деталі та розрахунок 📊</h2>
+        <!-- PAGE 2: DETAILS -->
+        <div class="page" id="page2" inert>
+            <div class="header">
+                <button id="btn-back-main" class="icon-btn" onclick="switchPage(1)">←</button>
+                <h1 data-i18n="detailsTitle">Деталі та розрахунок</h1>
             </div>
-            
-            <div class="info-card">
-                <div style="font-weight: bold; margin-bottom: 12px; color: var(--text-main); font-size: 14px; text-transform: uppercase;" data-i18n="breakdownHeader">Деталізація нарахувань</div>
+
+            <div class="card">
+                <div class="card-title" data-i18n="breakdownHeader">Деталізація нарахувань</div>
                 
-                <div class="info-row"><span data-i18n="infoBasePay">Базова ставка (з урахув. L4):</span> <strong id="infoBasePayVal">0,00 zł</strong></div>
-                
-                <div class="info-row"><span><span data-i18n="infoPresenceBonus">Премія за присутність</span> (<span id="infoPresencePct">5%</span>):</span> <strong id="infoPresenceBonusSum" style="color: var(--success);">0,00 zł</strong></div>
-                <div class="info-row"><span><span data-i18n="infoQualityBonus">Премія за якість</span> (<span id="infoQualityPct">10%</span>):</span> <strong id="infoQualityBonusSum" style="color: var(--success);">0,00 zł</strong></div>
-                <div class="info-row"><span><span data-i18n="infoExtraBonus">Додаткова премія</span>:</span> <strong id="infoExtraBonusSum" style="color: var(--success);">0,00 zł</strong></div>
-                <div class="info-row"><span><span data-i18n="infoNightTime">Доплата за нічний час</span> (<span id="infoNightHours">0 год 0 хв</span>):</span> <strong id="infoNightTimeSum">0,00 zł</strong></div>
-                <div class="info-row"><span><span data-i18n="infoNightShift">Доплата за нічну зміну</span> (<span id="infoNightShiftsCount">0</span> змін):</span> <strong id="infoNightShiftSum">0,00 zł</strong></div>
-                
-                <div class="info-row"><span data-i18n="infoWeekend">Робота у вікенди:</span> <strong id="infoWeekendSum">0,00 zł</strong></div>
-                
-                <div class="info-row">
-                    <span data-i18n="infoOvertime">Надгодини:</span> 
-                    <span style="text-align: right;">
+                <div class="detail-row">
+                    <span data-i18n="infoBasePay">Базова ставка (з урахув. L4):</span>
+                    <strong id="infoBasePayVal">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span><span data-i18n="infoPresenceBonus">Премія за присутність</span> (<span id="infoPresencePct">5%</span>):</span>
+                    <strong id="infoPresenceBonusSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span><span data-i18n="infoQualityBonus">Премія за якість</span> (<span id="infoQualityPct">10%</span>):</span>
+                    <strong id="infoQualityBonusSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span data-i18n="infoExtraBonus">Додаткова премія:</span>
+                    <strong id="infoExtraBonusSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span><span data-i18n="infoNightTime">Доплата за нічний час</span> (<span id="infoNightHours">0 год 0 хв</span>):</span>
+                    <strong id="infoNightTimeSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span><span data-i18n="infoNightShift">Доплата за нічну зміну</span> (<span id="infoNightShiftsCount">0</span>):</span>
+                    <strong id="infoNightShiftSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span data-i18n="infoWeekend">Робота у вікенди:</span>
+                    <strong id="infoWeekendSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span data-i18n="infoOvertime">Надгодини:</span>
+                    <span style="text-align:right;">
                         <strong id="infoOvertimeSum">0,00 zł</strong>
-                        <span style="font-size: 11px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">(<span data-i18n="lblNettoShort">нетто</span>: <strong id="infoOvertimeNetSum">0,00 zł</strong>)</span>
+                        <span style="font-size:11px;color:var(--text-secondary);margin-left:4px;">
+                            (<span data-i18n="lblNettoShort">нетто</span>: <strong id="infoOvertimeNetSum">0,00 zł</strong>
+                        </span>
                     </span>
                 </div>
+                <div class="detail-row">
+                    <span data-i18n="infoVacation">Оплата відпустки:</span>
+                    <strong id="infoVacationSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span data-i18n="infoBlood">Оплата донації крові:</span>
+                    <strong id="infoBloodSum">0,00 zł</strong>
+                </div>
+                <div class="detail-row">
+                    <span data-i18n="infoL4">Лікарняний L4 (компенс.):</span>
+                    <strong id="infoL4Sum">0,00 zł</strong>
+                </div>
 
-                <div class="info-row"><span data-i18n="infoVacation">Оплата відпустки:</span> <strong id="infoVacationSum">0,00 zł</strong></div>
-                <div class="info-row"><span data-i18n="infoBlood">Оплата донації крові:</span> <strong id="infoBloodSum">0,00 zł</strong></div>
-                <div class="info-row"><span data-i18n="infoL4">Лікарняний L4 (компенс.):</span> <strong id="infoL4Sum">0,00 zł</strong></div>
-                
-                <div class="info-row total-row">
-                    <span data-i18n="totalBrutto">РАЗОМ BRUTTO:</span> <strong id="infoTotalBrutto" style="color: var(--primary);">0,00 zł</strong>
+                <div class="detail-row detail-total">
+                    <span data-i18n="totalBrutto">РАЗОМ BRUTTO:</span>
+                    <strong id="infoTotalBrutto" style="color:var(--primary);">0,00 zł</strong>
                 </div>
-                <div class="info-row" style="margin-top: 4px; padding-top: 4px;">
-                    <span data-i18n="infoLaundry">Доплата за прання:</span> <strong id="infoLaundrySum">0,00 zł</strong>
+                <div class="detail-row" style="margin-top:6px;">
+                    <span data-i18n="infoLaundry">Доплата за прання:</span>
+                    <strong id="infoLaundrySum">0,00 zł</strong>
                 </div>
-                <div class="info-row total-row" style="margin-top: 4px; border-top: none; padding-top: 0;">
-                    <span data-i18n="totalNetto">РАЗОМ NETTO:</span> <strong id="infoTotalNetto" style="color: var(--success);">0,00 zł</strong>
+                <div class="detail-row detail-total" style="border-top:none;margin-top:4px;padding-top:4px;">
+                    <span data-i18n="totalNetto">РАЗОМ NETTO:</span>
+                    <strong id="infoTotalNetto" style="color:var(--success);font-size:17px;">0,00 zł</strong>
                 </div>
             </div>
-            
-            <div class="info-card" style="padding-top: 10px; padding-bottom: 10px;">
-                <div class="info-row" style="margin-bottom: 6px;"><span data-i18n="infoWorkedDays">Відпрацьовано планових змін:</span> <strong id="infoWorkedDaysVal">-</strong></div>
-                <div class="info-row" style="margin-bottom: 6px;"><span data-i18n="infoTotalDays">Всього задіяних днів:</span> <strong id="infoTotalDaysVal">-</strong></div>
-                <div class="info-row" style="margin-bottom: 6px;"><span data-i18n="infoSched">Дні за графіком (норма):</span> <strong id="infoSchedVal">-</strong></div>
-                <div class="info-row" style="margin-bottom: 0;"><span data-i18n="infoNightTariff">Нічний тариф:</span> <strong id="infoNightTariffVal">-</strong></div>
+
+            <div class="card">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-val" id="infoWorkedDaysVal">-</div>
+                        <div class="stat-lbl" data-i18n="infoWorkedDays">Відпрацьовано змін</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-val" id="infoTotalDaysVal">-</div>
+                        <div class="stat-lbl" data-i18n="infoTotalDays">Всього днів</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-val" id="infoSchedVal">-</div>
+                        <div class="stat-lbl" data-i18n="infoSched">Графік (норма)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-val" id="infoNightTariffVal" style="font-size:14px;">-</div>
+                        <div class="stat-lbl" data-i18n="infoNightTariff">Нічний тариф</div>
+                    </div>
+                </div>
             </div>
 
-            <div id="info-sync-container" class="premium-field" style="margin-top: 15px; display: none;">
-                <button id="btn-sync-up-info" class="action-btn btn-sync" data-i18n="btnSaveCloud">Зберегти місяць в хмару ☁️</button>
+            <div id="info-sync-container" class="premium-block" style="display:none;margin-top:8px;">
+                <button id="btn-sync-up-info" class="btn btn-success" data-i18n="btnSaveCloud">Зберегти місяць в хмару ☁️</button>
             </div>
 
-            <div class="swipe-hint" style="margin-top: 20px;" data-i18n="swipeHintRight">Свайп вправо для повернення →</div>
+            <div class="swipe-hint" data-i18n="swipeHintRight">Свайп вправо для повернення →</div>
         </div>
-
     </div>
 </div>
 
@@ -1085,75 +832,7 @@ input::placeholder {
         const [y, m] = monthVal.split('-');
         return getNormHours(parseInt(y), parseInt(m) - 1) / 8;
     };
-    
     const getMinWage = (year) => CONFIG.MIN_WAGES[year] || 4806;
-
-    const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
-
-    function shiftMonthId(monthVal, delta) {
-        const [y, m] = monthVal.split('-').map(Number);
-        const idx = y * 12 + (m - 1) - delta;
-        return Math.floor(idx / 12) + '-' + String((idx % 12) + 1).padStart(2, '0');
-    }
-
-    function vacationWindowIds(monthVal, lag = 2, count = 3) {
-        return Array.from({ length: count }, (_, i) => shiftMonthId(monthVal, lag + i));
-    }
-
-    function buildVacationEntry(monthId, data, fallbackBase) {
-        const [y, m] = monthId.split('-').map(Number);
-        const normHours = getNormHours(y, m - 1);
-        const n = k => Math.max(0, parseFloat(data[k]) || 0);
-
-        const sched = parseInt(data.scheduleDays) || normHours / 8;
-        const base = n('baseSalary') || fallbackBase;
-        const qPct = isNaN(parseFloat(data.bonusPctSelect)) ? 10 : parseFloat(data.bonusPctSelect);
-        
-        let presencePct = parseFloat(data.presencePctSelect);
-        if (isNaN(presencePct)) {
-            const l4 = n('l4Days');
-            presencePct = l4 > 0 ? (l4 <= 2 ? 2.5 : 0) : 5;
-        }
-
-        const morning = n('morningShifts'), afternoon = n('afternoonShifts'), night = n('nightShifts');
-        let worked = morning + afternoon + night;
-        if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) {
-            worked = Math.max(0, sched - n('vacationDays') - n('bloodDonationDays') - n('l4MissedShifts'));
-        }
-        const otDays = Math.min(n('overtimeDays'), worked);
-        const nightAll = night + n('overtimeNightShifts');
-        const morningAll = morning + n('overtimeMorningShifts');
-
-        return {
-            normHours,
-            workedHours: worked * 8,
-            otHours: otDays * 8,
-            nightHours: morningAll * (10 / 60) + nightAll * 8,
-            bonus: sched > 0 ? (base * (presencePct + qPct) / 100) / sched * worked : 0,
-            nightBonus: nightAll * CONFIG.NIGHT_SHIFT_BONUS,
-            weekendPay: n('weekendDays') * CONFIG.WEEKEND_DAY_RATE
-        };
-    }
-
-    function vacationHourlyRate(entries, cur) {
-        let num = 0, den = 0;
-        for (const e of entries) {
-            const nightTariff = r2(cur.minWage * 0.20 / e.normHours);
-            const otHourly = r2(cur.baseSalary / e.normHours);
-            num += e.bonus + e.nightBonus + e.weekendPay
-                 + r2(e.nightHours * nightTariff)
-                 + 2 * e.otHours * otHourly;
-            den += e.workedHours + e.otHours;
-        }
-        return den > 0 ? r2(num / den) : 0;
-    }
-
-    function computeDailyUrlopBonus(records, monthVal, cur, lag = 2) {
-        const entries = vacationWindowIds(monthVal, lag)
-            .filter(id => records[id])
-            .map(id => buildVacationEntry(id, records[id], cur.baseSalary));
-        return r2(vacationHourlyRate(entries, cur) * 8);
-    }
 
     function compute(inputs) {
         const {
@@ -1162,7 +841,7 @@ input::placeholder {
             weekendDays, overtimeDays, vacDays, dailyUrlopBonus, extraBonus,
             bloodDonationDays, l4Days, isPremium,
             isUnder26, ppkActive, insuranceActive, l4DailyRateCached,
-            presenceBonusPct, year
+            presenceBonusPctOverride, year
         } = inputs;
 
         let adjustedBase = baseSalary; let l4Pay = 0;
@@ -1174,7 +853,9 @@ input::placeholder {
             l4Pay = l4DailyRate * 0.80 * l4Days; 
         }
 
-        const qualityBonusPct = inputs.qualityBonusPct !== undefined ? inputs.qualityBonusPct : 10;
+        const presenceBonusPct = presenceBonusPctOverride !== undefined ? presenceBonusPctOverride : ((isPremium && l4Days > 0) ? (l4Days <= 2 ? 2.5 : 0) : 5);
+        const qualityBonusPct = inputs.qualityBonusPct || 0;
+
         const presenceBonusAmount = (schedDays > 0) ? ((baseSalary * (presenceBonusPct / 100)) / schedDays * regWorkedDays) : 0;
         const qualityBonusAmount = (schedDays > 0) ? ((baseSalary * (qualityBonusPct / 100)) / schedDays * regWorkedDays) : 0;
         const bonusAmount = presenceBonusAmount + qualityBonusAmount;
@@ -1200,8 +881,7 @@ input::placeholder {
 
         const currentVariables = bonusAmount + totalNightPay + totalWeekendPay + totalOvertimePay;
         const currentTotalHours = (regWorkedDays * 8) + (overtimeDays * 8);
-        
-        const autoDailyBlood = (isPremium && currentTotalHours > 0) ? Math.round((currentVariables / currentTotalHours) * 100) / 100 * 8 : 0;
+        const autoDailyBlood = (isPremium && currentTotalHours > 0) ? Math.round((currentVariables / currentTotalHours) * 8 * 100) / 100 : 0;
         const bloodDonationPay = autoDailyBlood * bloodDonationDays;
 
         const totalUrlopBonus = dailyUrlopBonus * vacDays;
@@ -1262,7 +942,6 @@ input::placeholder {
         uk: {
             title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
             schedDays: "Графік", bonus: "Премія за якість (макс 10%)", extraBonus: "Додаткова премія (zł)",
-            presenceBonusTitle: "Премія за присутність (макс 5%)",
             morning: "Ранкові зміни (шт)", afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
             overtime: "Надгодини (днів)", overtimeMorning: "З них ранкових (змін) ☀️", overtimeNight: "З них нічних (змін) 🌙", 
             vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
@@ -1273,15 +952,15 @@ input::placeholder {
             optThemeLight: "Світла", optThemeDark: "Темна", cloudHeader: "Акаунт & Хмара",
             btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць ☁️",
             btnLoadCloud: "Завантажити місяць 📥", btnLogout: "Вийти (Гостьовий режим)",
-            swipeHintLeft: "← Свайп вліво для деталей та розрахунку", swipeHintRight: "Свайп вправо для повернення →", 
-            detailsTitle: "Деталі та розрахунок 📊", breakdownHeader: "Деталізація нарахувань", 
+            swipeHintLeft: "← Свайп вліво для деталей", swipeHintRight: "Свайп вправо для повернення →", 
+            detailsTitle: "Деталі та розрахунок", breakdownHeader: "Деталізація нарахувань", 
             infoBasePay: "Базова ставка (з урахув. L4):", infoPresenceBonus: "Премія за присутність", 
             infoQualityBonus: "Премія за якість", infoExtraBonus: "Додаткова премія", infoNightTime: "Доплата за нічний час", 
             infoNightShift: "Доплата за нічну зміну", infoWeekend: "Робота у вікенди:", 
             infoOvertime: "Надгодини:", infoVacation: "Оплата відпустки:", infoBlood: "Оплата донації крові:", 
-            infoL4: "Лікарняний L4 (компенс.):", infoLaundry: "Доплата за прання:", infoWorkedDays: "Відпрацьовано планових змін:", 
-            infoTotalDays: "Всього задіяних днів:", infoSched: "Дні за графіком (норма):", 
-            infoNightTariff: "Нічний тариф:", lblNettoShort: "нетто", totalBrutto: "РАЗОМ BRUTTO:", 
+            infoL4: "Лікарняний L4 (компенс.):", infoLaundry: "Доплата за прання:", infoWorkedDays: "Відпрацьовано змін", 
+            infoTotalDays: "Всього днів", infoSched: "Графік (норма)", 
+            infoNightTariff: "Нічний тариф", lblNettoShort: "нетто", totalBrutto: "РАЗОМ BRUTTO:", 
             totalNetto: "РАЗОМ NETTO:", perHour: "/год", pwdPlaceholder: "Пароль",
             monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
             toastSaveCloud: "Дані збережені у хмару! ☁️", toastLoadCloud: "Дані завантажені! 📥",
@@ -1292,7 +971,6 @@ input::placeholder {
         pl: {
             title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
             schedDays: "Grafik", bonus: "Premia za jakość (max 10%)", extraBonus: "Dodatkowa premia (zł)",
-            presenceBonusTitle: "Premia za frekwencję (max 5%)",
             morning: "Poranne zmiany (szt)", afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
             overtime: "Nadgodziny (dni)", overtimeMorning: "W tym porannych (zmian) ☀️", overtimeNight: "W tym nocnych (zmian) 🌙", 
             vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (dzień) ℹ️",
@@ -1304,14 +982,14 @@ input::placeholder {
             btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc ☁️",
             btnLoadCloud: "Pobierz miesiąc 📥", btnLogout: "Wyloguj (Tryb gościa)",
             swipeHintLeft: "← Przesuń w lewo po szczegóły", swipeHintRight: "Przesuń w prawo aby wrócić →", 
-            detailsTitle: "Szczegóły wyliczenia 📊", breakdownHeader: "Struktura naliczeń", 
+            detailsTitle: "Szczegóły wyliczenia", breakdownHeader: "Struktura naliczeń", 
             infoBasePay: "Stawka bazowa (po L4):", infoPresenceBonus: "Premia za frekwencję", 
             infoQualityBonus: "Premia za jakość", infoExtraBonus: "Dodatkowa premia", infoNightTime: "Dodatek nocny (czas)", 
             infoNightShift: "Dodatek nocny (zmiana)", infoWeekend: "Praca w weekendy:", 
             infoOvertime: "Nadgodziny:", infoVacation: "Wynagrodzenie urlopowe:", infoBlood: "Wynagrodzenie za krew:", 
-            infoL4: "Chorobowe L4:", infoLaundry: "Ekwiwalent za pranie:", infoWorkedDays: "Przepracowane zmiany:", 
-            infoTotalDays: "Łącznie dni:", infoSched: "Grafik (norma):", 
-            infoNightTariff: "Stawka nocna:", lblNettoShort: "netto", totalBrutto: "RAZEM BRUTTO:", 
+            infoL4: "Chorobowe L4:", infoLaundry: "Ekwiwalent za pranie:", infoWorkedDays: "Przepracowane zmiany", 
+            infoTotalDays: "Łącznie dni", infoSched: "Grafik (norma)", 
+            infoNightTariff: "Stawka nocna", lblNettoShort: "netto", totalBrutto: "RAZEM BRUTTO:", 
             totalNetto: "RAZEM NETTO:", perHour: "/godz.", pwdPlaceholder: "Hasło",
             monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"],
             toastSaveCloud: "Zapisano w chmurze! ☁️", toastLoadCloud: "Dane pobrane! 📥",
@@ -1329,59 +1007,23 @@ input::placeholder {
     let userProfile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
     window.cachedL4DailyRate = null;
 
-    /* ПРОФІЛЬ ТА МЕНЮ (Персоналізовано під кожен акаунт) */
-    async function loadProfile() {
-        const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
-        const localKey = `user_profile_${uid}`;
-        
-        userProfile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
-
-        if (auth.currentUser) {
-            try {
-                const profSnap = await getDoc(doc(db, "users", uid, "profile", "userProfile"));
-                if (profSnap.exists()) {
-                    userProfile = { ...userProfile, ...profSnap.data() };
-                    localStorage.setItem(localKey, JSON.stringify(userProfile));
-                } else {
-                    const savedLocal = localStorage.getItem(localKey);
-                    if (savedLocal) {
-                        try { userProfile = { ...userProfile, ...JSON.parse(savedLocal) }; } catch(e) {}
-                    }
-                }
-            } catch(e) {
-                const savedLocal = localStorage.getItem(localKey);
-                if (savedLocal) {
-                    try { userProfile = { ...userProfile, ...JSON.parse(savedLocal) }; } catch(e) {}
-                }
-            }
-        } else {
-            const savedLocal = localStorage.getItem(localKey);
-            if (savedLocal) {
-                try { userProfile = { ...userProfile, ...JSON.parse(savedLocal) }; } catch(e) {}
-            }
+    function loadProfile() {
+        const saved = localStorage.getItem('user_profile');
+        if (saved) {
+            try { userProfile = { ...userProfile, ...JSON.parse(saved) }; } catch(e) {}
         }
-
         document.getElementById('profBaseSalary').value = userProfile.baseSalary;
         document.getElementById('profUnder26').value = userProfile.under26;
         document.getElementById('profPpk').value = userProfile.ppk;
         document.getElementById('profIns').value = userProfile.insurance;
     }
 
-    document.getElementById('btn-save-profile').addEventListener('click', async () => {
-        userProfile.baseSalary = parseFloat(document.getElementById('profBaseSalary').value) || 5750;
+    document.getElementById('btn-save-profile').addEventListener('click', () => {
+        userProfile.baseSalary = document.getElementById('profBaseSalary').value || 5750;
         userProfile.under26 = document.getElementById('profUnder26').value;
         userProfile.ppk = document.getElementById('profPpk').value;
         userProfile.insurance = document.getElementById('profIns').value;
-        
-        const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
-        const localKey = `user_profile_${uid}`;
-        localStorage.setItem(localKey, JSON.stringify(userProfile));
-
-        if (auth.currentUser) {
-            try {
-                await setDoc(doc(db, "users", uid, "profile", "userProfile"), userProfile, { merge: true });
-            } catch(e) {}
-        }
+        localStorage.setItem('user_profile', JSON.stringify(userProfile));
         
         const monthVal = document.getElementById('monthSelect').value;
         if (!localStorage.getItem(`guest_month_${monthVal}`) && (!auth.currentUser || !monthsCollectionCache?.some(d => d.id === monthVal))) {
@@ -1533,10 +1175,15 @@ input::placeholder {
         document.getElementById('auth-container').classList.toggle('hidden', isPremium);
         document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
         
+        // Show/hide premium blocks
+        document.querySelectorAll('.premium-block').forEach(el => {
+            el.style.display = isPremium ? 'block' : 'none';
+        });
+
         const infoSyncContainer = document.getElementById('info-sync-container');
         if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
 
-        await loadProfile();
+        loadProfile();
 
         if (user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -1548,20 +1195,11 @@ input::placeholder {
     });
 
     function fillFrom(d) {
-        clearInputs(); // Повне очищення форми перед заповненням
         document.querySelectorAll('input, select').forEach(el => {
             if (!['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(el.id) && d[el.id] !== undefined) {
                 el.value = d[el.id];
             }
         });
-        
-        if (d.bonusPctSelect === undefined) {
-            document.getElementById('bonusPctSelect').value = "10";
-        }
-        if (d.presencePctSelect === undefined) {
-            const l4 = parseInt(d.l4Days) || 0;
-            document.getElementById('presencePctSelect').value = l4 > 0 ? (l4 <= 2 ? "2.5" : "0") : "5";
-        }
     }
 
     async function handleSyncUp() {
@@ -1612,7 +1250,6 @@ input::placeholder {
             if (snap.exists()) {
                 fillFrom(snap.data());
                 if (!snap.data().scheduleDays) document.getElementById('scheduleDays').value = defaultSched;
-                if (!snap.data().baseSalary) document.getElementById('baseSalary').value = userProfile.baseSalary;
             } else {
                 clearInputs(); applyProfileToMain();
             }
@@ -1644,11 +1281,7 @@ input::placeholder {
         
         const saved = localStorage.getItem(`guest_month_${monthVal}`);
         if (saved) {
-            try { 
-                const d = JSON.parse(saved);
-                fillFrom(d);
-                if (!d.baseSalary) document.getElementById('baseSalary').value = userProfile.baseSalary;
-            } catch(e) { clearInputs(); applyProfileToMain(); }
+            try { fillFrom(JSON.parse(saved)); } catch(e) { clearInputs(); applyProfileToMain(); }
         } else {
             clearInputs(); applyProfileToMain();
         }
@@ -1659,9 +1292,7 @@ input::placeholder {
         document.querySelectorAll('input[type=number]').forEach(el => {
             if(el.id !== 'scheduleDays' && el.id !== 'profBaseSalary' && el.id !== 'baseSalary') el.value = '';
         });
-        document.getElementById('extraBonus').value = '';
         document.getElementById('bonusPctSelect').value = "10";
-        document.getElementById('presencePctSelect').value = "5";
         const monthVal = document.getElementById('monthSelect').value;
         if(monthVal) document.getElementById('scheduleDays').value = stateDaysFor(monthVal);
     }
@@ -1684,17 +1315,63 @@ input::placeholder {
 
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
-        const year = parseInt(currentMonthVal.split('-')[0]);
-        const cur = {
-            baseSalary: Math.max(0, parseFloat(document.getElementById('baseSalary').value) || Number(userProfile.baseSalary)),
-            minWage: getMinWage(year)
-        };
+        const [yStr, mStr] = currentMonthVal.split('-');
+        let cYear = parseInt(yStr); let cMonth = parseInt(mStr);
+
+        let targetMonths = [];
+        for (let i = 1; i <= 3; i++) {
+            let pMonth = cMonth - i; let pYear = cYear;
+            if (pMonth <= 0) { pMonth += 12; pYear -= 1; }
+            targetMonths.push(pYear + "-" + String(pMonth).padStart(2, '0'));
+        }
+
+        let totalValIncome = 0; let totalActualWorkedHours = 0;
+        const curBaseSalary = Math.max(0, parseFloat(document.getElementById('baseSalary').value) || userProfile.baseSalary);
+        const curNormHours = getNormHours(cYear, cMonth - 1);
+        const curMinWage = getMinWage(cYear);
+
         try {
             const docs = await getCachedMonths();
-            const records = {};
-            docs.forEach(d => { records[d.id] = d.data; });
-            return computeDailyUrlopBonus(records, currentMonthVal, cur);
-        } catch (e) { return 0; }
+            docs.forEach(docObj => {
+                if (targetMonths.includes(docObj.id)) {
+                    const data = docObj.data;
+                    const pYear = parseInt(docObj.id.split('-')[0]); const pMonthIdx = parseInt(docObj.id.split('-')[1]) - 1;
+                    const stDays = getNormHours(pYear, pMonthIdx) / 8;
+                    const pastSched = parseInt(data.scheduleDays) || stDays;
+                    const pastBase = Math.max(0, parseFloat(data.baseSalary) || curBaseSalary);
+                    let pastPct = parseFloat(data.bonusPctSelect); if (isNaN(pastPct)) pastPct = 10;
+
+                    const mShifts = Math.max(0, parseInt(data.morningShifts) || 0);
+                    const aShifts = Math.max(0, parseInt(data.afternoonShifts) || 0);
+                    const nShifts = Math.max(0, parseInt(data.nightShifts) || 0);
+                    const overMShifts = Math.max(0, parseInt(data.overtimeMorningShifts) || 0);
+                    const overNShifts = Math.max(0, parseInt(data.overtimeNightShifts) || 0);
+                    const wknd = Math.max(0, parseInt(data.weekendDays) || 0);
+                    const rawOver = Math.max(0, parseFloat(data.overtimeDays) || 0);
+                    const l4m = Math.max(0, parseInt(data.l4MissedShifts) || 0);
+                    const vac = Math.max(0, parseInt(data.vacationDays) || 0);
+                    const blood = Math.max(0, parseInt(data.bloodDonationDays) || 0);
+
+                    let regWorkedShifts = mShifts + aShifts + nShifts;
+                    if (!data.morningShifts && !data.afternoonShifts && !data.nightShifts) regWorkedShifts = Math.max(0, pastSched - vac - blood - l4m);
+
+                    const overDays = Math.min(rawOver, regWorkedShifts);
+                    totalActualWorkedHours += (regWorkedShifts + overDays) * 8;
+
+                    const pastBonusVal = pastSched > 0 ? (pastBase * (pastPct / 100)) / pastSched * regWorkedShifts : 0; 
+                    const valOvertimePay = overDays * ((curBaseSalary / (curNormHours / 8)) * 2); 
+                    const valNightTariff = (curMinWage / curNormHours) * 0.20;
+                    const totalM = mShifts + overMShifts; const totalN = nShifts + overNShifts;
+                    const valNightPay = (totalM * (10/60) * valNightTariff) + (totalN * 8 * valNightTariff) + (totalN * CONFIG.NIGHT_SHIFT_BONUS);
+                    const valWkndPay = wknd * CONFIG.WEEKEND_DAY_RATE;
+
+                    totalValIncome += (pastBonusVal + valNightPay + valWkndPay + valOvertimePay);
+                }
+            });
+        } catch (e) {}
+
+        if (totalActualWorkedHours === 0) return 0;
+        return (totalValIncome / totalActualWorkedHours) * 8;
     }
 
     async function autoFillUrlopBonus(monthVal) {
@@ -1725,12 +1402,6 @@ input::placeholder {
                     const pBase = Math.max(0, parseFloat(data.baseSalary) || userProfile.baseSalary);
                     let pPct = parseFloat(data.bonusPctSelect); if (isNaN(pPct)) pPct = 10;
                     
-                    let pPPct = parseFloat(data.presencePctSelect);
-                    if (isNaN(pPPct)) {
-                        const l4 = parseInt(data.l4Days) || 0;
-                        pPPct = l4 > 0 ? (l4 <= 2 ? 2.5 : 0) : 5;
-                    }
-                    
                     const mS = Math.max(0, parseInt(data.morningShifts) || 0);
                     const aS = Math.max(0, parseInt(data.afternoonShifts) || 0);
                     const nS = Math.max(0, parseInt(data.nightShifts) || 0);
@@ -1751,7 +1422,7 @@ input::placeholder {
                         isUnder26: userProfile.under26 === 'yes', 
                         ppkActive: userProfile.ppk === 'yes', 
                         insuranceActive: userProfile.insurance === 'yes', 
-                        qualityBonusPct: pPct, presenceBonusPct: pPPct, year: pYear 
+                        qualityBonusPct: pPct, presenceBonusPctOverride: 0, year: pYear 
                     });
 
                     totalNetBase += (res.gross * (1 - CONFIG.ZUS)); monthsFound++;
@@ -1788,7 +1459,6 @@ input::placeholder {
             bloodDonationDays: isPremium ? Math.max(0, parseInt(document.getElementById('bloodDonationDays').value) || 0) : 0,
             l4Days: isPremium ? Math.max(0, parseInt(document.getElementById('l4Days').value) || 0) : 0,
             qualityBonusPct: parseFloat(document.getElementById('bonusPctSelect').value) || 0,
-            presenceBonusPct: parseFloat(document.getElementById('presencePctSelect').value) || 0,
             
             isUnder26: userProfile.under26 === 'yes',
             ppkActive: userProfile.ppk === 'yes',
@@ -1805,7 +1475,7 @@ input::placeholder {
 
         const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * 8)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60); const nMins = totalNightMinutes % 60;
-        document.getElementById('infoNightHours').innerText = nHours > 0 ? `${nHours} ${dict[currentLang].hoursShort} ${nMins} ${dict[currentLang].minsShort}` : `${nMins} ${dict[currentLang].minsShort}`;
+        document.getElementById('infoNightHours').innerText = nHours > 0 ? `${nHours} ${dict[currentLang].hoursShort} ${nMins} \( {dict[currentLang].minsShort}` : ` \){nMins} ${dict[currentLang].minsShort}`;
 
         document.getElementById('infoPresencePct').innerText = res.presenceBonusPct + '%';
         document.getElementById('infoQualityPct').innerText = res.qualityBonusPct + '%';
@@ -1835,11 +1505,15 @@ input::placeholder {
 
     function setFormatSum(id, val, isHighlight = false) {
         const el = document.getElementById(id);
-        if (el) { el.innerText = formatPLN(val); el.style.color = val === 0 ? 'var(--text-muted)' : (isHighlight ? 'var(--success)' : 'var(--text-main)'); }
+        if (el) { 
+            el.innerText = formatPLN(val); 
+            el.style.color = val === 0 ? 'var(--text-secondary)' : (isHighlight ? 'var(--success)' : 'var(--text)'); 
+        }
     }
 
     function updateUI(g, n) {
-        document.getElementById('grossResult').innerText = formatPLN(g); document.getElementById('netResult').innerText = formatPLN(n);
+        document.getElementById('grossResult').innerText = formatPLN(g); 
+        document.getElementById('netResult').innerText = formatPLN(n);
     }
 
     const appBody = document.getElementById('app-body');
@@ -1861,15 +1535,6 @@ input::placeholder {
 
     appBody.addEventListener('input', e => {
         const id = e.target.id;
-        
-        if (id === 'l4Days') {
-            const l4 = parseInt(e.target.value) || 0;
-            const pSel = document.getElementById('presencePctSelect');
-            if (l4 === 0) pSel.value = "5";
-            else if (l4 <= 2) pSel.value = "2.5";
-            else pSel.value = "0";
-        }
-
         if (id === 'monthSelect' || ['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(id)) return;
         if (SCHED_IDS.includes(id)) syncSchedule();
         calculateSalary(); saveLocalGuestData();
@@ -1892,17 +1557,6 @@ input::placeholder {
     setTheme(localStorage.getItem('theme') || 'light');
     window.setLang(currentLang);
     loadProfile();
-</script>
-
-<!-- Реєстрація Service Worker для PWA -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker зареєстровано!', reg))
-                .catch(err => console.error('Помилка реєстрації SW:', err));
-        });
-    }
 </script>
 </body>
 </html>
