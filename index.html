@@ -474,7 +474,6 @@
     
     const getMinWage = (year) => CONFIG.MIN_WAGES[year] || 4806;
 
-    // ---- PART1 START ----
     const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
 
     function shiftMonthId(monthVal, delta) {
@@ -541,7 +540,6 @@
             .map(id => buildVacationEntry(id, records[id], cur.baseSalary));
         return r2(vacationHourlyRate(entries, cur) * 8);
     }
-    // ---- PART1 END ----
 
     function compute(inputs) {
         const {
@@ -562,7 +560,7 @@
             l4Pay = l4DailyRate * 0.80 * l4Days; 
         }
 
-        const qualityBonusPct = inputs.qualityBonusPct || 0;
+        const qualityBonusPct = inputs.qualityBonusPct !== undefined ? inputs.qualityBonusPct : 10;
         const presenceBonusAmount = (schedDays > 0) ? ((baseSalary * (presenceBonusPct / 100)) / schedDays * regWorkedDays) : 0;
         const qualityBonusAmount = (schedDays > 0) ? ((baseSalary * (qualityBonusPct / 100)) / schedDays * regWorkedDays) : 0;
         const bonusAmount = presenceBonusAmount + qualityBonusAmount;
@@ -717,24 +715,59 @@
     let userProfile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
     window.cachedL4DailyRate = null;
 
-    /* ПРОФІЛЬ ТА МЕНЮ */
-    function loadProfile() {
-        const saved = localStorage.getItem('user_profile');
-        if (saved) {
-            try { userProfile = { ...userProfile, ...JSON.parse(saved) }; } catch(e) {}
+    /* ПРОФІЛЬ ТА МЕНЮ (Персоналізовано під кожен акаунт) */
+    async function loadProfile() {
+        const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
+        const localKey = `user_profile_${uid}`;
+        
+        userProfile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
+
+        if (auth.currentUser) {
+            try {
+                const profSnap = await getDoc(doc(db, "users", uid, "profile", "userProfile"));
+                if (profSnap.exists()) {
+                    userProfile = { ...userProfile, ...profSnap.data() };
+                    localStorage.setItem(localKey, JSON.stringify(userProfile));
+                } else {
+                    const savedLocal = localStorage.getItem(localKey);
+                    if (savedLocal) {
+                        try { userProfile = { ...userProfile, ...JSON.parse(savedLocal) }; } catch(e) {}
+                    }
+                }
+            } catch(e) {
+                const savedLocal = localStorage.getItem(localKey);
+                if (savedLocal) {
+                    try { userProfile = { ...userProfile, ...JSON.parse(savedLocal) }; } catch(e) {}
+                }
+            }
+        } else {
+            const savedLocal = localStorage.getItem(localKey);
+            if (savedLocal) {
+                try { userProfile = { ...userProfile, ...JSON.parse(savedLocal) }; } catch(e) {}
+            }
         }
+
         document.getElementById('profBaseSalary').value = userProfile.baseSalary;
         document.getElementById('profUnder26').value = userProfile.under26;
         document.getElementById('profPpk').value = userProfile.ppk;
         document.getElementById('profIns').value = userProfile.insurance;
     }
 
-    document.getElementById('btn-save-profile').addEventListener('click', () => {
-        userProfile.baseSalary = document.getElementById('profBaseSalary').value || 5750;
+    document.getElementById('btn-save-profile').addEventListener('click', async () => {
+        userProfile.baseSalary = parseFloat(document.getElementById('profBaseSalary').value) || 5750;
         userProfile.under26 = document.getElementById('profUnder26').value;
         userProfile.ppk = document.getElementById('profPpk').value;
         userProfile.insurance = document.getElementById('profIns').value;
-        localStorage.setItem('user_profile', JSON.stringify(userProfile));
+        
+        const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
+        const localKey = `user_profile_${uid}`;
+        localStorage.setItem(localKey, JSON.stringify(userProfile));
+
+        if (auth.currentUser) {
+            try {
+                await setDoc(doc(db, "users", uid, "profile", "userProfile"), userProfile, { merge: true });
+            } catch(e) {}
+        }
         
         const monthVal = document.getElementById('monthSelect').value;
         if (!localStorage.getItem(`guest_month_${monthVal}`) && (!auth.currentUser || !monthsCollectionCache?.some(d => d.id === monthVal))) {
@@ -889,7 +922,7 @@
         const infoSyncContainer = document.getElementById('info-sync-container');
         if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
 
-        loadProfile();
+        await loadProfile();
 
         if (user) {
             document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -901,11 +934,16 @@
     });
 
     function fillFrom(d) {
+        clearInputs(); // Повне очищення форми перед заповненням
         document.querySelectorAll('input, select').forEach(el => {
             if (!['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(el.id) && d[el.id] !== undefined) {
                 el.value = d[el.id];
             }
         });
+        
+        if (d.bonusPctSelect === undefined) {
+            document.getElementById('bonusPctSelect').value = "10";
+        }
         if (d.presencePctSelect === undefined) {
             const l4 = parseInt(d.l4Days) || 0;
             document.getElementById('presencePctSelect').value = l4 > 0 ? (l4 <= 2 ? "2.5" : "0") : "5";
@@ -960,6 +998,7 @@
             if (snap.exists()) {
                 fillFrom(snap.data());
                 if (!snap.data().scheduleDays) document.getElementById('scheduleDays').value = defaultSched;
+                if (!snap.data().baseSalary) document.getElementById('baseSalary').value = userProfile.baseSalary;
             } else {
                 clearInputs(); applyProfileToMain();
             }
@@ -991,7 +1030,11 @@
         
         const saved = localStorage.getItem(`guest_month_${monthVal}`);
         if (saved) {
-            try { fillFrom(JSON.parse(saved)); } catch(e) { clearInputs(); applyProfileToMain(); }
+            try { 
+                const d = JSON.parse(saved);
+                fillFrom(d);
+                if (!d.baseSalary) document.getElementById('baseSalary').value = userProfile.baseSalary;
+            } catch(e) { clearInputs(); applyProfileToMain(); }
         } else {
             clearInputs(); applyProfileToMain();
         }
@@ -1002,6 +1045,7 @@
         document.querySelectorAll('input[type=number]').forEach(el => {
             if(el.id !== 'scheduleDays' && el.id !== 'profBaseSalary' && el.id !== 'baseSalary') el.value = '';
         });
+        document.getElementById('extraBonus').value = '';
         document.getElementById('bonusPctSelect').value = "10";
         document.getElementById('presencePctSelect').value = "5";
         const monthVal = document.getElementById('monthSelect').value;
