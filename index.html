@@ -3,774 +3,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Калькулятор ЗП</title>
+    <title>ЗП Калькулятор</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-soft: rgba(37, 99, 235, 0.12);
-            --success: #059669;
-            --success-soft: rgba(5, 150, 105, 0.12);
-            --bg: #f1f5f9;
-            --surface: #ffffff;
-            --surface-2: #f8fafc;
-            --text: #0f172a;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --radius: 16px;
-            --radius-sm: 12px;
-            --shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
-            --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --primary: #3b82f6; /* Нейтральний сучасний синій */
+            --primary-bg: #eff6ff;
+            --bg-color: #f3f4f6;
+            --panel-bg: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --success: #10b981;
+            --premium-bg: #fef3c7;
+            --premium-border: #f59e0b;
+            --profile-bg: #f8fafc;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         [data-theme="dark"] {
-            --primary: #3b82f6;
-            --primary-soft: rgba(59, 130, 246, 0.18);
-            --success: #10b981;
-            --success-soft: rgba(16, 185, 129, 0.18);
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --surface-2: #334155;
-            --text: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border: #334155;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+            --primary: #60a5fa;
+            --primary-bg: #1e3a8a;
+            --bg-color: #111827;
+            --panel-bg: #1f2937;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border-color: #374151;
+            --success: #34d399;
+            --premium-bg: #422006;
+            --premium-border: #d97706;
+            --profile-bg: #111827;
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 12px;
-            min-height: 100dvh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            transition: background 0.25s, color 0.25s;
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; 
+            display: flex; justify-content: center; align-items: flex-start; 
+            min-height: 100dvh; transition: background 0.3s, color 0.3s;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .app {
-            width: 100%;
-            max-width: 440px;
-            background: var(--surface);
-            border-radius: 24px;
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            position: relative;
-            margin: 8px 0 24px;
+        .calculator-wrapper { 
+            width: 100%; max-width: 480px; background: var(--bg-color); 
+            box-sizing: border-box; position: relative; overflow: hidden; 
+            min-height: 100dvh; display: flex; flex-direction: column;
         }
 
-        /* ===== SIDE MENU ===== */
+        .pages-track {
+            display: flex; width: 200%; flex-grow: 1;
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .calculator-page {
+            width: 50%; padding: 16px; box-sizing: border-box;
+            flex-shrink: 0; overflow-y: auto; padding-bottom: 100px; /* Місце для sticky footer */
+        }
+
+        /* Top Header */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 4px 0;}
+        .menu-btn, .close-menu { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-main); padding: 8px; margin-left: -8px; }
+        h2 { margin: 0; font-size: 22px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px;}
+        .premium-badge { background: var(--premium-border); color: #fff; font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: bold; display: none; text-transform: uppercase; letter-spacing: 1px;}
+        .is-logged-in .premium-badge { display: inline-block; }
+
+        /* Cards Style */
+        .ui-card {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 4px 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ui-card-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 16px 0 8px 4px;
+        }
+
+        .form-group { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px 0; border-bottom: 1px solid var(--border-color);
+        }
+        .form-group:last-child { border-bottom: none; }
+        
+        label { font-size: 15px; font-weight: 500; color: var(--text-main); flex-grow: 1; cursor: default; user-select: none; }
+        
+        .sub-group { background: var(--primary-bg); padding: 8px 12px; margin: 4px -16px; border-bottom: 1px solid var(--border-color); }
+        .sub-group label { font-size: 14px; font-weight: 500; }
+        
+        .premium-field { display: none; }
+        .is-logged-in .premium-field { display: flex; }
+
+        /* Inputs */
+        input, select { 
+            width: 100px; padding: 8px 12px; border: 1px solid var(--border-color); 
+            border-radius: 8px; font-size: 16px; text-align: right; 
+            background: var(--bg-color); color: var(--text-main);
+            font-weight: 600; box-sizing: border-box; appearance: none; transition: border 0.2s;
+        }
+        
+        select {
+            text-align-last: right; padding-right: 28px;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%0-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 10px auto;
+        }
+        
+        input:focus, select:focus { border-color: var(--primary); outline: none; background: var(--panel-bg); }
+        input::placeholder { color: var(--text-muted); font-weight: 400; }
+        input[readonly] { opacity: 0.7; }
+
+        /* Schedule Badge */
+        .schedule-badge {
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 6px 10px; display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .is-logged-in .schedule-badge { display: flex; }
+        .schedule-badge span { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .schedule-badge input {
+            width: 40px; padding: 0; background: transparent; border: none;
+            font-size: 16px; font-weight: 800; color: var(--primary); text-align: center; box-shadow: none;
+        }
+
+        /* Sticky Results Panel */
+        .sticky-results {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px; background: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 16px; box-sizing: border-box; z-index: 5;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            display: flex; gap: 12px;
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
+        .result-box { flex: 1; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid; }
+        .result-box.brutto { background: var(--bg-color); border-color: var(--border-color); }
+        .result-box.netto { background: rgba(16, 185, 129, 0.1); border-color: var(--success); }
+        .result-title { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; }
+        .result-value { font-size: 18px; font-weight: 800; }
+        .brutto .result-value { color: var(--text-main); }
+        .netto .result-value { color: var(--success); }
+
+        /* Side Menu */
         .side-menu {
-            position: absolute;
-            inset: 0;
-            width: min(300px, 85%);
-            background: var(--surface);
-            z-index: 50;
-            transform: translateX(-105%);
-            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 8px 0 32px rgba(0,0,0,0.12);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            position: absolute; top: 0; left: 0; width: 300px; height: 100%;
+            background: var(--panel-bg); box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+            z-index: 20; display: flex; flex-direction: column;
+            padding: 24px; box-sizing: border-box; transition: transform 0.3s ease;
+            transform: translateX(-100%); overflow-y: auto;
         }
         .side-menu.open { transform: translateX(0); }
+        .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .menu-item { margin-bottom: 16px; }
+        .menu-item label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; display: block; }
 
-        .menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 20px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .menu-header span { font-size: 17px; font-weight: 700; }
-        .icon-btn {
-            background: none;
-            border: none;
-            font-size: 22px;
-            color: var(--text);
-            cursor: pointer;
-            padding: 6px;
-            line-height: 1;
-            border-radius: 8px;
-        }
-        .icon-btn:active { background: var(--surface-2); }
+        .profile-section, .cloud-section { background: var(--bg-color); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .profile-section input, .profile-section select, .cloud-section input { width: 100%; margin-bottom: 12px; text-align: left; background: var(--panel-bg); }
+        .profile-section label { font-size: 13px; margin-bottom: 6px; display: block;}
 
-        .menu-body { padding: 16px 20px 32px; flex: 1; }
+        .action-btn { width: 100%; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+        .action-btn:active { opacity: 0.8; }
+        .btn-sync { background: var(--success); }
+        .btn-auth-action { background: var(--primary); }
+        .btn-logout { background: var(--border-color); color: var(--text-main); }
+        .btn-profile { background: var(--text-main); }
 
-        .profile-card {
-            background: var(--primary-soft);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        .profile-card .section-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--primary);
-            margin-bottom: 14px;
-            text-align: center;
-        }
-        .profile-card label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-        .profile-card input,
-        .profile-card select {
-            width: 100%;
-            padding: 10px 12px;
-            font-size: 15px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--surface);
-            color: var(--text);
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
+        /* Page 2 Details */
+        .info-card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+        .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; padding: 8px 0; border-bottom: 1px dashed var(--border-color); }
+        .info-row:last-child { border-bottom: none; }
+        .total-row { font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: 8px; padding-top: 12px; border-top: 2px solid var(--border-color); }
 
-        .menu-group { margin-bottom: 18px; }
-        .menu-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-        .menu-group select {
-            width: 100%;
-            padding: 11px 14px;
-            font-size: 15px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--surface-2);
-            color: var(--text);
-            font-weight: 500;
-            appearance: none;
-        }
-
-        .cloud-card {
-            background: var(--surface-2);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            border: 1px solid var(--border);
-        }
-        .cloud-card .section-title {
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: var(--text);
-        }
-        .cloud-card input {
-            width: 100%;
-            padding: 11px 12px;
-            font-size: 14px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--surface);
-            color: var(--text);
-            margin-bottom: 8px;
-            text-align: left;
-        }
-
-        .btn {
-            width: 100%;
-            border: none;
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.15s, transform 0.1s;
-            color: #fff;
-        }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-primary { background: var(--primary); }
-        .btn-success { background: var(--success); }
-        .btn-secondary { background: var(--text-secondary); }
-        .btn-dark { background: var(--text); }
-        .btn-blue { background: #0284c7; }
-        .btn + .btn { margin-top: 8px; }
-
-        /* ===== PAGES ===== */
-        .pages-track {
-            display: flex;
-            width: 200%;
-            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .page {
-            width: 50%;
-            padding: 20px 18px 28px;
-            flex-shrink: 0;
-            overflow-y: auto;
-            max-height: 92dvh;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 800;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .pro-badge {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #fff;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 3px 7px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
-            display: none;
-        }
-        .is-logged-in .pro-badge { display: inline-block; }
-
-        .sched-pill {
-            background: var(--primary-soft);
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            padding: 6px 10px;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            min-width: 52px;
-        }
-        .is-logged-in .sched-pill { display: flex; }
-        .sched-pill span {
-            font-size: 9px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            letter-spacing: 0.3px;
-        }
-        .sched-pill input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            font-size: 17px;
-            font-weight: 800;
-            color: var(--primary);
-            text-align: center;
-            padding: 0;
-            outline: none;
-        }
-
-        /* ===== CARDS & FIELDS ===== */
-        .card {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            margin-bottom: 14px;
-        }
-        .card-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-secondary);
-            margin-bottom: 14px;
-        }
-
-        .field {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .field:last-child { margin-bottom: 0; }
-        .field label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
-            flex: 1;
-            padding-right: 10px;
-            user-select: none;
-        }
-        .field input,
-        .field select {
-            width: 110px;
-            min-width: 110px;
-            padding: 10px 8px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            text-align: center;
-            background: var(--surface);
-            color: var(--text);
-            appearance: none;
-        }
-        .field select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            padding-right: 28px;
-        }
-        .field input:focus,
-        .field select:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px var(--primary-soft);
-        }
-        .field input[readonly] { opacity: 0.75; }
-
-        .sub-fields {
-            margin-top: 4px;
-            padding-left: 12px;
-            border-left: 3px solid var(--primary);
-        }
-        .sub-fields .field label { font-size: 13px; font-weight: 600; }
-        .sub-fields input { color: var(--primary); }
-
-        .premium-only { display: none; }
-        .is-logged-in .premium-only { display: flex; }
-        .is-logged-in .premium-block { display: block; }
-
-        /* ===== RESULTS ===== */
-        .results {
-            display: grid;
-            grid-template-columns: 1fr 1.4fr;
-            gap: 12px;
-            margin-top: 6px;
-        }
-        .result-card {
-            border-radius: var(--radius);
-            padding: 18px 14px;
-            text-align: center;
-        }
-        .result-card.brutto {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-        }
-        .result-card.netto {
-            background: var(--success-soft);
-            border: 1px solid var(--success);
-        }
-        .result-label {
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-        .result-card.netto .result-label { color: var(--success); }
-        .result-value {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text);
-            letter-spacing: -0.3px;
-        }
-        .result-card.netto .result-value {
-            font-size: 22px;
-            color: var(--success);
-        }
-
-        .swipe-hint {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 18px;
-            opacity: 0.8;
-        }
-
-        /* ===== DETAILS PAGE ===== */
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-size: 13.5px;
-            margin-bottom: 10px;
-            gap: 8px;
-        }
-        .detail-row:last-child { margin-bottom: 0; }
-        .detail-row span:first-child { color: var(--text-secondary); flex: 1; }
-        .detail-row strong { font-weight: 700; text-align: right; white-space: nowrap; }
-        .detail-total {
-            margin-top: 14px;
-            padding-top: 14px;
-            border-top: 2px dashed var(--border);
-            font-size: 15px;
-            font-weight: 800;
-        }
-        .detail-total span:first-child { color: var(--text); }
-        .muted { color: var(--text-secondary) !important; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .stat-item {
-            background: var(--surface);
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-        .stat-item .stat-val {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text);
-        }
-        .stat-item .stat-lbl {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-            font-weight: 500;
-        }
-
-        /* ===== TOAST ===== */
-        .toast {
-            position: fixed;
-            bottom: calc(24px + var(--safe-bottom));
-            left: 50%;
-            transform: translateX(-50%) translateY(120px);
-            background: #1e293b;
-            color: #fff;
-            padding: 12px 22px;
-            border-radius: 24px;
-            font-size: 13px;
-            font-weight: 600;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-            z-index: 1000;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            max-width: 90%;
-            text-align: center;
-        }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
+        .swipe-hint { text-align: center; margin: 20px 0; font-size: 13px; color: var(--text-muted); font-weight: 500; }
         .hidden { display: none !important; }
-
-        /* Mobile polish */
-        @media (max-width: 380px) {
-            .page { padding: 16px 14px 24px; }
-            .field input, .field select { width: 100px; min-width: 100px; font-size: 15px; }
-            .result-card.netto .result-value { font-size: 20px; }
-            .result-value { font-size: 16px; }
+        
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: var(--text-main); color: var(--panel-bg); padding: 12px 24px; border-radius: 30px;
+            font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
 </head>
 <body id="app-body">
 
 <div id="toast" class="toast"></div>
 
-<div class="app">
-    <!-- SIDE MENU -->
+<div class="calculator-wrapper">
+    <!-- Side Menu -->
     <div id="sideMenu" class="side-menu">
         <div class="menu-header">
-            <span data-i18n="menuTitle">Меню</span>
-            <button id="btn-close-menu" class="icon-btn" onclick="toggleMenu()" aria-label="Close">✕</button>
+            <span data-i18n="menuTitle" style="font-size: 18px; font-weight: 800;">Меню</span>
+            <button id="btn-close-menu" class="close-menu" onclick="toggleMenu()">✕</button>
         </div>
-        <div class="menu-body">
-            <div class="profile-card">
-                <div class="section-title" data-i18n="profHeader">👤 Мій профіль</div>
-                <label data-i18n="profBase">Стандартна ставка (zł)</label>
-                <input type="number" inputmode="decimal" id="profBaseSalary" placeholder="5750">
-                <label data-i18n="profAge">Вік до 26 років</label>
-                <select id="profUnder26">
-                    <option value="no" data-i18n="no">Ні</option>
-                    <option value="yes" data-i18n="yes">Так</option>
-                </select>
-                <label data-i18n="profPpk">Участь у PPK</label>
-                <select id="profPpk">
-                    <option value="no" data-i18n="no">Ні</option>
-                    <option value="yes" data-i18n="yes">Так</option>
-                </select>
-                <label data-i18n="profIns">Додаткове страхування</label>
-                <select id="profIns">
-                    <option value="yes" data-i18n="yes">Так</option>
-                    <option value="no" data-i18n="no">Ні</option>
-                </select>
-                <button id="btn-save-profile" class="btn btn-blue" data-i18n="btnSaveProfile">Зберегти профіль 💾</button>
-            </div>
 
-            <div class="menu-group">
-                <label data-i18n="menuLang">Мова</label>
-                <select id="langSelect" onchange="setLang(this.value)">
-                    <option value="uk">Українська</option>
-                    <option value="pl">Polski</option>
-                </select>
-            </div>
-            <div class="menu-group">
-                <label data-i18n="menuTheme">Тема</label>
-                <select id="themeSelect" onchange="setTheme(this.value)">
-                    <option value="light" data-i18n="optThemeLight">Світла</option>
-                    <option value="dark" data-i18n="optThemeDark">Темна</option>
-                </select>
-            </div>
+        <div class="profile-section">
+            <label style="text-align: center; text-transform: uppercase; font-weight: 700; margin-bottom: 16px;" data-i18n="profHeader">👤 Мій профіль</label>
+            <label data-i18n="profBase">Стандартна ставка (zł)</label>
+            <input type="number" inputmode="decimal" id="profBaseSalary">
+            <label data-i18n="profAge">Вік до 26 років</label>
+            <select id="profUnder26"><option value="no" data-i18n="no">Ні</option><option value="yes" data-i18n="yes">Так</option></select>
+            <label data-i18n="profPpk">Участь у PPK</label>
+            <select id="profPpk"><option value="no" data-i18n="no">Ні</option><option value="yes" data-i18n="yes">Так</option></select>
+            <label data-i18n="profIns">Додаткове страхування</label>
+            <select id="profIns"><option value="yes" data-i18n="yes">Так</option><option value="no" data-i18n="no">Ні</option></select>
+            <button id="btn-save-profile" class="action-btn btn-profile" data-i18n="btnSaveProfile">Зберегти профіль</button>
+        </div>
 
-            <div class="cloud-card">
-                <div class="section-title" data-i18n="cloudHeader">Акаунт & Хмара</div>
-                <div id="auth-container">
-                    <input type="email" id="email" placeholder="Email">
-                    <input type="password" id="password" data-i18n-ph="pwdPlaceholder" placeholder="Пароль">
-                    <button id="btn-login" class="btn btn-primary" data-i18n="btnLogin">Увійти (PRO)</button>
-                    <button id="btn-register" class="btn btn-dark" data-i18n="btnRegister">Реєстрація</button>
-                </div>
-                <div id="sync-container" class="hidden">
-                    <span id="user-email-display" style="font-size:12px;display:block;margin-bottom:10px;word-break:break-all;font-weight:600;"></span>
-                    <button id="btn-sync-up" class="btn btn-success" data-i18n="btnSaveCloud">Зберегти місяць ☁️</button>
-                    <button id="btn-sync-down" class="btn btn-blue" data-i18n="btnLoadCloud">Завантажити місяць 📥</button>
-                    <button id="btn-logout" class="btn btn-secondary" data-i18n="btnLogout">Вийти (Гостьовий режим)</button>
-                </div>
+        <div class="menu-item">
+            <label data-i18n="menuLang">Мова</label>
+            <select id="langSelect" style="width: 100%; background: var(--bg-color);" onchange="setLang(this.value)">
+                <option value="uk">Українська</option><option value="pl">Polski</option>
+            </select>
+        </div>
+        <div class="menu-item">
+            <label data-i18n="menuTheme">Тема</label>
+            <select id="themeSelect" style="width: 100%; background: var(--bg-color);" onchange="setTheme(this.value)">
+                <option value="light" data-i18n="optThemeLight">Світла</option><option value="dark" data-i18n="optThemeDark">Темна</option>
+            </select>
+        </div>
+
+        <div class="cloud-section">
+            <label style="font-weight: 700; margin-bottom: 12px;" data-i18n="cloudHeader">Акаунт & Хмара</label>
+            <div id="auth-container">
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" data-i18n-ph="pwdPlaceholder" placeholder="Пароль">
+                <button id="btn-login" class="action-btn btn-auth-action" data-i18n="btnLogin">Увійти (PRO)</button>
+                <button id="btn-register" class="action-btn" style="background: var(--text-main);" data-i18n="btnRegister">Реєстрація</button>
+            </div>
+            <div id="sync-container" class="hidden">
+                <span id="user-email-display" style="font-size: 12px; margin-bottom: 12px; display: block; font-weight: 600; color: var(--primary);"></span>
+                <button id="btn-sync-up" class="action-btn btn-sync" data-i18n="btnSaveCloud">Зберегти місяць</button>
+                <button id="btn-sync-down" class="action-btn btn-auth-action" data-i18n="btnLoadCloud">Завантажити</button>
+                <button id="btn-logout" class="action-btn btn-logout" data-i18n="btnLogout">Вийти</button>
             </div>
         </div>
     </div>
 
+    <!-- Pages Track -->
     <div class="pages-track" id="pagesTrack">
-        <!-- PAGE 1: INPUTS -->
-        <div class="page" id="page1">
-            <div class="header">
-                <button id="btn-open-menu" class="icon-btn" onclick="toggleMenu()">☰</button>
-                <h1>
-                    <span data-i18n="title">Калькулятор ЗП</span>
-                    <span class="pro-badge">PRO</span>
-                </h1>
-                <div class="sched-pill" id="scheduleBadgeContainer">
+        
+        <!-- PAGE 1: Розрахунок -->
+        <div class="calculator-page" id="page1">
+            <div class="header-row">
+                <button id="btn-open-menu" class="menu-btn" onclick="toggleMenu()">☰</button>
+                <h2 style="margin-right: auto;"><span data-i18n="title">Калькулятор</span> <span class="premium-badge">PRO</span></h2>
+                <div class="schedule-badge" id="scheduleBadgeContainer">
                     <span data-i18n="schedDays">Графік</span>
-                    <input type="number" inputmode="decimal" id="scheduleDays" placeholder="0" min="0">
+                    <input type="number" inputmode="decimal" id="scheduleDays">
                 </div>
             </div>
-
-            <!-- Main inputs -->
-            <div class="card">
-                <div class="field">
+            
+            <!-- Card 1: Базові налаштування -->
+            <div class="ui-card-header" data-i18n="cardParams">Параметри</div>
+            <div class="ui-card">
+                <div class="form-group">
                     <label data-i18n="month">Місяць</label>
                     <select id="monthSelect"></select>
                 </div>
-                <div class="field">
-                    <label data-i18n="base">Загальна ставка (zł)</label>
-                    <input type="number" inputmode="decimal" id="baseSalary" min="0">
+                <div class="form-group">
+                    <label data-i18n="base">Ставка (zł)</label>
+                    <input type="number" inputmode="decimal" id="baseSalary">
                 </div>
-                <div class="field">
-                    <label data-i18n="bonus">Премія за якість (макс 10%)</label>
+                <div class="form-group">
+                    <label data-i18n="bonus">Премія якість</label>
                     <select id="bonusPctSelect">
-                        <option value="10" selected>10%</option>
-                        <option value="5">5%</option>
-                        <option value="0">0%</option>
+                        <option value="10" selected>10%</option><option value="5">5%</option><option value="0">0%</option>
                     </select>
                 </div>
-                <div class="field">
-                    <label data-i18n="extraBonus">Додаткова премія (zł)</label>
-                    <input type="number" inputmode="decimal" id="extraBonus" placeholder="0" min="0">
+                <div class="form-group">
+                    <label data-i18n="extraBonus">Додатково (zł)</label>
+                    <input type="number" inputmode="decimal" id="extraBonus" placeholder="0">
                 </div>
             </div>
 
-            <!-- Shifts -->
-            <div class="card">
-                <div class="card-title">Зміни</div>
-                <div class="field">
-                    <label data-i18n="morning">Ранкові зміни (шт)</label>
-                    <input type="number" inputmode="decimal" id="morningShifts" placeholder="-" min="0">
+            <!-- Card 2: Зміни -->
+            <div class="ui-card-header" data-i18n="cardShifts">Відпрацьовано</div>
+            <div class="ui-card">
+                <div class="form-group">
+                    <label data-i18n="morning">Ранкові (шт)</label>
+                    <input type="number" inputmode="decimal" id="morningShifts" placeholder="0">
                 </div>
-                <div class="field">
-                    <label data-i18n="afternoon">Денні зміни (шт)</label>
-                    <input type="number" inputmode="decimal" id="afternoonShifts" placeholder="-" min="0">
+                <div class="form-group">
+                    <label data-i18n="afternoon">Денні (шт)</label>
+                    <input type="number" inputmode="decimal" id="afternoonShifts" placeholder="0">
                 </div>
-                <div class="field">
-                    <label data-i18n="night">Нічні зміни (шт)</label>
-                    <input type="number" inputmode="decimal" id="nightShifts" placeholder="-" min="0">
+                <div class="form-group">
+                    <label data-i18n="night">Нічні (шт)</label>
+                    <input type="number" inputmode="decimal" id="nightShifts" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="weekend">Вихідні (днів)</label>
+                    <input type="number" inputmode="decimal" id="weekendDays" placeholder="0">
                 </div>
             </div>
 
-            <!-- Extra work -->
-            <div class="card">
-                <div class="card-title">Додатково</div>
-                <div class="field">
-                    <label data-i18n="weekend">Робочі сб / нд (днів)</label>
-                    <input type="number" inputmode="decimal" id="weekendDays" placeholder="-" min="0">
+            <!-- Card 3: Надгодини -->
+            <div class="ui-card-header" data-i18n="cardOvertime">Надгодини</div>
+            <div class="ui-card">
+                <div class="form-group">
+                    <label data-i18n="overtime">Всього (днів)</label>
+                    <input type="number" inputmode="decimal" id="overtimeDays" placeholder="0" step="0.5">
                 </div>
-                <div class="field">
-                    <label data-i18n="overtime">Надгодини (днів)</label>
-                    <input type="number" inputmode="decimal" id="overtimeDays" placeholder="-" min="0" step="0.5">
-                </div>
-                <div id="overtimeSubGroup" class="sub-fields hidden">
-                    <div class="field">
-                        <label data-i18n="overtimeMorning">З них ранкових (змін) ☀️</label>
-                        <input type="number" inputmode="decimal" id="overtimeMorningShifts" placeholder="0" min="0">
+                <div id="overtimeSubGroup" class="hidden">
+                    <div class="form-group sub-group">
+                        <label data-i18n="overtimeMorning">З них ранкових ☀️</label>
+                        <input type="number" inputmode="decimal" id="overtimeMorningShifts" placeholder="0">
                     </div>
-                    <div class="field">
-                        <label data-i18n="overtimeNight">З них нічних (змін) 🌙</label>
-                        <input type="number" inputmode="decimal" id="overtimeNightShifts" placeholder="0" min="0">
+                    <div class="form-group sub-group">
+                        <label data-i18n="overtimeNight">З них нічних 🌙</label>
+                        <input type="number" inputmode="decimal" id="overtimeNightShifts" placeholder="0">
                     </div>
                 </div>
             </div>
 
-            <!-- Premium: vacation / blood / L4 -->
-            <div class="card premium-block" style="display:none;">
-                <div class="card-title">Відпустка / L4 / Кров</div>
-                <div class="field premium-only">
+            <!-- Card 4: Відсутності (PRO) -->
+            <div class="ui-card-header premium-field" data-i18n="cardAbsence">Відсутності</div>
+            <div class="ui-card premium-field" style="flex-direction: column;">
+                <div class="form-group" style="width: 100%;">
                     <label data-i18n="vacationDays">Відпустка (днів)</label>
-                    <input type="number" inputmode="decimal" id="vacationDays" placeholder="0" min="0">
+                    <input type="number" inputmode="decimal" id="vacationDays" placeholder="0">
                 </div>
-                <div class="sub-fields hidden" id="urlopBonusGroup">
-                    <div class="field">
-                        <label data-i18n="urlopBonus">Сер. за 1 дн. відп. (zł) ℹ️</label>
-                        <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00" min="0">
-                    </div>
+                <div class="form-group sub-group hidden" id="urlopBonusGroup" style="width: 100%;">
+                    <label data-i18n="urlopBonus">Сер. за 1 дн. (zł)</label>
+                    <input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00">
                 </div>
-                <div class="field premium-only">
-                    <label data-i18n="bloodDonation">Донація крові (днів)</label>
-                    <input type="number" inputmode="decimal" id="bloodDonationDays" placeholder="0" min="0">
+
+                <div class="form-group" style="width: 100%;">
+                    <label data-i18n="bloodDonation">Донація (днів)</label>
+                    <input type="number" inputmode="decimal" id="bloodDonationDays" placeholder="0">
                 </div>
-                <div class="sub-fields hidden" id="bloodBonusGroup">
-                    <div class="field">
-                        <label data-i18n="bloodBonus">Сер. за 1 дн. донації (zł) ℹ️</label>
-                        <input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" min="0" readonly>
-                    </div>
+                <div class="form-group sub-group hidden" id="bloodBonusGroup" style="width: 100%;">
+                    <label data-i18n="bloodBonus">Сер. за 1 дн. (zł)</label>
+                    <input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" readonly>
                 </div>
-                <div class="field premium-only">
-                    <label data-i18n="l4Days">Лікарняний L4 (календ.)</label>
-                    <input type="number" inputmode="decimal" id="l4Days" placeholder="0" min="0">
+
+                <div class="form-group" style="width: 100%;">
+                    <label data-i18n="l4Days">Лікарняний L4</label>
+                    <input type="number" inputmode="decimal" id="l4Days" placeholder="0">
                 </div>
-                <div class="sub-fields hidden" id="l4MissedGroup">
-                    <div class="field">
-                        <label data-i18n="l4Missed">Пропущено змін (шт) ℹ️</label>
-                        <input type="number" inputmode="decimal" id="l4MissedShifts" placeholder="0" min="0">
-                    </div>
+                <div class="form-group sub-group hidden" id="l4MissedGroup" style="width: 100%;">
+                    <label data-i18n="l4Missed">Пропущено (змін)</label>
+                    <input type="number" inputmode="decimal" id="l4MissedShifts" placeholder="0">
                 </div>
             </div>
 
-            <!-- Results -->
-            <div class="results">
-                <div class="result-card brutto">
-                    <div class="result-label">BRUTTO</div>
-                    <div class="result-value" id="grossResult">0,00 zł</div>
-                </div>
-                <div class="result-card netto">
-                    <div class="result-label">NETTO</div>
-                    <div class="result-value" id="netResult">0,00 zł</div>
-                </div>
-            </div>
-
-            <div class="swipe-hint" data-i18n="swipeHintLeft">← Свайп вліво для деталей</div>
+            <div class="swipe-hint" data-i18n="swipeHintLeft">← Свайп для деталей</div>
         </div>
 
-        <!-- PAGE 2: DETAILS -->
-        <div class="page" id="page2" inert>
-            <div class="header">
-                <button id="btn-back-main" class="icon-btn" onclick="switchPage(1)">←</button>
-                <h1 data-i18n="detailsTitle">Деталі та розрахунок</h1>
+        <!-- PAGE 2: Деталі -->
+        <div class="calculator-page" id="page2" inert>
+            <div class="header-row">
+                <button id="btn-back-main" class="menu-btn" onclick="switchPage(1)">➔</button>
+                <h2 style="margin-right: auto;" data-i18n="detailsTitle">Деталі 📊</h2>
             </div>
-
-            <div class="card">
-                <div class="card-title" data-i18n="breakdownHeader">Деталізація нарахувань</div>
+            
+            <div class="info-card">
+                <div style="font-weight: 700; margin-bottom: 16px; color: var(--primary); text-transform: uppercase; font-size: 13px;" data-i18n="breakdownHeader">Структура нарахувань</div>
                 
-                <div class="detail-row">
-                    <span data-i18n="infoBasePay">Базова ставка (з урахув. L4):</span>
-                    <strong id="infoBasePayVal">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span><span data-i18n="infoPresenceBonus">Премія за присутність</span> (<span id="infoPresencePct">5%</span>):</span>
-                    <strong id="infoPresenceBonusSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span><span data-i18n="infoQualityBonus">Премія за якість</span> (<span id="infoQualityPct">10%</span>):</span>
-                    <strong id="infoQualityBonusSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span data-i18n="infoExtraBonus">Додаткова премія:</span>
-                    <strong id="infoExtraBonusSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span><span data-i18n="infoNightTime">Доплата за нічний час</span> (<span id="infoNightHours">0 год 0 хв</span>):</span>
-                    <strong id="infoNightTimeSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span><span data-i18n="infoNightShift">Доплата за нічну зміну</span> (<span id="infoNightShiftsCount">0</span>):</span>
-                    <strong id="infoNightShiftSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span data-i18n="infoWeekend">Робота у вікенди:</span>
-                    <strong id="infoWeekendSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span data-i18n="infoOvertime">Надгодини:</span>
-                    <span style="text-align:right;">
+                <div class="info-row"><span data-i18n="infoBasePay">База (з урахув. L4):</span> <strong id="infoBasePayVal">0,00 zł</strong></div>
+                <div class="info-row"><span><span data-i18n="infoPresenceBonus">Присутність</span> (<span id="infoPresencePct">5%</span>):</span> <strong id="infoPresenceBonusSum" style="color: var(--success);">0,00 zł</strong></div>
+                <div class="info-row"><span><span data-i18n="infoQualityBonus">Якість</span> (<span id="infoQualityPct">10%</span>):</span> <strong id="infoQualityBonusSum" style="color: var(--success);">0,00 zł</strong></div>
+                <div class="info-row"><span><span data-i18n="infoExtraBonus">Додаткова премія</span>:</span> <strong id="infoExtraBonusSum" style="color: var(--success);">0,00 zł</strong></div>
+                <div class="info-row"><span><span data-i18n="infoNightTime">Нічні (час)</span> (<span id="infoNightHours">0г</span>):</span> <strong id="infoNightTimeSum">0,00 zł</strong></div>
+                <div class="info-row"><span><span data-i18n="infoNightShift">Нічні (зміни)</span> (<span id="infoNightShiftsCount">0</span>):</span> <strong id="infoNightShiftSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoWeekend">Вікенди:</span> <strong id="infoWeekendSum">0,00 zł</strong></div>
+                
+                <div class="info-row" style="flex-wrap: wrap;">
+                    <span data-i18n="infoOvertime">Надгодини:</span> 
+                    <div style="text-align: right; width: 100%;">
                         <strong id="infoOvertimeSum">0,00 zł</strong>
-                        <span style="font-size:11px;color:var(--text-secondary);margin-left:4px;">
-                            (<span data-i18n="lblNettoShort">нетто</span>: <strong id="infoOvertimeNetSum">0,00 zł</strong>
-                        </span>
-                    </span>
-                </div>
-                <div class="detail-row">
-                    <span data-i18n="infoVacation">Оплата відпустки:</span>
-                    <strong id="infoVacationSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span data-i18n="infoBlood">Оплата донації крові:</span>
-                    <strong id="infoBloodSum">0,00 zł</strong>
-                </div>
-                <div class="detail-row">
-                    <span data-i18n="infoL4">Лікарняний L4 (компенс.):</span>
-                    <strong id="infoL4Sum">0,00 zł</strong>
+                        <span style="font-size: 12px; color: var(--text-muted);"> (<span data-i18n="lblNettoShort">нетто</span>: <strong id="infoOvertimeNetSum">0,00 zł</strong>)</span>
+                    </div>
                 </div>
 
-                <div class="detail-row detail-total">
-                    <span data-i18n="totalBrutto">РАЗОМ BRUTTO:</span>
-                    <strong id="infoTotalBrutto" style="color:var(--primary);">0,00 zł</strong>
+                <div class="info-row"><span data-i18n="infoVacation">Відпустка:</span> <strong id="infoVacationSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoBlood">Донація крові:</span> <strong id="infoBloodSum">0,00 zł</strong></div>
+                <div class="info-row"><span data-i18n="infoL4">Лікарняний L4:</span> <strong id="infoL4Sum">0,00 zł</strong></div>
+                
+                <div class="info-row total-row">
+                    <span data-i18n="totalBrutto">BRUTTO:</span> <strong id="infoTotalBrutto" style="color: var(--primary);">0,00 zł</strong>
                 </div>
-                <div class="detail-row" style="margin-top:6px;">
-                    <span data-i18n="infoLaundry">Доплата за прання:</span>
-                    <strong id="infoLaundrySum">0,00 zł</strong>
+                <div class="info-row">
+                    <span data-i18n="infoLaundry">Доплата (прання):</span> <strong id="infoLaundrySum">0,00 zł</strong>
                 </div>
-                <div class="detail-row detail-total" style="border-top:none;margin-top:4px;padding-top:4px;">
-                    <span data-i18n="totalNetto">РАЗОМ NETTO:</span>
-                    <strong id="infoTotalNetto" style="color:var(--success);font-size:17px;">0,00 zł</strong>
+                <div class="info-row total-row" style="border-top: none; padding-top: 0;">
+                    <span data-i18n="totalNetto">NETTO:</span> <strong id="infoTotalNetto" style="color: var(--success); font-size: 20px;">0,00 zł</strong>
                 </div>
             </div>
-
-            <div class="card">
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-val" id="infoWorkedDaysVal">-</div>
-                        <div class="stat-lbl" data-i18n="infoWorkedDays">Відпрацьовано змін</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-val" id="infoTotalDaysVal">-</div>
-                        <div class="stat-lbl" data-i18n="infoTotalDays">Всього днів</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-val" id="infoSchedVal">-</div>
-                        <div class="stat-lbl" data-i18n="infoSched">Графік (норма)</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-val" id="infoNightTariffVal" style="font-size:14px;">-</div>
-                        <div class="stat-lbl" data-i18n="infoNightTariff">Нічний тариф</div>
-                    </div>
-                </div>
+            
+            <div class="info-card">
+                <div class="info-row"><span data-i18n="infoWorkedDays">Відпрацьовано змін:</span> <strong id="infoWorkedDaysVal">-</strong></div>
+                <div class="info-row"><span data-i18n="infoTotalDays">Всього днів:</span> <strong id="infoTotalDaysVal">-</strong></div>
+                <div class="info-row"><span data-i18n="infoSched">Дні за графіком:</span> <strong id="infoSchedVal">-</strong></div>
+                <div class="info-row" style="border-bottom: none;"><span data-i18n="infoNightTariff">Нічний тариф:</span> <strong id="infoNightTariffVal">-</strong></div>
             </div>
 
-            <div id="info-sync-container" class="premium-block" style="display:none;margin-top:8px;">
-                <button id="btn-sync-up-info" class="btn btn-success" data-i18n="btnSaveCloud">Зберегти місяць в хмару ☁️</button>
+            <div id="info-sync-container" class="premium-field" style="margin-top: 16px; display: none;">
+                <button id="btn-sync-up-info" class="action-btn btn-sync" data-i18n="btnSaveCloud">Зберегти в хмару</button>
             </div>
 
-            <div class="swipe-hint" data-i18n="swipeHintRight">Свайп вправо для повернення →</div>
+            <div class="swipe-hint" data-i18n="swipeHintRight">Свайп вправо →</div>
+        </div>
+    </div>
+
+    <!-- Sticky Results Footer (Page 1) -->
+    <div class="sticky-results">
+        <div class="result-box brutto">
+            <div class="result-title">BRUTTO</div>
+            <div class="result-value" id="grossResult">0,00 zł</div>
+        </div>
+        <div class="result-box netto">
+            <div class="result-title">NETTO</div>
+            <div class="result-value" id="netResult">0,00 zł</div>
         </div>
     </div>
 </div>
@@ -779,6 +429,12 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    /* ДОДАНІ НОВІ КЛЮЧІ ДЛЯ КАРТОК У СЛОВНИК */
+    const customDictAdditions = {
+        uk: { cardParams: "Параметри", cardShifts: "Відпрацьовано", cardOvertime: "Надгодини", cardAbsence: "Відсутності" },
+        pl: { cardParams: "Parametry", cardShifts: "Przepracowano", cardOvertime: "Nadgodziny", cardAbsence: "Nieobecności" }
+    };
 
     /* @@PURE:BEGIN ALGORITHMS */
     const CONFIG = {
@@ -940,62 +596,64 @@
 
     const dict = {
         uk: {
-            title: "Калькулятор ЗП", month: "Місяць", base: "Загальна ставка (zł)", 
-            schedDays: "Графік", bonus: "Премія за якість (макс 10%)", extraBonus: "Додаткова премія (zł)",
-            morning: "Ранкові зміни (шт)", afternoon: "Денні зміни (шт)", night: "Нічні зміни (шт)", weekend: "Робочі сб / нд (днів)", 
-            overtime: "Надгодини (днів)", overtimeMorning: "З них ранкових (змін) ☀️", overtimeNight: "З них нічних (змін) 🌙", 
-            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. відп. (zł) ℹ️",
-            bloodDonation: "Донація крові (днів)", bloodBonus: "Сер. за 1 дн. донації (zł) ℹ️",
-            l4Days: "Лікарняний L4 (календ.)", l4Missed: "Пропущено змін (шт) ℹ️",
+            title: "Калькулятор", month: "Місяць", base: "Ставка (zł)", 
+            schedDays: "Графік", bonus: "Премія якість", extraBonus: "Додатково (zł)",
+            morning: "Ранкові (шт)", afternoon: "Денні (шт)", night: "Нічні (шт)", weekend: "Вихідні (днів)", 
+            overtime: "Всього (днів)", overtimeMorning: "З них ранкових ☀️", overtimeNight: "З них нічних 🌙", 
+            vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. (zł)",
+            bloodDonation: "Донація (днів)", bloodBonus: "Сер. за 1 дн. (zł)",
+            l4Days: "Лікарняний L4", l4Missed: "Пропущено (змін)",
             yes: "Так", no: "Ні", menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема",
-            profHeader: "👤 Мій профіль", profBase: "Стандартна ставка (zł)", profAge: "Вік до 26 років", profPpk: "Участь у PPK", profIns: "Додаткове страхування", btnSaveProfile: "Зберегти профіль 💾", toastProfOk: "Профіль збережено!",
+            profHeader: "👤 Мій профіль", profBase: "Стандартна ставка (zł)", profAge: "Вік до 26 років", profPpk: "Участь у PPK", profIns: "Додаткове страхування", btnSaveProfile: "Зберегти профіль", toastProfOk: "Профіль збережено!",
             optThemeLight: "Світла", optThemeDark: "Темна", cloudHeader: "Акаунт & Хмара",
-            btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць ☁️",
-            btnLoadCloud: "Завантажити місяць 📥", btnLogout: "Вийти (Гостьовий режим)",
-            swipeHintLeft: "← Свайп вліво для деталей", swipeHintRight: "Свайп вправо для повернення →", 
-            detailsTitle: "Деталі та розрахунок", breakdownHeader: "Деталізація нарахувань", 
-            infoBasePay: "Базова ставка (з урахув. L4):", infoPresenceBonus: "Премія за присутність", 
-            infoQualityBonus: "Премія за якість", infoExtraBonus: "Додаткова премія", infoNightTime: "Доплата за нічний час", 
-            infoNightShift: "Доплата за нічну зміну", infoWeekend: "Робота у вікенди:", 
-            infoOvertime: "Надгодини:", infoVacation: "Оплата відпустки:", infoBlood: "Оплата донації крові:", 
-            infoL4: "Лікарняний L4 (компенс.):", infoLaundry: "Доплата за прання:", infoWorkedDays: "Відпрацьовано змін", 
-            infoTotalDays: "Всього днів", infoSched: "Графік (норма)", 
-            infoNightTariff: "Нічний тариф", lblNettoShort: "нетто", totalBrutto: "РАЗОМ BRUTTO:", 
-            totalNetto: "РАЗОМ NETTO:", perHour: "/год", pwdPlaceholder: "Пароль",
+            btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць",
+            btnLoadCloud: "Завантажити", btnLogout: "Вийти",
+            swipeHintLeft: "← Свайп для деталей", swipeHintRight: "Свайп вправо →", 
+            detailsTitle: "Деталі 📊", breakdownHeader: "Структура нарахувань", 
+            infoBasePay: "База (з урахув. L4):", infoPresenceBonus: "Присутність", 
+            infoQualityBonus: "Якість", infoExtraBonus: "Додаткова премія", infoNightTime: "Нічні (час)", 
+            infoNightShift: "Нічні (зміни)", infoWeekend: "Вікенди:", 
+            infoOvertime: "Надгодини:", infoVacation: "Відпустка:", infoBlood: "Донація крові:", 
+            infoL4: "Лікарняний L4:", infoLaundry: "Доплата (прання):", infoWorkedDays: "Відпрацьовано змін:", 
+            infoTotalDays: "Всього днів:", infoSched: "Дні за графіком:", 
+            infoNightTariff: "Нічний тариф:", lblNettoShort: "нетто", totalBrutto: "BRUTTO:", 
+            totalNetto: "NETTO:", perHour: "/год", pwdPlaceholder: "Пароль",
             monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
-            toastSaveCloud: "Дані збережені у хмару! ☁️", toastLoadCloud: "Дані завантажені! 📥",
+            toastSaveCloud: "Дані збережені! ☁️", toastLoadCloud: "Дані завантажені! 📥",
             toastLoginErr: "Помилка входу: ", toastRegOk: "Реєстрація успішна!", toastRegErr: "Помилка реєстрації: ",
             toastSelectMonth: "Оберіть місяць!", toastSaveErr: "Помилка збереження: ",
-            hoursShort: "год", minsShort: "хв", ariaMenuOpen: "Відкрити меню", ariaMenuClose: "Закрити меню", ariaBack: "Повернутися на головну"
+            hoursShort: "г", minsShort: "хв", ariaMenuOpen: "Відкрити меню", ariaMenuClose: "Закрити меню", ariaBack: "На головну",
+            ...customDictAdditions.uk
         },
         pl: {
-            title: "Kalkulator Wypłaty", month: "Miesiąc", base: "Stawka (zł)", 
-            schedDays: "Grafik", bonus: "Premia za jakość (max 10%)", extraBonus: "Dodatkowa premia (zł)",
-            morning: "Poranne zmiany (szt)", afternoon: "Dzienne zmiany (szt)", night: "Nocne zmiany (szt)", weekend: "Weekendy (dni)", 
-            overtime: "Nadgodziny (dni)", overtimeMorning: "W tym porannych (zmian) ☀️", overtimeNight: "W tym nocnych (zmian) 🌙", 
-            vacationDays: "Urlop (dni)", urlopBonus: "Średnia urlopowa (dzień) ℹ️",
-            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z oddania krwi ℹ️",
-            l4Days: "L4 (dni kalendarzowe)", l4Missed: "Opuszczone zmiany ℹ️",
+            title: "Kalkulator", month: "Miesiąc", base: "Stawka (zł)", 
+            schedDays: "Grafik", bonus: "Premia jakość", extraBonus: "Dodatkowo (zł)",
+            morning: "Poranne (szt)", afternoon: "Dzienne (szt)", night: "Nocne (szt)", weekend: "Weekendy (dni)", 
+            overtime: "Razem (dni)", overtimeMorning: "W tym porannych ☀️", overtimeNight: "W tym nocnych 🌙", 
+            vacationDays: "Urlop (dni)", urlopBonus: "Średnia z 1 dn. (zł)",
+            bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z 1 dn. (zł)",
+            l4Days: "L4 (dni kalend.)", l4Missed: "Opuszczone (zmian)",
             yes: "Tak", no: "Nie", menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw",
-            profHeader: "👤 Mój Profil", profBase: "Standardowa stawka (zł)", profAge: "Wiek < 26 lat", profPpk: "PPK", profIns: "Ubezpieczenie", btnSaveProfile: "Zapisz profil 💾", toastProfOk: "Profil zapisany!",
+            profHeader: "👤 Mój Profil", profBase: "Standardowa stawka (zł)", profAge: "Wiek < 26 lat", profPpk: "PPK", profIns: "Ubezpieczenie", btnSaveProfile: "Zapisz profil", toastProfOk: "Profil zapisany!",
             optThemeLight: "Jasny", optThemeDark: "Ciemny", cloudHeader: "Konto & Chmura",
-            btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc ☁️",
-            btnLoadCloud: "Pobierz miesiąc 📥", btnLogout: "Wyloguj (Tryb gościa)",
-            swipeHintLeft: "← Przesuń w lewo po szczegóły", swipeHintRight: "Przesuń w prawo aby wrócić →", 
-            detailsTitle: "Szczegóły wyliczenia", breakdownHeader: "Struktura naliczeń", 
-            infoBasePay: "Stawka bazowa (po L4):", infoPresenceBonus: "Premia za frekwencję", 
-            infoQualityBonus: "Premia za jakość", infoExtraBonus: "Dodatkowa premia", infoNightTime: "Dodatek nocny (czas)", 
-            infoNightShift: "Dodatek nocny (zmiana)", infoWeekend: "Praca w weekendy:", 
-            infoOvertime: "Nadgodziny:", infoVacation: "Wynagrodzenie urlopowe:", infoBlood: "Wynagrodzenie za krew:", 
-            infoL4: "Chorobowe L4:", infoLaundry: "Ekwiwalent za pranie:", infoWorkedDays: "Przepracowane zmiany", 
-            infoTotalDays: "Łącznie dni", infoSched: "Grafik (norma)", 
-            infoNightTariff: "Stawka nocna", lblNettoShort: "netto", totalBrutto: "RAZEM BRUTTO:", 
-            totalNetto: "RAZEM NETTO:", perHour: "/godz.", pwdPlaceholder: "Hasło",
+            btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc",
+            btnLoadCloud: "Pobierz", btnLogout: "Wyloguj",
+            swipeHintLeft: "← Przesuń po szczegóły", swipeHintRight: "Przesuń w prawo →", 
+            detailsTitle: "Szczegóły 📊", breakdownHeader: "Struktura naliczeń", 
+            infoBasePay: "Baza (po L4):", infoPresenceBonus: "Frekwencja", 
+            infoQualityBonus: "Jakość", infoExtraBonus: "Dodatkowa premia", infoNightTime: "Dodatek nocny (czas)", 
+            infoNightShift: "Dodatek nocny (zmiana)", infoWeekend: "Weekendy:", 
+            infoOvertime: "Nadgodziny:", infoVacation: "Urlop:", infoBlood: "Oddanie krwi:", 
+            infoL4: "Chorobowe L4:", infoLaundry: "Dodatek (pranie):", infoWorkedDays: "Przepracowane zmiany:", 
+            infoTotalDays: "Łącznie dni:", infoSched: "Grafik (norma):", 
+            infoNightTariff: "Stawka nocna:", lblNettoShort: "netto", totalBrutto: "BRUTTO:", 
+            totalNetto: "NETTO:", perHour: "/godz", pwdPlaceholder: "Hasło",
             monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"],
             toastSaveCloud: "Zapisano w chmurze! ☁️", toastLoadCloud: "Dane pobrane! 📥",
             toastLoginErr: "Błąd logowania: ", toastRegOk: "Rejestracja pomyślna!", toastRegErr: "Błąd rejestracji: ",
             toastSelectMonth: "Wybierz miesiąc!", toastSaveErr: "Błąd zapisu: ",
-            hoursShort: "godz.", minsShort: "min", ariaMenuOpen: "Otwórz menu", ariaMenuClose: "Zamknij menu", ariaBack: "Wróć do głównej"
+            hoursShort: "g", minsShort: "min", ariaMenuOpen: "Otwórz menu", ariaMenuClose: "Zamknij menu", ariaBack: "Do głównej",
+            ...customDictAdditions.pl
         }
     };
 
@@ -1007,6 +665,7 @@
     let userProfile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
     window.cachedL4DailyRate = null;
 
+    /* ПРОФІЛЬ ТА МЕНЮ */
     function loadProfile() {
         const saved = localStorage.getItem('user_profile');
         if (saved) {
@@ -1070,11 +729,14 @@
         const track = document.getElementById('pagesTrack');
         const p1 = document.getElementById('page1');
         const p2 = document.getElementById('page2');
+        const stickyRes = document.querySelector('.sticky-results');
 
         if (page === 2) {
             track.style.transform = 'translateX(-50%)'; p1.setAttribute('inert', ''); p2.removeAttribute('inert');
+            if(stickyRes) stickyRes.classList.add('hidden');
         } else {
             track.style.transform = 'translateX(0)'; p2.setAttribute('inert', ''); p1.removeAttribute('inert');
+            if(stickyRes) stickyRes.classList.remove('hidden');
         }
     };
 
@@ -1128,12 +790,12 @@
 
     let touchStartX = 0, touchStartY = 0;
     document.addEventListener('touchstart', e => {
-        if (e.target.closest('input, select, button')) return;
+        if (e.target.closest('input, select, button, .sticky-results')) return;
         touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
     }, { passive: true });
 
     document.addEventListener('touchend', e => {
-        if (e.target.closest('input, select, button')) return;
+        if (e.target.closest('input, select, button, .sticky-results')) return;
         const dx = e.changedTouches[0].screenX - touchStartX;
         const dy = e.changedTouches[0].screenY - touchStartY;
         const sideMenu = document.getElementById('sideMenu');
@@ -1175,11 +837,6 @@
         document.getElementById('auth-container').classList.toggle('hidden', isPremium);
         document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
         
-        // Show/hide premium blocks
-        document.querySelectorAll('.premium-block').forEach(el => {
-            el.style.display = isPremium ? 'block' : 'none';
-        });
-
         const infoSyncContainer = document.getElementById('info-sync-container');
         if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
 
@@ -1313,6 +970,7 @@
         select.value = currentVal || (currentYear + "-" + String(currentMonth + 1).padStart(2, '0'));
     }
 
+    /* АЛГОРИТМ ВАЛОРИЗАЦІЇ ВІДПУСКНИХ */
     async function getAutoDailyUrlopBonus(currentMonthVal) {
         if (!auth.currentUser) return 0;
         const [yStr, mStr] = currentMonthVal.split('-');
@@ -1475,7 +1133,7 @@
 
         const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * 8)) * 60);
         const nHours = Math.floor(totalNightMinutes / 60); const nMins = totalNightMinutes % 60;
-        document.getElementById('infoNightHours').innerText = nHours > 0 ? `${nHours} ${dict[currentLang].hoursShort} ${nMins} \( {dict[currentLang].minsShort}` : ` \){nMins} ${dict[currentLang].minsShort}`;
+        document.getElementById('infoNightHours').innerText = nHours > 0 ? `${nHours} ${dict[currentLang].hoursShort} ${nMins} ${dict[currentLang].minsShort}` : `${nMins} ${dict[currentLang].minsShort}`;
 
         document.getElementById('infoPresencePct').innerText = res.presenceBonusPct + '%';
         document.getElementById('infoQualityPct').innerText = res.qualityBonusPct + '%';
@@ -1505,15 +1163,11 @@
 
     function setFormatSum(id, val, isHighlight = false) {
         const el = document.getElementById(id);
-        if (el) { 
-            el.innerText = formatPLN(val); 
-            el.style.color = val === 0 ? 'var(--text-secondary)' : (isHighlight ? 'var(--success)' : 'var(--text)'); 
-        }
+        if (el) { el.innerText = formatPLN(val); el.style.color = val === 0 ? 'var(--text-muted)' : (isHighlight ? 'var(--success)' : 'var(--text-main)'); }
     }
 
     function updateUI(g, n) {
-        document.getElementById('grossResult').innerText = formatPLN(g); 
-        document.getElementById('netResult').innerText = formatPLN(n);
+        document.getElementById('grossResult').innerText = formatPLN(g); document.getElementById('netResult').innerText = formatPLN(n);
     }
 
     const appBody = document.getElementById('app-body');
