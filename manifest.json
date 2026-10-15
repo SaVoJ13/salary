@@ -1,10 +1,10 @@
 {
-  "name": "ЗП Калькулятор Fiege",
-  "short_name": "ЗП Fiege",
+  "name": "Калькулятор Зарплати",
+  "short_name": "Калькулятор",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f6f9",
-  "theme_color": "#e3000f",
+  "background_color": "#f3f4f6",
+  "theme_color": "#3b82f6",
   "description": "Розрахунок зарплати, надгодин та відпускних",
   "icons": [
     {
