@@ -966,6 +966,39 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.error('Помилка реєстрації Service Worker:', err));
     });
 }
+  /* --- СВАЙП-НАВІГАЦІЯ МІЖ ВІКНАМИ --- */
+let touchStartX = 0, touchStartY = 0;
+const swipeThreshold = 50; // Мінімальна довжина свайпу в пікселях
+
+document.addEventListener('touchstart', e => {
+    // Ігноруємо свайпи на полях вводу, селекторах та нижній панелі вкладок
+    if (e.target.closest('input, select, button, .tabs, .ctl, .seg')) return;
+    touchStartX = e.changedTouches[0].screenX; 
+    touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+    if (e.target.closest('input, select, button, .tabs, .ctl, .seg')) return;
+    
+    const touchEndX = e.changedTouches[0].screenX;
+    const touchEndY = e.changedTouches[0].screenY;
+    
+    const dx = touchEndX - touchStartX;
+    const dy = touchEndY - touchStartY;
+
+    // Перевіряємо, чи рух був горизонтальним і чи перевищив поріг спрацьовування
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > swipeThreshold) {
+        if (dx < 0) {
+            // Свайп вліво -> Наступна сторінка (до 4)
+            if (currentActivePage < 4) switchPage(currentActivePage + 1);
+        } else {
+            // Свайп вправо -> Попередня сторінка (до 1)
+            if (currentActivePage > 1) switchPage(currentActivePage - 1);
+        }
+    }
+}, { passive: true });
+/* ---------------------------------- */
+
 </script>
 </body>
 </html>
