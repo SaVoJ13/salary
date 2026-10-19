@@ -1,0 +1,75 @@
+/* Словники інтерфейсу (UA / PL). Тексти перенесені без змін. */
+
+const customDictAdditions = {
+  uk: { presenceBonusTitle: "Премія присутність", cardParams: "Параметри", cardShifts: "Відпрацьовано", cardOvertime: "Надгодини", cardAbsence: "Відсутності" },
+  pl: { presenceBonusTitle: "Premia frekwencja", cardParams: "Parametry", cardShifts: "Przepracowano", cardOvertime: "Nadgodziny", cardAbsence: "Nieobecności" }
+};
+
+export const dict = {
+  uk: {
+    title: "Калькулятор", month: "Місяць", base: "Ставка (zł)", schedDays: "Графік", bonus: "Премія якість", extraBonus: "Додатково (zł)",
+    morning: "Ранкові (шт)", afternoon: "Денні (шт)", night: "Нічні (шт)", weekend: "Вихідні (днів)", overtime: "Всього (днів)",
+    overtimeMorning: "З них ранкових ☀️", overtimeNight: "З них нічних 🌙", vacationDays: "Відпустка (днів)", urlopBonus: "Сер. за 1 дн. (zł)",
+    bloodDonation: "Донація (днів)", bloodBonus: "Сер. за 1 дн. (zł)", l4Days: "Лікарняний L4", l4Missed: "Пропущено (змін)",
+    yes: "Так", no: "Ні", menuTitle: "Меню", menuLang: "Мова", menuTheme: "Тема", profHeader: " 👤 Мій профіль",
+    profBase: "Стандартна ставка (zł)", profAge: "Вік до 26 років", profPpk: "Участь у PPK", profIns: "Додаткове страхування",
+    btnSaveProfile: "Зберегти профіль", toastProfOk: "Профіль збережено!", optThemeLight: "Світла", optThemeDark: "Темна",
+    cloudHeader: "Акаунт & Хмара", btnLogin: "Увійти (PRO)", btnRegister: "Реєстрація", btnSaveCloud: "Зберегти місяць",
+    btnLoadCloud: "Завантажити", btnLogout: "Вийти", swipeHintLeft: "← Свайп для деталей", swipeHintRight: "Свайп вправо →",
+    detailsTitle: "Деталі 📊", breakdownHeader: "Структура нарахувань", infoBasePay: "База (з урахув. L4):",
+    infoPresenceBonus: "Присутність", infoQualityBonus: "Якість", infoExtraBonus: "Додаткова премія", infoNightTime: "Нічні (час)",
+    infoNightShift: "Нічні (зміни)", infoWeekend: "Вікенди:", infoOvertime: "Надгодини:", infoVacation: "Відпустка:",
+    infoBlood: "Донація крові:", infoL4: "Лікарняний L4:", infoLaundry: "Доплата (прання):", infoWorkedDays: "Відпрацьовано змін:",
+    infoTotalDays: "Всього днів:", infoSched: "Дні за графіком:", infoNightTariff: "Нічний тариф:", lblNettoShort: "нетто",
+    totalBrutto: "BRUTTO:", totalNetto: "NETTO:", perHour: "/год", pwdPlaceholder: "Пароль",
+    monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
+    toastSaveCloud: "Дані збережені! ☁️ ", toastLoadCloud: "Дані завантажені! 📥 ", toastLoginErr: "Помилка входу: ",
+    toastRegOk: "Реєстрація успішна!", toastRegErr: "Помилка реєстрації: ", toastSelectMonth: "Оберіть місяць!",
+    toastSaveErr: "Помилка збереження: ", hoursShort: "г", minsShort: "хв", ariaMenuOpen: "Відкрити меню",
+    ariaMenuClose: "Закрити меню", ariaBack: "На головну", ...customDictAdditions.uk
+  },
+  pl: {
+    title: "Kalkulator", month: "Miesiąc", base: "Stawka (zł)", schedDays: "Grafik", bonus: "Premia jakość", extraBonus: "Dodatkowo (zł)",
+    morning: "Poranne (szt)", afternoon: "Dzienne (szt)", night: "Nocne (szt)", weekend: "Weekendy (dni)", overtime: "Razem (dni)",
+    overtimeMorning: "W tym porannych ☀️", overtimeNight: "W tym nocnych 🌙", vacationDays: "Urlop (dni)", urlopBonus: "Średnia z 1 dn. (zł)",
+    bloodDonation: "Oddanie krwi (dni)", bloodBonus: "Średnia z 1 dn. (zł)", l4Days: "L4 (dni kalend.)", l4Missed: "Opuszczone (zmian)",
+    yes: "Tak", no: "Nie", menuTitle: "Menu", menuLang: "Język", menuTheme: "Motyw", profHeader: " 👤 Mój Profil",
+    profBase: "Standardowa stawka (zł)", profAge: "Wiek < 26 lat", profPpk: "PPK", profIns: "Ubezpieczenie",
+    btnSaveProfile: "Zapisz profil", toastProfOk: "Profil zapisany!", optThemeLight: "Jasny", optThemeDark: "Ciemny",
+    cloudHeader: "Konto & Chmura", btnLogin: "Zaloguj (PRO)", btnRegister: "Rejestracja", btnSaveCloud: "Zapisz miesiąc",
+    btnLoadCloud: "Pobierz", btnLogout: "Wyloguj", swipeHintLeft: "← Przesuń po szczegóły", swipeHintRight: "Przesuń w prawo →",
+    detailsTitle: "Szczegóły 📊", breakdownHeader: "Struktura naliczeń", infoBasePay: "Baza (po L4):",
+    infoPresenceBonus: "Frekwencja", infoQualityBonus: "Jakość", infoExtraBonus: "Dodatkowa premia", infoNightTime: "Dodatek nocny (czas)",
+    infoNightShift: "Dodatek nocny (zmiana)", infoWeekend: "Weekendy:", infoOvertime: "Nadgodziny:", infoVacation: "Urlop:",
+    infoBlood: "Oddanie krwi:", infoL4: "Chorobowe L4:", infoLaundry: "Dodatek (pranie):", infoWorkedDays: "Przepracowane zmiany:",
+    infoTotalDays: "Łącznie dni:", infoSched: "Grafik (norma):", infoNightTariff: "Stawka nocna:", lblNettoShort: "netto",
+    totalBrutto: "BRUTTO:", totalNetto: "NETTO:", perHour: "/godz", pwdPlaceholder: "Hasło",
+    monthNames: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"],
+    toastSaveCloud: "Zapisano w chmurze! ☁️ ", toastLoadCloud: "Dane pobrane! 📥 ", toastLoginErr: "Błąd logowania: ",
+    toastRegOk: "Rejestracja pomyślna!", toastRegErr: "Błąd rejestracji: ", toastSelectMonth: "Wybierz miesiąc!",
+    toastSaveErr: "Błąd zapisu: ", hoursShort: "g", minsShort: "min", ariaMenuOpen: "Otwórz menu",
+    ariaMenuClose: "Zamknij menu", ariaBack: "Do głównej", ...customDictAdditions.pl
+  }
+};
+
+Object.assign(dict.uk, {
+  appTitle: "Калькулятор зарплати", navCalc: "Розрахунок", navDetails: "Деталі", navProfile: "Профіль", navSettings: "Налаштування",
+  netHint: "до виплати", secBase: "Основна зарплата", secBase2: "Основна зарплата та бонуси", secNight: "Нічні зміни та вихідні",
+  secVac: "Відпускні", secBlood: "Донорство крові", secL4: "Лікарняний", secTotals: "Підсумок", secStats: "Параметри місяця",
+  proNote: "Відпустка, донорство крові та лікарняний доступні після входу в акаунт (PRO).",
+  guestNote: "Без входу дані зберігаються лише на цьому пристрої.", toDetails: "Деталізація", lblEmail: "Email", lblPwd: "Пароль",
+  hintSched: "Норма змін; рахується автоматично, можна змінити", hintUrlop: "Авто за 3 попередні місяці (з хмари), можна змінити",
+  hintBlood: "Розраховується автоматично", hintL4: "Календарних днів", ariaTheme: "Змінити тему", ariaLangGrp: "Мова",
+  ariaNav: "Навігація", ariaPrev: "Попередній місяць", ariaNext: "Наступний місяць", infoWeekend: "Вихідні дні", lblNettoShort: "з них нетто"
+});
+
+Object.assign(dict.pl, {
+  appTitle: "Kalkulator wynagrodzenia", navCalc: "Kalkulator", navDetails: "Szczegóły", navProfile: "Profil", navSettings: "Ustawienia",
+  netHint: "do wypłaty", secBase: "Wynagrodzenie podstawowe", secBase2: "Wynagrodzenie i premie", secNight: "Zmiany nocne i weekendy",
+  secVac: "Urlop", secBlood: "Oddanie krwi", secL4: "Zwolnienie L4", secTotals: "Podsumowanie", secStats: "Parametry miesiąca",
+  proNote: "Urlop, oddanie krwi i L4 są dostępne po zalogowaniu (PRO).",
+  guestNote: "Bez logowania dane są zapisywane tylko na tym urządzeniu.", toDetails: "Szczegóły", lblEmail: "Email", lblPwd: "Hasło",
+  hintSched: "Norma zmian; liczona automatycznie, można zmienić", hintUrlop: "Auto z 3 poprzednich miesięcy (z chmury), można zmienić",
+  hintBlood: "Liczone automatycznie", hintL4: "Dni kalendarzowe", ariaTheme: "Zmień motyw", ariaLangGrp: "Język",
+  ariaNav: "Nawigacja", ariaPrev: "Poprzedni miesiąc", ariaNext: "Następny miesiąc", infoWeekend: "Dni weekendowe", lblNettoShort: "w tym netto"
+});
