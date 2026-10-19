@@ -1,0 +1,9 @@
+{
+  "name": "salary",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/golden.mjs",
+    "test:update": "node tests/golden.mjs --update"
+  }
+}
