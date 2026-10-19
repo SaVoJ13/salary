@@ -1,14 +1,9 @@
-// js/utils.js
-const plnFormatter = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' });
-export const formatPLN = (val) => plnFormatter.format(val);
+/* Дрібні UI-утиліти без стану застосунку. */
 
-let toastTimeout = null;
+export const formatPLN = val => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(val);
+
 export function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg; 
-    t.classList.add('show');
-    
-    if (toastTimeout) clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+  const t = document.getElementById('toast');
+  t.innerText = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
-
