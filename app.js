@@ -47,9 +47,12 @@ const AUTH_ERR = {
   'auth/invalid-email': 'errInvalidEmail', 'auth/missing-password': 'errWeakPwd', 'auth/weak-password': 'errWeakPwd',
   'auth/email-already-in-use': 'errEmailInUse', 'auth/network-request-failed': 'errNetwork', 'auth/too-many-requests': 'errTooMany'
 };
+const CLOUD_ERR = { 'permission-denied': 'errPermission', 'unauthenticated': 'errPermission', 'unavailable': 'errNetwork', 'resource-exhausted': 'errTooMany' };
 function authMsg(e) {
-  const k = AUTH_ERR[e && e.code];
-  return k ? dict[currentLang][k] : ((e && e.message) || '');
+  const code = e && e.code;
+  const k = AUTH_ERR[code] || CLOUD_ERR[code];
+  if (!k) console.warn('Помилка хмари:', e);   // сирий текст помилки — лише в консоль, не користувачу
+  return dict[currentLang][k || 'errUnknown'];
 }
 
 let currentLang = localStorage.getItem('lang') || (navigator.language && navigator.language.toLowerCase().startsWith('pl') ? 'pl' : 'uk');
@@ -204,7 +207,7 @@ async function handleAuthState(user) {
   document.getElementById('auth-container').classList.toggle('hidden', isPremium);
   document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
   const infoSyncContainer = document.getElementById('info-sync-container');
-  if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
+  if (infoSyncContainer) infoSyncContainer.classList.toggle('hidden', !isPremium);
   await loadProfile();
   if (user) {
     document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -243,7 +246,7 @@ async function handleSyncUp() {
     await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
     showToast(dict[currentLang].toastSaveCloud); monthsCollectionCache = null;
     await updateL4Cache(monthVal);
-  } catch (error) { showToast(dict[currentLang].toastSaveErr + error.message); }
+  } catch (error) { showToast(dict[currentLang].toastSaveErr + authMsg(error)); }
   finally { if(btn1) btn1.disabled = false; if(btn2) btn2.disabled = false; }
 }
 
@@ -413,7 +416,7 @@ async function updateL4Cache(currentMonthVal) {
       }
     });
     window.cachedL4DailyRate = monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
-  } catch(e) {}
+  } catch(e) { console.warn('updateL4Cache:', e); }
 }
 
 function calculateSalary() {
@@ -560,6 +563,9 @@ document.addEventListener('click', e => {
 });
 
 document.getElementById('auth-form').addEventListener('submit', e => e.preventDefault());
+// Замість inline onchange (потрібно для CSP без 'unsafe-inline')
+document.getElementById('langSelect').addEventListener('change', e => window.setLang(e.target.value));
+document.getElementById('themeSelect').addEventListener('change', e => window.setTheme(e.target.value));
 
 setTheme(localStorage.getItem('theme') || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 window.setLang(currentLang);
