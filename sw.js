@@ -1,5 +1,5 @@
 /* Піднімай VERSION при кожному деплої — так користувачі отримають оновлення. */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = `salary-${VERSION}`;
 
 const CORE = [

@@ -23,11 +23,12 @@ function makeEl(id) {
     get options() { return options; },
     set innerHTML(_v) { options = []; },
     appendChild(o) { options.push(o); },
-    addEventListener(type, fn) { this.handlers[type] = fn; },
+    addEventListener(type, fn) { (this.handlers[type] ||= []).push(fn); },
     setAttribute() {}, removeAttribute() {}, hasAttribute() { return false; },
     dispatchEvent() {}, closest() { return null; }
   };
 }
+const fire = async (el, type, target = el) => { for (const fn of el.handlers[type] || []) await fn({ target }); };
 const getEl = id => { if (!elements.has(id)) elements.set(id, makeEl(id)); return elements.get(id); };
 
 const store = new Map();
@@ -44,7 +45,7 @@ globalThis.document = {
   documentElement: { lang: '', setAttribute() {}, getAttribute() { return ''; } },
   getElementById: getEl,
   querySelector: () => null,
-  querySelectorAll: () => [],
+  querySelectorAll: sel => (sel === 'input, select' ? [...elements.values()] : []),
   createElement: () => ({ value: '', text: '' }),
   addEventListener() {}
 };
@@ -64,9 +65,37 @@ assert.ok(gross && !gross.startsWith('0,00'), `BRUTTO має бути розра
 const { dict } = await import('../js/i18n.js');
 for (const id of ['btn-login', 'btn-register']) {
   getEl('toast').innerText = '';
-  await getEl(id).handlers.click();
+  await fire(getEl(id), 'click');
   assert.equal(getEl('toast').innerText, dict.uk.toastOffline, `${id}: очікувався тост про офлайн`);
 }
+
+// 6. Очищення поля: торкнулись і вийшли — значення повертається; стерли свідомо — лишається порожнім
+const body = getEl('app-body');
+const field = getEl('morningShifts');
+Object.assign(field, { tagName: 'INPUT', type: 'number', readOnly: false });
+
+field.value = '5';
+await fire(body, 'focusin', field);
+assert.equal(field.value, '', 'при фокусі поле очищується');
+await fire(body, 'focusout', field);
+assert.equal(field.value, '5', 'без введення старе значення повертається');
+
+field.value = '5';
+await fire(body, 'focusin', field);
+field.value = '3'; await fire(body, 'input', field);
+field.value = '';  await fire(body, 'input', field);
+await fire(body, 'focusout', field);
+assert.equal(field.value, '', 'свідомо стерте значення не повертається');
+assert.equal(JSON.parse(store.get(`guest_month_${getEl('monthSelect').value}`)).morningShifts, '', 'збережене значення збігається з екраном');
+
+// 7. Порожня ставка після свідомого стирання = ставка з профілю
+const base = getEl('baseSalary');
+Object.assign(base, { tagName: 'INPUT', type: 'number', readOnly: false, value: '7000' });
+await fire(body, 'focusin', base);
+base.value = '1'; await fire(body, 'input', base);
+base.value = '';  await fire(body, 'input', base);
+await fire(body, 'focusout', base);
+assert.equal(String(base.value), '5750', 'порожня ставка замінюється ставкою з профілю');
 
 console.warn = originalWarn;
 console.log('OK: офлайн-старт — гостьовий калькулятор працює, хмара вимкнена');

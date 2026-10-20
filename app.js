@@ -262,7 +262,15 @@ document.getElementById('btn-register').addEventListener('click', async () => {
   catch (e) { showToast(dict[currentLang].toastRegErr + authMsg(e)); }
 });
 
-document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  if (!cloudAvailable || !auth.currentUser) return;
+  const uid = auth.currentUser.uid;
+  try { await signOut(auth); } catch (e) { return; }
+  // Локальна копія профілю акаунта (ставка, PPK, вік) не має лишатись на спільному пристрої.
+  // Гостьові дані (guest_month_*, user_profile_guest) — окремий режим, їх не чіпаємо.
+  localStorage.removeItem(`user_profile_${uid}`);
+  window.cachedL4DailyRate = null; monthsCollectionCache = null;
+});
 
 async function loadCloudData() {
   if (!auth.currentUser) return;
@@ -486,17 +494,31 @@ const appBody = document.getElementById('app-body');
 appBody.addEventListener('focusin', e => {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
     e.target.dataset.prevVal = e.target.value; e.target.value = '';
+    delete e.target.dataset.edited;
   }
+});
+
+/* Позначаємо, що користувач щось вводив у полі: тоді порожнє значення — його свідомий вибір,
+   і старе значення при виході з поля повертати не можна (розрахунок і збереження вже з порожнім). */
+appBody.addEventListener('input', e => {
+  if (e.target.dataset && e.target.dataset.prevVal !== undefined) e.target.dataset.edited = '1';
 });
 
 appBody.addEventListener('focusout', e => {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
-    if (e.target.value === '' && e.target.dataset.prevVal !== undefined) e.target.value = e.target.dataset.prevVal;
+    if (e.target.value === '' && e.target.dataset.prevVal !== undefined) {
+      if (!e.target.dataset.edited) {
+        e.target.value = e.target.dataset.prevVal;               // просто торкнулись і вийшли — повертаємо як було
+      } else if (e.target.id === 'baseSalary') {
+        e.target.value = userProfile.baseSalary;                 // порожня ставка = ставка з профілю (так рахує calculateSalary)
+        saveLocalGuestData();
+      }
+    }
     if (e.target.id === 'scheduleDays' && !e.target.value) {
       e.target.value = stateDaysFor(document.getElementById('monthSelect').value);
       calculateSalary();
     }
-    delete e.target.dataset.prevVal;
+    delete e.target.dataset.prevVal; delete e.target.dataset.edited;
   }
 });
 
