@@ -52,6 +52,7 @@ globalThis.document = {
 Object.defineProperty(globalThis, 'navigator', { value: { language: 'uk' }, configurable: true });
 const originalWarn = console.warn; console.warn = () => {};
 
+globalThis.APP_VERSION = '9.9.9';   // у браузері його задає js/version.js
 // 3. Запуск застосунку: модуль має завершитись без Firebase
 await import('../js/app.js');
 await new Promise(r => setTimeout(r, 100));
@@ -96,6 +97,16 @@ base.value = '1'; await fire(body, 'input', base);
 base.value = '';  await fire(body, 'input', base);
 await fire(body, 'focusout', base);
 assert.equal(String(base.value), '5750', 'порожня ставка замінюється ставкою з профілю');
+
+// 8. Вибір мови працює без inline onchange
+const langSel = getEl('langSelect');
+langSel.value = 'pl'; await fire(langSel, 'change');
+assert.equal(document.documentElement.lang, 'pl', 'зміна мови через listener');
+langSel.value = 'uk'; await fire(langSel, 'change');
+assert.equal(document.documentElement.lang, 'uk');
+
+// 9. Версія показується в шапці
+assert.equal(getEl('appVersion').textContent, 'v9.9.9', 'версія в шапці');
 
 console.warn = originalWarn;
 console.log('OK: офлайн-старт — гостьовий калькулятор працює, хмара вимкнена');
