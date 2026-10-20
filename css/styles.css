@@ -4,10 +4,12 @@
 body{margin:0;background:var(--bg);color:var(--text-main);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 button{font:inherit;color:inherit;cursor:pointer}:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .hidden{display:none!important}
+.sprite{position:absolute}
 .top{background:var(--bg)}.topbar{display:flex;align-items:center;gap:10px;max-width:1080px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 16px 8px}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
 .mark{width:36px;height:36px;border-radius:11px;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font-weight:800;font-size:14px;flex:none}
 h1{font-size:18px;margin:0;letter-spacing:-.01em;white-space:nowrap}
+.app-ver{flex:none;font-size:11px;font-weight:600;color:var(--text-muted);white-space:nowrap}
 .pro-badge{display:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--pro-soft);color:var(--pro)}.is-logged-in .pro-badge{display:inline-block}
 .icon-btn{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;position:relative}
 .icon{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
