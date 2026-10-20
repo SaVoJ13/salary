@@ -3,101 +3,92 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { compute } from '../js/calc.js';
 
-// Налаштування шляхів (оскільки ми використовуємо ES-модулі)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const goldenPath = path.join(__dirname, 'golden.json');
 
-// 1. Еталонні сценарії (різні комбінації змін, надгодин, L4)
 const scenarios = [
   {
-    name: "Сценарій 1: Базовий (без надгодин і нічних)",
-    inputs: {
-      baseSalary: 5750, stateDays: 20, schedDays: 20, regWorkedDays: 20,
-      morningShifts: 10, afternoonShifts: 10, nightShifts: 0,
-      overtimeMorningShifts: 0, overtimeNightShifts: 0,
-      weekendDays: 0, overtimeDays: 0, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 0,
-      bloodDonationDays: 0, l4Days: 0, isPremium: false,
-      isUnder26: false, ppkActive: false, insuranceActive: true, l4DailyRateCached: null,
-      year: 2026, presenceBonusPct: 5, qualityBonusPct: 10
+    id: 'scenario_1',
+    name: 'Сценарій 1: Базовий (без надгодин і нічних)',
+    input: {
+      year: 2026, month: 5, baseSalary: 5750, isUnder26: false, hasPpk: false, hasIns: true,
+      presencePct: 5, bonusPct: 10, extraBonus: 0, schedDays: 20, morningShifts: 10,
+      afternoonShifts: 10, nightShifts: 0, weekendDays: 0, overtimeDays: 0, overtimeMorning: 0,
+      overtimeNight: 0, vacationDays: 0, customUrlopRate: 0, bloodDays: 0, customBloodRate: 0,
+      l4Days: 0, l4MissedShifts: 0
     }
   },
   {
-    name: "Сценарій 2: Інтенсив (Нічні, надгодини, до 26 років)",
-    inputs: {
-      baseSalary: 5750, stateDays: 21, schedDays: 21, regWorkedDays: 21,
-      morningShifts: 7, afternoonShifts: 7, nightShifts: 7,
-      overtimeMorningShifts: 1, overtimeNightShifts: 1,
-      weekendDays: 2, overtimeDays: 2, vacDays: 0, dailyUrlopBonus: 0, extraBonus: 150,
-      bloodDonationDays: 0, l4Days: 0, isPremium: false,
-      isUnder26: true, ppkActive: true, insuranceActive: true, l4DailyRateCached: null,
-      year: 2026, presenceBonusPct: 5, qualityBonusPct: 10
+    id: 'scenario_2',
+    name: 'Сценарій 2: Інтенсив (Нічні, надгодини, до 26 років)',
+    input: {
+      year: 2026, month: 5, baseSalary: 5750, isUnder26: true, hasPpk: false, hasIns: true,
+      presencePct: 5, bonusPct: 10, extraBonus: 150, schedDays: 21, morningShifts: 8,
+      afternoonShifts: 5, nightShifts: 8, weekendDays: 1, overtimeDays: 2, overtimeMorning: 1,
+      overtimeNight: 1, vacationDays: 0, customUrlopRate: 0, bloodDays: 0, customBloodRate: 0,
+      l4Days: 0, l4MissedShifts: 0
     }
   },
   {
-    name: "Сценарій 3: PRO-акаунт (L4, відпустка, донація)",
-    inputs: {
-      baseSalary: 6000, stateDays: 20, schedDays: 20, regWorkedDays: 13,
-      morningShifts: 5, afternoonShifts: 5, nightShifts: 3,
-      overtimeMorningShifts: 0, overtimeNightShifts: 0,
-      weekendDays: 0, overtimeDays: 0, vacDays: 2, dailyUrlopBonus: 220.50, extraBonus: 0,
-      bloodDonationDays: 1, l4Days: 4, isPremium: true,
-      isUnder26: false, ppkActive: false, insuranceActive: true, l4DailyRateCached: 165.20,
-      year: 2026, presenceBonusPct: 0, qualityBonusPct: 10
+    id: 'scenario_3',
+    name: 'Сценарій 3: PRO-акаунт (L4, відпустка, донація)',
+    input: {
+      year: 2026, month: 5, baseSalary: 5200, isUnder26: false, hasPpk: true, hasIns: true,
+      presencePct: 0, bonusPct: 10, extraBonus: 0, schedDays: 20, morningShifts: 5,
+      afternoonShifts: 5, nightShifts: 3, weekendDays: 0, overtimeDays: 0, overtimeMorning: 0,
+      overtimeNight: 0, vacationDays: 2, customUrlopRate: 220.5, bloodDays: 1, customBloodRate: 0,
+      l4Days: 4, l4MissedShifts: 3
     }
   }
 ];
 
-// 2. Функція прогону тестів
-function runTests() {
-  const results = {};
-  scenarios.forEach((scenario, index) => {
-    // Робимо копію вхідних даних
-    const inputs = JSON.parse(JSON.stringify(scenario.inputs));
-    results[`scenario_${index + 1}`] = {
-      name: scenario.name,
-      output: compute(inputs)
-    };
-  });
-  return results;
-}
-
-// 3. Логіка порівняння або запису
-const args = process.argv.slice(2);
-const isUpdate = args.includes('--update');
-const currentResults = runTests();
+const isUpdate = process.argv.includes('--update');
 
 if (isUpdate) {
-  // Записуємо як еталон
-  fs.writeFileSync(goldenPath, JSON.stringify(currentResults, null, 2));
-  console.log('✅ Еталонні дані успішно збережено у tests/golden.json!');
-} else {
-  // Перевіряємо з еталоном
-  if (!fs.existsSync(goldenPath)) {
-    console.error('❌ Файл golden.json не знайдено. Спочатку оновіть еталон.');
-    process.exit(1);
+  const newGolden = {};
+  for (const sc of scenarios) {
+    newGolden[sc.id] = { name: sc.name, output: compute(sc.input) };
+  }
+  fs.writeFileSync(goldenPath, JSON.stringify(newGolden, null, 2), 'utf8');
+  console.log('✅ golden.json успішно оновлено!');
+  process.exit(0);
+}
+
+if (!fs.existsSync(goldenPath)) {
+  console.error('❌ Файл golden.json не знайдено.');
+  process.exit(1);
+}
+
+const goldenData = JSON.parse(fs.readFileSync(goldenPath, 'utf8'));
+let hasError = false;
+
+for (const sc of scenarios) {
+  const actual = compute(sc.input);
+  const expected = goldenData[sc.id]?.output;
+
+  if (!expected) {
+    console.error(`❌ Відсутній еталон для ${sc.name}`);
+    hasError = true;
+    continue;
   }
 
-  const goldenResults = JSON.parse(fs.readFileSync(goldenPath, 'utf8'));
-  let hasErrors = false;
-
-  for (const key in currentResults) {
-    const current = JSON.stringify(currentResults[key].output);
-    const golden = JSON.stringify(goldenResults[key].output);
-
-    if (current !== golden) {
-      console.error(`❌ Тест провалено: ${currentResults[key].name}`);
-      hasErrors = true;
-    } else {
-      console.log(`✅ Тест пройдено: ${currentResults[key].name}`);
+  let scFailed = false;
+  for (const key of Object.keys(actual)) {
+    if (actual[key] !== expected[key]) {
+      if (!scFailed) {
+        console.error(`\n❌ ${sc.name}`);
+        scFailed = true;
+      }
+      console.error(`   • ${key}: отримано ${actual[key]}, очікувалося ${expected[key]}`);
+      hasError = true;
     }
-  }
-
-  if (hasErrors) {
-    console.error('\n⚠️ Виявлено розбіжності! Ви випадково зламали математику в calc.js.');
-    process.exit(1);
-  } else {
-    console.log('\n🚀 Всі тести пройшли успішно! Ядро працює ідеально.');
   }
 }
 
+if (hasError) {
+  console.error('\n⚠️ Виявлено розбіжності між calc.js та golden.json');
+  process.exit(1);
+} else {
+  console.log('✅ Усі golden-тести математики успішно пройдено!');
+}
