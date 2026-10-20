@@ -14,5 +14,4 @@ jobs:
           node-version: '18'
 
       - name: Запуск Golden Tests
-        run: node tests/golden.mjs --update && cat tests/golden.json
-
+        run: npm run test
