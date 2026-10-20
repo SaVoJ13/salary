@@ -206,8 +206,7 @@ async function handleAuthState(user) {
   document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
   document.getElementById('auth-container').classList.toggle('hidden', isPremium);
   document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
-  const infoSyncContainer = document.getElementById('info-sync-container');
-  if (infoSyncContainer) infoSyncContainer.classList.toggle('hidden', !isPremium);
+  document.querySelectorAll('[data-cloud-only]').forEach(el => el.classList.toggle('hidden', !isPremium));
   await loadProfile();
   if (user) {
     document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -236,8 +235,8 @@ async function handleSyncUp() {
   if (!auth.currentUser) return;
   const monthVal = document.getElementById('monthSelect').value;
   if (!monthVal) return showToast(dict[currentLang].toastSelectMonth);
-  const btn1 = document.getElementById('btn-sync-up'); const btn2 = document.getElementById('btn-sync-up-info');
-  if(btn1) btn1.disabled = true; if(btn2) btn2.disabled = true;
+  const saveBtns = document.querySelectorAll('[data-sync-up]');
+  saveBtns.forEach(b => { b.disabled = true; });
   const data = { updatedAt: new Date().toISOString() };
   document.querySelectorAll('input, select').forEach(el => {
     if(!NON_MONTH_IDS.has(el.id)) data[el.id] = el.value;
@@ -247,11 +246,10 @@ async function handleSyncUp() {
     showToast(dict[currentLang].toastSaveCloud); monthsCollectionCache = null;
     await updateL4Cache(monthVal);
   } catch (error) { showToast(dict[currentLang].toastSaveErr + authMsg(error)); }
-  finally { if(btn1) btn1.disabled = false; if(btn2) btn2.disabled = false; }
+  finally { saveBtns.forEach(b => { b.disabled = false; }); }
 }
 
-document.getElementById('btn-sync-up').addEventListener('click', handleSyncUp);
-if (document.getElementById('btn-sync-up-info')) document.getElementById('btn-sync-up-info').addEventListener('click', handleSyncUp);
+document.querySelectorAll('[data-sync-up]').forEach(b => b.addEventListener('click', handleSyncUp));
 
 document.getElementById('btn-login').addEventListener('click', async () => {
   if (!(await initCloud())) return showToast(dict[currentLang].toastOffline);
