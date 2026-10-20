@@ -1,5 +1,7 @@
-/* Піднімай VERSION при кожному деплої — так користувачі отримають оновлення. */
-const VERSION = 'v5';
+/* Версію береться з js/version.js (єдине джерело). Піднімай її при кожному деплої — так користувачі
+   отримають оновлення: зміна version.js змінює і sw.js (importScripts), і назву кешу. */
+importScripts('./js/version.js');
+const VERSION = self.APP_VERSION;
 const CACHE = `salary-${VERSION}`;
 
 const CORE = [
@@ -12,6 +14,7 @@ const CORE = [
   './js/i18n.js',
   './js/firebase.js',
   './js/utils.js',
+  './js/version.js',
   './android-chrome-192x192.png',
   './android-chrome-512x512.png'
 ];

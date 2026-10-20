@@ -565,6 +565,8 @@ document.getElementById('auth-form').addEventListener('submit', e => e.preventDe
 document.getElementById('langSelect').addEventListener('change', e => window.setLang(e.target.value));
 document.getElementById('themeSelect').addEventListener('change', e => window.setTheme(e.target.value));
 
+const appVerEl = document.getElementById('appVersion');
+if (appVerEl && globalThis.APP_VERSION) appVerEl.textContent = 'v' + globalThis.APP_VERSION;
 setTheme(localStorage.getItem('theme') || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 window.setLang(currentLang);
 switchPage(1);
