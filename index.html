@@ -2,6 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2f4f8">
 <title>Прогноз ЗП</title>
@@ -11,7 +12,7 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body id="app-body">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<svg class="sprite" width="0" height="0" aria-hidden="true"><defs>
 <symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 7h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/></symbol>
 <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2.5H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-12z"/><path d="M14 2.5v5h5M9 13h6M9 17h6"/></symbol>
 <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></symbol>
@@ -25,26 +26,26 @@
 <header class="top"><div class="topbar">
 <div class="brand"><span class="mark" aria-hidden="true">zł</span><h1 data-i18n="title">Калькулятор</h1><span class="pro-badge">PRO</span></div>
 <nav class="tabs" data-i18n-aria="ariaNav" aria-label="Навігація">
-<button type="button" class="tab" data-page="1" aria-current="page"><svg class="icon"><use href="#i-calc"/></svg><span data-i18n="navCalc">Розрахунок</span></button>
-<button type="button" class="tab" data-page="2"><svg class="icon"><use href="#i-doc"/></svg><span data-i18n="navDetails">Деталі</span></button>
-<button type="button" class="tab" data-page="3"><svg class="icon"><use href="#i-user"/></svg><span data-i18n="navProfile">Профіль</span></button>
-<button type="button" class="tab" data-page="4"><svg class="icon"><use href="#i-set"/></svg><span data-i18n="navSettings">Налаштування</span></button></nav>
+<button type="button" class="tab" data-page="1" aria-current="page"><svg aria-hidden="true" class="icon"><use href="#i-calc"/></svg><span data-i18n="navCalc">Розрахунок</span></button>
+<button type="button" class="tab" data-page="2"><svg aria-hidden="true" class="icon"><use href="#i-doc"/></svg><span data-i18n="navDetails">Деталі</span></button>
+<button type="button" class="tab" data-page="3"><svg aria-hidden="true" class="icon"><use href="#i-user"/></svg><span data-i18n="navProfile">Профіль</span></button>
+<button type="button" class="tab" data-page="4"><svg aria-hidden="true" class="icon"><use href="#i-set"/></svg><span data-i18n="navSettings">Налаштування</span></button></nav>
 <div class="seg" role="group" data-i18n-aria="ariaLangGrp" aria-label="Мова"><button type="button" data-lang="uk" lang="uk">UA</button><button type="button" data-lang="pl" lang="pl">PL</button></div>
-<button type="button" class="icon-btn" id="btn-theme" data-i18n-aria="ariaTheme" aria-label="Змінити тему"><svg class="icon moon"><use href="#i-moon"/></svg><svg class="icon sun"><use href="#i-sun"/></svg></button>
-<button type="button" class="icon-btn" data-page="3" data-i18n-aria="navProfile" aria-label="Профіль"><svg class="icon"><use href="#i-user"/></svg><span class="dot"></span></button>
+<button type="button" class="icon-btn" id="btn-theme" data-i18n-aria="ariaTheme" aria-label="Змінити тему"><svg aria-hidden="true" class="icon moon"><use href="#i-moon"/></svg><svg aria-hidden="true" class="icon sun"><use href="#i-sun"/></svg></button>
+<button type="button" class="icon-btn" data-page="3" data-i18n-aria="navProfile" aria-label="Профіль"><svg aria-hidden="true" class="icon"><use href="#i-user"/></svg><span class="dot"></span></button>
 </div></header>
 
 <main>
 <section class="view active" id="page1">
 <div class="layout">
-<div class="aside"><section class="hero" aria-live="polite">
+<div class="aside"><section class="hero">
 <div class="hero-row"><span class="hero-label">NETTO</span><span data-i18n="netHint">до виплати</span></div>
 <div class="hero-net" id="netResult">0,00 zł</div>
 <div class="hero-gross"><span>BRUTTO</span><strong id="grossResult">0,00 zł</strong></div></section></div>
 <div class="forms">
-<div class="card period"><button type="button" class="icon-btn" data-step="1" data-i18n-aria="ariaPrev"><svg class="icon"><use href="#i-l"/></svg></button>
+<div class="card period"><button type="button" class="icon-btn" data-step="1" data-i18n-aria="ariaPrev"><svg aria-hidden="true" class="icon"><use href="#i-l"/></svg></button>
 <div class="ctl sel"><select id="monthSelect" data-i18n-aria="month"></select></div>
-<button type="button" class="icon-btn" data-step="-1" data-i18n-aria="ariaNext"><svg class="icon"><use href="#i-r"/></svg></button></div>
+<button type="button" class="icon-btn" data-step="-1" data-i18n-aria="ariaNext"><svg aria-hidden="true" class="icon"><use href="#i-r"/></svg></button></div>
 
 <section class="card"><h3 data-i18n="secBase">Основна зарплата</h3>
 <div class="field"><div class="lab"><label for="baseSalary" data-i18n="base">Ставка (zł)</label></div><div class="ctl"><input type="number" inputmode="decimal" id="baseSalary" placeholder="0"></div></div>
@@ -102,7 +103,7 @@
 <div class="row"><span data-i18n="infoSched" data-nocolon>Дні за графіком:</span><b id="infoSchedVal">-</b></div>
 <div class="row"><span data-i18n="infoNightTariff" data-nocolon>Нічний тариф:</span><b id="infoNightTariffVal">-</b></div></section>
 
-<div id="info-sync-container" class="premium-field" style="display:none"><button type="button" id="btn-sync-up-info" class="btn primary" data-i18n="btnSaveCloud">Зберегти місяць</button></div>
+<div id="info-sync-container" class="hidden"><button type="button" id="btn-sync-up-info" class="btn primary" data-i18n="btnSaveCloud">Зберегти місяць</button></div>
 </div></div></section>
 
 <section class="view" id="viewProfile">
@@ -126,8 +127,8 @@
 
 <section class="view" id="viewSettings">
 <h2 class="vt" data-i18n="navSettings">Налаштування</h2><div class="layout one"><div class="forms"><section class="card">
-<div class="field"><div class="lab"><label for="langSelect" data-i18n="menuLang">Мова</label></div><div class="ctl sel"><select id="langSelect" onchange="setLang(this.value)"><option value="uk">Українська</option><option value="pl">Polski</option></select></div></div>
-<div class="field"><div class="lab"><label for="themeSelect" data-i18n="menuTheme">Тема</label></div><div class="ctl sel"><select id="themeSelect" onchange="setTheme(this.value)"><option value="light" data-i18n="optThemeLight">Світла</option><option value="dark" data-i18n="optThemeDark">Темна</option></select></div></div>
+<div class="field"><div class="lab"><label for="langSelect" data-i18n="menuLang">Мова</label></div><div class="ctl sel"><select id="langSelect"><option value="uk">Українська</option><option value="pl">Polski</option></select></div></div>
+<div class="field"><div class="lab"><label for="themeSelect" data-i18n="menuTheme">Тема</label></div><div class="ctl sel"><select id="themeSelect"><option value="light" data-i18n="optThemeLight">Світла</option><option value="dark" data-i18n="optThemeDark">Темна</option></select></div></div>
 </section></div></div></section>
 </main>
 

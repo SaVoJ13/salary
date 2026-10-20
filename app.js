@@ -47,9 +47,12 @@ const AUTH_ERR = {
   'auth/invalid-email': 'errInvalidEmail', 'auth/missing-password': 'errWeakPwd', 'auth/weak-password': 'errWeakPwd',
   'auth/email-already-in-use': 'errEmailInUse', 'auth/network-request-failed': 'errNetwork', 'auth/too-many-requests': 'errTooMany'
 };
+const CLOUD_ERR = { 'permission-denied': 'errPermission', 'unauthenticated': 'errPermission', 'unavailable': 'errNetwork', 'resource-exhausted': 'errTooMany' };
 function authMsg(e) {
-  const k = AUTH_ERR[e && e.code];
-  return k ? dict[currentLang][k] : ((e && e.message) || '');
+  const code = e && e.code;
+  const k = AUTH_ERR[code] || CLOUD_ERR[code];
+  if (!k) console.warn('Помилка хмари:', e);   // сирий текст помилки — лише в консоль, не користувачу
+  return dict[currentLang][k || 'errUnknown'];
 }
 
 let currentLang = localStorage.getItem('lang') || (navigator.language && navigator.language.toLowerCase().startsWith('pl') ? 'pl' : 'uk');
@@ -203,8 +206,7 @@ async function handleAuthState(user) {
   document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
   document.getElementById('auth-container').classList.toggle('hidden', isPremium);
   document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
-  const infoSyncContainer = document.getElementById('info-sync-container');
-  if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
+  document.querySelectorAll('[data-cloud-only]').forEach(el => el.classList.toggle('hidden', !isPremium));
   await loadProfile();
   if (user) {
     document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -233,8 +235,8 @@ async function handleSyncUp() {
   if (!auth.currentUser) return;
   const monthVal = document.getElementById('monthSelect').value;
   if (!monthVal) return showToast(dict[currentLang].toastSelectMonth);
-  const btn1 = document.getElementById('btn-sync-up'); const btn2 = document.getElementById('btn-sync-up-info');
-  if(btn1) btn1.disabled = true; if(btn2) btn2.disabled = true;
+  const saveBtns = document.querySelectorAll('[data-sync-up]');
+  saveBtns.forEach(b => { b.disabled = true; });
   const data = { updatedAt: new Date().toISOString() };
   document.querySelectorAll('input, select').forEach(el => {
     if(!NON_MONTH_IDS.has(el.id)) data[el.id] = el.value;
@@ -243,12 +245,11 @@ async function handleSyncUp() {
     await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
     showToast(dict[currentLang].toastSaveCloud); monthsCollectionCache = null;
     await updateL4Cache(monthVal);
-  } catch (error) { showToast(dict[currentLang].toastSaveErr + error.message); }
-  finally { if(btn1) btn1.disabled = false; if(btn2) btn2.disabled = false; }
+  } catch (error) { showToast(dict[currentLang].toastSaveErr + authMsg(error)); }
+  finally { saveBtns.forEach(b => { b.disabled = false; }); }
 }
 
-document.getElementById('btn-sync-up').addEventListener('click', handleSyncUp);
-if (document.getElementById('btn-sync-up-info')) document.getElementById('btn-sync-up-info').addEventListener('click', handleSyncUp);
+document.querySelectorAll('[data-sync-up]').forEach(b => b.addEventListener('click', handleSyncUp));
 
 document.getElementById('btn-login').addEventListener('click', async () => {
   if (!(await initCloud())) return showToast(dict[currentLang].toastOffline);
@@ -413,7 +414,7 @@ async function updateL4Cache(currentMonthVal) {
       }
     });
     window.cachedL4DailyRate = monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
-  } catch(e) {}
+  } catch(e) { console.warn('updateL4Cache:', e); }
 }
 
 function calculateSalary() {
@@ -560,7 +561,12 @@ document.addEventListener('click', e => {
 });
 
 document.getElementById('auth-form').addEventListener('submit', e => e.preventDefault());
+// Замість inline onchange (потрібно для CSP без 'unsafe-inline')
+document.getElementById('langSelect').addEventListener('change', e => window.setLang(e.target.value));
+document.getElementById('themeSelect').addEventListener('change', e => window.setTheme(e.target.value));
 
+const appVerEl = document.getElementById('appVersion');
+if (appVerEl && globalThis.APP_VERSION) appVerEl.textContent = 'v' + globalThis.APP_VERSION;
 setTheme(localStorage.getItem('theme') || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 window.setLang(currentLang);
 switchPage(1);
