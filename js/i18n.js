@@ -73,3 +73,23 @@ Object.assign(dict.pl, {
   hintBlood: "Liczone automatycznie", hintL4: "Dni kalendarzowe", ariaTheme: "Zmień motyw", ariaLangGrp: "Język",
   ariaNav: "Nawigacja", ariaPrev: "Poprzedni miesiąc", ariaNext: "Następny miesiąc", infoWeekend: "Dni weekendowe", lblNettoShort: "w tym netto"
 });
+
+Object.assign(dict.uk, {
+  toastOffline: "Хмара недоступна без мережі. Працює гостьовий режим.",
+  toastProfLocalOnly: "Профіль збережено на пристрої, у хмару не вдалося",
+  toastLoadErr: "Не вдалося завантажити дані з хмари",
+  errPermission: "Немає доступу. Увійдіть знову.", errUnknown: "Невідома помилка",
+  errInvalidCred: "Невірний email або пароль", errInvalidEmail: "Некоректний email",
+  errWeakPwd: "Пароль закороткий (мінімум 6 символів)", errEmailInUse: "Цей email уже зареєстровано",
+  errNetwork: "Немає підключення до мережі", errTooMany: "Забагато спроб, спробуйте пізніше"
+});
+
+Object.assign(dict.pl, {
+  toastOffline: "Chmura niedostępna bez sieci. Działa tryb gościa.",
+  toastProfLocalOnly: "Profil zapisany na urządzeniu, zapis w chmurze nie powiódł się",
+  toastLoadErr: "Nie udało się pobrać danych z chmury",
+  errPermission: "Brak dostępu. Zaloguj się ponownie.", errUnknown: "Nieznany błąd",
+  errInvalidCred: "Nieprawidłowy email lub hasło", errInvalidEmail: "Nieprawidłowy adres email",
+  errWeakPwd: "Hasło jest za krótkie (min. 6 znaków)", errEmailInUse: "Ten email jest już zarejestrowany",
+  errNetwork: "Brak połączenia z siecią", errTooMany: "Zbyt wiele prób, spróbuj później"
+});

@@ -1,12 +1,61 @@
-import {
-  auth, db, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged,
-  doc, setDoc, getDoc, collection, getDocs
-} from './firebase.js';
 import { dict } from './i18n.js';
 import { CONFIG, getNormHours, stateDaysFor, getMinWage, compute, computeDailyUrlopBonus } from './calc.js';
 import { formatPLN, showToast } from './utils.js';
 
-let currentLang = localStorage.getItem('lang') || 'uk';
+/* ХМАРА (Firebase) — опційна й не блокує старт.
+   Спершу застосунок стартує як гостьовий (працює офлайн), Firebase підвантажується у фоні
+   (initCloud). Якщо CDN недоступний, auth лишається заглушкою { currentUser: null }, а спроба
+   повторюється при події online або при натисканні «Увійти» / «Реєстрація». */
+let auth = { currentUser: null }, db = null;
+let signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut;
+let doc, setDoc, getDoc, collection, getDocs;
+let cloudAvailable = false;
+let cloudPromise = null;
+let guestReady = false;
+
+function withTimeout(p, ms) {
+  let t;
+  const timeout = new Promise((_, reject) => { t = setTimeout(() => reject(new Error('timeout')), ms); });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(t));
+}
+
+function initCloud() {
+  if (cloudAvailable) return Promise.resolve(true);
+  if (cloudPromise) return cloudPromise;
+  cloudPromise = withTimeout(import('./firebase.js'), 15000)
+    .then(m => {
+      ({ auth, db, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+         doc, setDoc, getDoc, collection, getDocs } = m);
+      cloudAvailable = true;
+      m.onAuthStateChanged(m.auth, user => {
+        // Перший виклик з null після гостьового старту нічого не змінює — пропускаємо
+        if (!user && guestReady && !isPremium) return;
+        return handleAuthState(user);
+      });
+      return true;
+    })
+    .catch(err => { console.warn('Firebase недоступний:', err); cloudPromise = null; return false; });
+  return cloudPromise;
+}
+
+window.addEventListener('online', () => { initCloud(); });
+
+const NON_MONTH_IDS = new Set(['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns']);
+
+const AUTH_ERR = {
+  'auth/invalid-credential': 'errInvalidCred', 'auth/wrong-password': 'errInvalidCred', 'auth/user-not-found': 'errInvalidCred',
+  'auth/invalid-email': 'errInvalidEmail', 'auth/missing-password': 'errWeakPwd', 'auth/weak-password': 'errWeakPwd',
+  'auth/email-already-in-use': 'errEmailInUse', 'auth/network-request-failed': 'errNetwork', 'auth/too-many-requests': 'errTooMany'
+};
+const CLOUD_ERR = { 'permission-denied': 'errPermission', 'unauthenticated': 'errPermission', 'unavailable': 'errNetwork', 'resource-exhausted': 'errTooMany' };
+function authMsg(e) {
+  const code = e && e.code;
+  const k = AUTH_ERR[code] || CLOUD_ERR[code];
+  if (!k) console.warn('Помилка хмари:', e);   // сирий текст помилки — лише в консоль, не користувачу
+  return dict[currentLang][k || 'errUnknown'];
+}
+
+let currentLang = localStorage.getItem('lang') || (navigator.language && navigator.language.toLowerCase().startsWith('pl') ? 'pl' : 'uk');
 let isPremium = false;
 let currentActivePage = 1;
 let requestCounter = 0;
@@ -45,22 +94,24 @@ async function loadProfile() {
 }
 
 document.getElementById('btn-save-profile').addEventListener('click', async () => {
-  userProfile.baseSalary = document.getElementById('profBaseSalary').value || 5750;
+  const profBase = parseFloat(document.getElementById('profBaseSalary').value);
+  userProfile.baseSalary = isNaN(profBase) ? 5750 : profBase;
   userProfile.under26 = document.getElementById('profUnder26').value;
   userProfile.ppk = document.getElementById('profPpk').value;
   userProfile.insurance = document.getElementById('profIns').value;
   const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
   const localKey = `user_profile_${uid}`;
   localStorage.setItem(localKey, JSON.stringify(userProfile));
+  let profileCloudFailed = false;
   if (auth.currentUser) {
-    try { await setDoc(doc(db, "users", uid, "profile", "userProfile"), userProfile, { merge: true }); } catch(e) {}
+    try { await setDoc(doc(db, "users", uid, "profile", "userProfile"), userProfile, { merge: true }); } catch(e) { profileCloudFailed = true; }
   }
   const monthVal = document.getElementById('monthSelect').value;
   if (!localStorage.getItem(`guest_month_${monthVal}`) && (!auth.currentUser || !monthsCollectionCache?.some(d => d.id === monthVal))) {
     applyProfileToMain();
   }
   calculateSalary();
-  showToast(dict[currentLang].toastProfOk);
+  showToast(profileCloudFailed ? dict[currentLang].toastProfLocalOnly : dict[currentLang].toastProfOk);
 });
 
 function applyProfileToMain() {
@@ -149,14 +200,13 @@ async function getCachedMonths() {
   } catch (e) { return []; }
 }
 
-onAuthStateChanged(auth, async (user) => {
+async function handleAuthState(user) {
   requestCounter++; monthsCollectionCache = null;
   isPremium = !!user;
   document.getElementById('app-body').classList.toggle('is-logged-in', isPremium);
   document.getElementById('auth-container').classList.toggle('hidden', isPremium);
   document.getElementById('sync-container').classList.toggle('hidden', !isPremium);
-  const infoSyncContainer = document.getElementById('info-sync-container');
-  if (infoSyncContainer) infoSyncContainer.style.display = isPremium ? 'block' : 'none';
+  document.querySelectorAll('[data-cloud-only]').forEach(el => el.classList.toggle('hidden', !isPremium));
   await loadProfile();
   if (user) {
     document.getElementById('user-email-display').innerText = "👤 " + user.email;
@@ -165,12 +215,12 @@ onAuthStateChanged(auth, async (user) => {
     loadLocalGuestData();
   }
   calculateSalary();
-});
+}
 
 function fillFrom(d) {
   clearInputs();
   document.querySelectorAll('input, select').forEach(el => {
-    if (!['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(el.id) && d[el.id] !== undefined) {
+    if (!NON_MONTH_IDS.has(el.id) && d[el.id] !== undefined) {
       el.value = d[el.id];
     }
   });
@@ -185,34 +235,43 @@ async function handleSyncUp() {
   if (!auth.currentUser) return;
   const monthVal = document.getElementById('monthSelect').value;
   if (!monthVal) return showToast(dict[currentLang].toastSelectMonth);
-  const btn1 = document.getElementById('btn-sync-up'); const btn2 = document.getElementById('btn-sync-up-info');
-  if(btn1) btn1.disabled = true; if(btn2) btn2.disabled = true;
+  const saveBtns = document.querySelectorAll('[data-sync-up]');
+  saveBtns.forEach(b => { b.disabled = true; });
   const data = { updatedAt: new Date().toISOString() };
   document.querySelectorAll('input, select').forEach(el => {
-    if(!['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(el.id)) data[el.id] = el.value;
+    if(!NON_MONTH_IDS.has(el.id)) data[el.id] = el.value;
   });
   try {
     await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
     showToast(dict[currentLang].toastSaveCloud); monthsCollectionCache = null;
     await updateL4Cache(monthVal);
-  } catch (error) { showToast(dict[currentLang].toastSaveErr + error.message); }
-  finally { if(btn1) btn1.disabled = false; if(btn2) btn2.disabled = false; }
+  } catch (error) { showToast(dict[currentLang].toastSaveErr + authMsg(error)); }
+  finally { saveBtns.forEach(b => { b.disabled = false; }); }
 }
 
-document.getElementById('btn-sync-up').addEventListener('click', handleSyncUp);
-if (document.getElementById('btn-sync-up-info')) document.getElementById('btn-sync-up-info').addEventListener('click', handleSyncUp);
+document.querySelectorAll('[data-sync-up]').forEach(b => b.addEventListener('click', handleSyncUp));
 
 document.getElementById('btn-login').addEventListener('click', async () => {
+  if (!(await initCloud())) return showToast(dict[currentLang].toastOffline);
   try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); }
-  catch (e) { showToast(dict[currentLang].toastLoginErr + e.message); }
+  catch (e) { showToast(dict[currentLang].toastLoginErr + authMsg(e)); }
 });
 
 document.getElementById('btn-register').addEventListener('click', async () => {
+  if (!(await initCloud())) return showToast(dict[currentLang].toastOffline);
   try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); showToast(dict[currentLang].toastRegOk); }
-  catch (e) { showToast(dict[currentLang].toastRegErr + e.message); }
+  catch (e) { showToast(dict[currentLang].toastRegErr + authMsg(e)); }
 });
 
-document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  if (!cloudAvailable || !auth.currentUser) return;
+  const uid = auth.currentUser.uid;
+  try { await signOut(auth); } catch (e) { return; }
+  // Локальна копія профілю акаунта (ставка, PPK, вік) не має лишатись на спільному пристрої.
+  // Гостьові дані (guest_month_*, user_profile_guest) — окремий режим, їх не чіпаємо.
+  localStorage.removeItem(`user_profile_${uid}`);
+  window.cachedL4DailyRate = null; monthsCollectionCache = null;
+});
 
 async function loadCloudData() {
   if (!auth.currentUser) return;
@@ -234,10 +293,11 @@ async function loadCloudData() {
     await updateL4Cache(monthVal);
     if (currentReq !== requestCounter) return;
     calculateSalary();
-  } catch(e) {}
+    return true;
+  } catch(e) { showToast(dict[currentLang].toastLoadErr); return false; }
 }
 
-document.getElementById('btn-sync-down').addEventListener('click', async () => { await loadCloudData(); showToast(dict[currentLang].toastLoadCloud); });
+document.getElementById('btn-sync-down').addEventListener('click', async () => { if (await loadCloudData()) showToast(dict[currentLang].toastLoadCloud); });
 
 function saveLocalGuestData() {
   if (auth.currentUser) return;
@@ -245,7 +305,7 @@ function saveLocalGuestData() {
   if (!monthVal) return;
   const data = {};
   document.querySelectorAll('input, select').forEach(el => {
-    if(!['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(el.id)) data[el.id] = el.value;
+    if(!NON_MONTH_IDS.has(el.id)) data[el.id] = el.value;
   });
   localStorage.setItem(`guest_month_${monthVal}`, JSON.stringify(data));
 }
@@ -354,7 +414,7 @@ async function updateL4Cache(currentMonthVal) {
       }
     });
     window.cachedL4DailyRate = monthsFound > 0 ? (totalNetBase / monthsFound) / 30 : null;
-  } catch(e) {}
+  } catch(e) { console.warn('updateL4Cache:', e); }
 }
 
 function calculateSalary() {
@@ -435,17 +495,31 @@ const appBody = document.getElementById('app-body');
 appBody.addEventListener('focusin', e => {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
     e.target.dataset.prevVal = e.target.value; e.target.value = '';
+    delete e.target.dataset.edited;
   }
+});
+
+/* Позначаємо, що користувач щось вводив у полі: тоді порожнє значення — його свідомий вибір,
+   і старе значення при виході з поля повертати не можна (розрахунок і збереження вже з порожнім). */
+appBody.addEventListener('input', e => {
+  if (e.target.dataset && e.target.dataset.prevVal !== undefined) e.target.dataset.edited = '1';
 });
 
 appBody.addEventListener('focusout', e => {
   if (e.target.tagName === 'INPUT' && e.target.type === 'number' && !e.target.readOnly) {
-    if (e.target.value === '' && e.target.dataset.prevVal !== undefined) e.target.value = e.target.dataset.prevVal;
+    if (e.target.value === '' && e.target.dataset.prevVal !== undefined) {
+      if (!e.target.dataset.edited) {
+        e.target.value = e.target.dataset.prevVal;               // просто торкнулись і вийшли — повертаємо як було
+      } else if (e.target.id === 'baseSalary') {
+        e.target.value = userProfile.baseSalary;                 // порожня ставка = ставка з профілю (так рахує calculateSalary)
+        saveLocalGuestData();
+      }
+    }
     if (e.target.id === 'scheduleDays' && !e.target.value) {
       e.target.value = stateDaysFor(document.getElementById('monthSelect').value);
       calculateSalary();
     }
-    delete e.target.dataset.prevVal;
+    delete e.target.dataset.prevVal; delete e.target.dataset.edited;
   }
 });
 
@@ -459,7 +533,7 @@ appBody.addEventListener('input', e => {
     else if (l4 <= 2) pSel.value = "2.5";
     else pSel.value = "0";
   }
-  if (id === 'monthSelect' || ['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(id)) return;
+  if (id === 'monthSelect' || NON_MONTH_IDS.has(id)) return;
   if (SCHED_IDS.includes(id)) syncSchedule();
   calculateSalary(); saveLocalGuestData();
   if (id === 'vacationDays') {
@@ -471,8 +545,8 @@ appBody.addEventListener('change', e => {
   const id = e.target.id;
   if (id === 'monthSelect') {
     document.getElementById('scheduleDays').value = stateDaysFor(e.target.value);
-    if (auth.currentUser) loadCloudData(); else loadLocalGuestData();
-  } else if (!['langSelect', 'themeSelect', 'email', 'password', 'profBaseSalary', 'profUnder26', 'profPpk', 'profIns'].includes(id)) {
+    if (auth.currentUser) loadCloudData(); else { loadLocalGuestData(); calculateSalary(); }
+  } else if (!NON_MONTH_IDS.has(id)) {
     calculateSalary(); saveLocalGuestData();
   }
 });
@@ -486,13 +560,17 @@ document.addEventListener('click', e => {
     if (i >= 0 && i < s.options.length) { s.selectedIndex = i; s.dispatchEvent(new Event('change', { bubbles: true })); } }
 });
 
-appBody.addEventListener('change', e => { if (e.target.id === 'monthSelect') refreshPeriod(); });
 document.getElementById('auth-form').addEventListener('submit', e => e.preventDefault());
+// Замість inline onchange (потрібно для CSP без 'unsafe-inline')
+document.getElementById('langSelect').addEventListener('change', e => window.setLang(e.target.value));
+document.getElementById('themeSelect').addEventListener('change', e => window.setTheme(e.target.value));
 
-setTheme(localStorage.getItem('theme') || 'light');
+const appVerEl = document.getElementById('appVersion');
+if (appVerEl && globalThis.APP_VERSION) appVerEl.textContent = 'v' + globalThis.APP_VERSION;
+setTheme(localStorage.getItem('theme') || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 window.setLang(currentLang);
-loadProfile();
 switchPage(1);
+handleAuthState(null).finally(() => { guestReady = true; initCloud(); });
 
 /* --- СВАЙП-НАВІГАЦІЯ МІЖ ВІКНАМИ --- */
 let touchStartX = 0, touchStartY = 0;
