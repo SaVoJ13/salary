@@ -14,13 +14,17 @@ const CORE = [
   './js/i18n.js',
   './js/firebase.js',
   './js/utils.js',
+  './js/monthcache.js',
   './js/version.js',
   './android-chrome-192x192.png',
-  './android-chrome-512x512.png'
+  './android-chrome-512x512.png',
+  './maskable-192.png',
+  './maskable-512.png'
 ];
 
+// Прекеш у обхід HTTP-кешу браузера: новий service worker має отримати справді нові файли.
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE.map(url => new Request(url, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {

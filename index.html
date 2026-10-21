@@ -5,7 +5,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2f4f8">
-<title>Прогноз ЗП</title>
+<meta name="description" content="Розрахунок зарплати, надгодин та відпускних">
+<title>Калькулятор зарплати</title>
 <!-- PWA Зв'язки -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="android-chrome-192x192.png">
@@ -22,6 +23,11 @@
 <symbol id="i-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
 </defs></svg>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="update-banner" class="update-banner hidden" role="status">
+<span data-i18n="updateAvailable">Доступна нова версія</span>
+<button type="button" id="btn-update" class="btn primary" data-i18n="updateNow">Оновити</button>
+<button type="button" id="btn-update-later" class="btn" data-i18n="updateLater">Пізніше</button>
+</div>
 
 <header class="top"><div class="topbar">
 <div class="brand"><span class="mark" aria-hidden="true">zł</span><h1 data-i18n="title">Калькулятор</h1><span class="pro-badge">PRO</span><span class="app-ver" id="appVersion"></span></div>
@@ -118,6 +124,7 @@
 <form id="auth-form" novalidate><div id="auth-container">
 <div class="stack"><label for="email" data-i18n="lblEmail">Email</label><div class="ctl"><input type="email" id="email" autocomplete="email" placeholder="Email"></div></div>
 <div class="stack"><label for="password" data-i18n="lblPwd">Пароль</label><div class="ctl"><input type="password" id="password" autocomplete="current-password" data-i18n-ph="pwdPlaceholder" placeholder="Пароль"></div></div>
+<button type="button" id="btn-reset-password" class="link-btn" data-i18n="btnResetPassword">Забули пароль?</button>
 <button type="submit" id="btn-login" class="btn primary" data-i18n="btnLogin">Увійти (PRO)</button>
 <button type="button" id="btn-register" class="btn" data-i18n="btnRegister">Реєстрація</button>
 <p class="card-sub" data-i18n="guestNote">Без входу дані зберігаються лише на цьому пристрої.</p></div></form>
