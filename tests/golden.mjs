@@ -1,6 +1,6 @@
 /* Characterization ("golden") test.
    `npm run test:update` записує поточні результати в golden.json,
-   `npm test` порівнює з ними. Будь-яка зміна математики одразу видна. */
+   `npm test` порівнює з ними (без golden.json тест падає). Будь-яка зміна математики одразу видна. */
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -51,10 +51,12 @@ out.urlop = computeDailyUrlopBonus(records, '2026-09', { baseSalary: 5750, minWa
 
 const json = JSON.stringify(out, null, 2);
 
-if (process.argv.includes('--update') || !existsSync(goldenPath)) {
+if (process.argv.includes('--update')) {
   writeFileSync(goldenPath, json + '\n');
   console.log('golden.json записано:', goldenPath);
 } else {
+  // Без тихої регенерації: відсутній golden.json у CI має валити тест, а не створюватись заново.
+  assert.ok(existsSync(goldenPath), 'tests/golden.json не знайдено. Завантаж його в репозиторій (або створи: npm run test:update).');
   assert.deepStrictEqual(JSON.parse(json), JSON.parse(readFileSync(goldenPath, 'utf8')));
   console.log('OK: результати збігаються з golden.json');
 }
