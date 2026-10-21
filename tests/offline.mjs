@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { installFakeDom } from './helpers/fake-dom.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const appSrc = readFileSync(join(here, '../js/app.js'), 'utf8');
@@ -13,43 +14,8 @@ const appSrc = readFileSync(join(here, '../js/app.js'), 'utf8');
 assert.ok(!/^(?:const|let|var)\s[^\n]*=\s*await\s/m.test(appSrc) && !/^await\s/m.test(appSrc), 'app.js не має top-level await');
 assert.ok(!/^import[^\n]*firebase\.js/m.test(appSrc), 'app.js не має статично імпортувати firebase.js');
 
-// 2. Фейковий DOM
-const elements = new Map();
-function makeEl(id) {
-  let options = [];
-  return {
-    id, value: '', innerText: '', textContent: '', dataset: {}, style: {}, handlers: {}, selectedIndex: 0,
-    classList: { toggle() {}, add() {}, remove() {} },
-    get options() { return options; },
-    set innerHTML(_v) { options = []; },
-    appendChild(o) { options.push(o); },
-    addEventListener(type, fn) { (this.handlers[type] ||= []).push(fn); },
-    setAttribute() {}, removeAttribute() {}, hasAttribute() { return false; },
-    dispatchEvent() {}, closest() { return null; }
-  };
-}
-const fire = async (el, type, target = el) => { for (const fn of el.handlers[type] || []) await fn({ target }); };
-const getEl = id => { if (!elements.has(id)) elements.set(id, makeEl(id)); return elements.get(id); };
-
-const store = new Map();
-globalThis.localStorage = {
-  getItem: k => (store.has(k) ? store.get(k) : null),
-  setItem: (k, v) => store.set(k, String(v)),
-  removeItem: k => store.delete(k)
-};
-globalThis.window = globalThis;
-globalThis.window.scrollTo = () => {};
-globalThis.window.addEventListener = () => {};
-globalThis.document = {
-  title: '',
-  documentElement: { lang: '', setAttribute() {}, getAttribute() { return ''; } },
-  getElementById: getEl,
-  querySelector: () => null,
-  querySelectorAll: sel => (sel === 'input, select' ? [...elements.values()] : []),
-  createElement: () => ({ value: '', text: '' }),
-  addEventListener() {}
-};
-Object.defineProperty(globalThis, 'navigator', { value: { language: 'uk' }, configurable: true });
+// 2. Фейковий DOM (спільний хелпер)
+const { getEl, fire, store } = installFakeDom();
 const originalWarn = console.warn; console.warn = () => {};
 
 globalThis.APP_VERSION = '9.9.9';   // у браузері його задає js/version.js
@@ -69,6 +35,15 @@ for (const id of ['btn-login', 'btn-register']) {
   await fire(getEl(id), 'click');
   assert.equal(getEl('toast').innerText, dict.uk.toastOffline, `${id}: очікувався тост про офлайн`);
 }
+
+// 5b. Скидання пароля без мережі: спершу вимога email, потім повідомлення про недоступну хмару
+getEl('email').value = ''; getEl('toast').innerText = '';
+await fire(getEl('btn-reset-password'), 'click');
+assert.equal(getEl('toast').innerText, dict.uk.toastResetNeedEmail, 'без email — підказка');
+getEl('email').value = 'user@example.com';
+await fire(getEl('btn-reset-password'), 'click');
+assert.equal(getEl('toast').innerText, dict.uk.toastOffline, 'без хмари — повідомлення про офлайн');
+getEl('email').value = '';
 
 // 6. Очищення поля: торкнулись і вийшли — значення повертається; стерли свідомо — лишається порожнім
 const body = getEl('app-body');
