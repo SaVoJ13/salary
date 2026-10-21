@@ -6,7 +6,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 export {
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
 export {

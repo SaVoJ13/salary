@@ -1,13 +1,18 @@
 import { dict } from './i18n.js';
 import { CONFIG, getNormHours, stateDaysFor, getMinWage, compute, computeDailyUrlopBonus } from './calc.js';
 import { formatPLN, showToast } from './utils.js';
+import { saveMonthCache, loadMonthCache, clearMonthCache } from './monthcache.js';
+
+/* Лише для тестів: tests/cloud.mjs підставляє фейковий Firebase і короткий таймаут. У браузері не задано. */
+const TEST = globalThis.__salaryTest || {};
+const SAVE_TIMEOUT_MS = () => TEST.saveTimeoutMs ?? 15000;
 
 /* ХМАРА (Firebase) — опційна й не блокує старт.
    Спершу застосунок стартує як гостьовий (працює офлайн), Firebase підвантажується у фоні
    (initCloud). Якщо CDN недоступний, auth лишається заглушкою { currentUser: null }, а спроба
    повторюється при події online або при натисканні «Увійти» / «Реєстрація». */
 let auth = { currentUser: null }, db = null;
-let signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut;
+let signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail;
 let doc, setDoc, getDoc, collection, getDocs;
 let cloudAvailable = false;
 let cloudPromise = null;
@@ -22,9 +27,9 @@ function withTimeout(p, ms) {
 function initCloud() {
   if (cloudAvailable) return Promise.resolve(true);
   if (cloudPromise) return cloudPromise;
-  cloudPromise = withTimeout(import('./firebase.js'), 15000)
+  cloudPromise = withTimeout(TEST.cloudLoader ? TEST.cloudLoader() : import('./firebase.js'), 15000)
     .then(m => {
-      ({ auth, db, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+      ({ auth, db, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail,
          doc, setDoc, getDoc, collection, getDocs } = m);
       cloudAvailable = true;
       m.onAuthStateChanged(m.auth, user => {
@@ -235,6 +240,7 @@ async function handleSyncUp() {
   if (!auth.currentUser) return;
   const monthVal = document.getElementById('monthSelect').value;
   if (!monthVal) return showToast(dict[currentLang].toastSelectMonth);
+  if (navigator.onLine === false) return showToast(dict[currentLang].toastSaveOffline);   // setDoc без мережі висить без відповіді
   const saveBtns = document.querySelectorAll('[data-sync-up]');
   saveBtns.forEach(b => { b.disabled = true; });
   const data = { updatedAt: new Date().toISOString() };
@@ -242,10 +248,14 @@ async function handleSyncUp() {
     if(!NON_MONTH_IDS.has(el.id)) data[el.id] = el.value;
   });
   try {
-    await setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true });
+    await withTimeout(setDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal), data, { merge: true }), SAVE_TIMEOUT_MS());
+    saveMonthCache(localStorage, auth.currentUser.uid, monthVal, data);
     showToast(dict[currentLang].toastSaveCloud); monthsCollectionCache = null;
     await updateL4Cache(monthVal);
-  } catch (error) { showToast(dict[currentLang].toastSaveErr + authMsg(error)); }
+  } catch (error) {
+    // таймаут = немає зв'язку з хмарою (запис міг бути в черзі Firestore, повторне збереження безпечне: merge)
+    showToast(error && error.message === 'timeout' ? dict[currentLang].toastSaveOffline : dict[currentLang].toastSaveErr + authMsg(error));
+  }
   finally { saveBtns.forEach(b => { b.disabled = false; }); }
 }
 
@@ -263,6 +273,28 @@ document.getElementById('btn-register').addEventListener('click', async () => {
   catch (e) { showToast(dict[currentLang].toastRegErr + authMsg(e)); }
 });
 
+/* СКИДАННЯ ПАРОЛЯ: лист надсилає Firebase. Відповідь користувачу однакова, чи існує акаунт
+   (не розкриваємо, які email зареєстровані); між запитами — пауза, щоб не засипати скриньку. */
+let lastResetAt = 0;
+document.getElementById('btn-reset-password').addEventListener('click', async () => {
+  const emailEl = document.getElementById('email');
+  const email = (emailEl.value || '').trim();
+  if (!email) { showToast(dict[currentLang].toastResetNeedEmail); if (emailEl.focus) emailEl.focus(); return; }
+  const wait = lastResetAt + (TEST.resetCooldownMs ?? 60000) - Date.now();
+  if (wait > 0) return showToast(dict[currentLang].toastResetWait.replace('{n}', Math.ceil(wait / 1000)));
+  if (!(await initCloud())) return showToast(dict[currentLang].toastOffline);
+  const btn = document.getElementById('btn-reset-password');
+  btn.disabled = true;
+  try {
+    auth.languageCode = currentLang;                 // лист приходить мовою інтерфейсу (шаблони UA/PL — у консолі Firebase)
+    await sendPasswordResetEmail(auth, email);
+    lastResetAt = Date.now(); showToast(dict[currentLang].toastResetSent, 6000);
+  } catch (e) {
+    if (e && e.code === 'auth/user-not-found') { lastResetAt = Date.now(); showToast(dict[currentLang].toastResetSent, 6000); }
+    else showToast(dict[currentLang].toastResetErr + authMsg(e));
+  } finally { btn.disabled = false; }
+});
+
 document.getElementById('btn-logout').addEventListener('click', async () => {
   if (!cloudAvailable || !auth.currentUser) return;
   const uid = auth.currentUser.uid;
@@ -270,6 +302,7 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   // Локальна копія профілю акаунта (ставка, PPK, вік) не має лишатись на спільному пристрої.
   // Гостьові дані (guest_month_*, user_profile_guest) — окремий режим, їх не чіпаємо.
   localStorage.removeItem(`user_profile_${uid}`);
+  clearMonthCache(localStorage, uid);
   window.cachedL4DailyRate = null; monthsCollectionCache = null;
 });
 
@@ -277,12 +310,21 @@ async function loadCloudData() {
   if (!auth.currentUser) return;
   const monthVal = document.getElementById('monthSelect').value;
   if (!monthVal) return;
+  const uid = auth.currentUser.uid;
   const currentReq = ++requestCounter;
   const defaultSched = stateDaysFor(monthVal);
+  let snap = null;
   try {
-    const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "months", monthVal));
-    if (currentReq !== requestCounter) return;
+    if (navigator.onLine === false) throw new Error('offline');   // без мережі не чекаємо таймауту Firestore
+    snap = await getDoc(doc(db, "users", uid, "months", monthVal));
+  } catch (e) {
+    if (currentReq !== requestCounter) return false;
+    return showCachedMonth(uid, monthVal, defaultSched);
+  }
+  if (currentReq !== requestCounter) return;
+  try {
     if (snap.exists()) {
+      saveMonthCache(localStorage, uid, monthVal, snap.data());
       fillFrom(snap.data());
       if (!snap.data().scheduleDays) document.getElementById('scheduleDays').value = defaultSched;
     } else {
@@ -297,7 +339,20 @@ async function loadCloudData() {
   } catch(e) { showToast(dict[currentLang].toastLoadErr); return false; }
 }
 
-document.getElementById('btn-sync-down').addEventListener('click', async () => { if (await loadCloudData()) showToast(dict[currentLang].toastLoadCloud); });
+/* Мережі немає (або Firestore не відповів): показуємо останню локальну копію місяця.
+   Повертає 'cache', якщо копія є, інакше false (з тостом про помилку). */
+function showCachedMonth(uid, monthVal, defaultSched) {
+  const cached = loadMonthCache(localStorage, uid, monthVal);
+  if (!cached) { showToast(dict[currentLang].toastLoadErr); return false; }
+  fillFrom(cached.data);
+  if (!cached.data.scheduleDays) document.getElementById('scheduleDays').value = defaultSched;
+  updateVisibility(); calculateSalary();
+  const when = new Date(cached.savedAt).toLocaleDateString(currentLang === 'pl' ? 'pl-PL' : 'uk-UA');
+  showToast(dict[currentLang].toastLoadCached + when);
+  return 'cache';
+}
+
+document.getElementById('btn-sync-down').addEventListener('click', async () => { if (await loadCloudData() === true) showToast(dict[currentLang].toastLoadCloud); });
 
 function saveLocalGuestData() {
   if (auth.currentUser) return;
@@ -567,6 +622,11 @@ document.getElementById('themeSelect').addEventListener('change', e => window.se
 
 const appVerEl = document.getElementById('appVersion');
 if (appVerEl && globalThis.APP_VERSION) appVerEl.textContent = 'v' + globalThis.APP_VERSION;
+// Повідомлення про нову версію: js/sw-register.js диспатчить подію, коли новий service worker перейняв керування
+const updateBanner = document.getElementById('update-banner');
+window.addEventListener('salary:update-ready', () => updateBanner.classList.remove('hidden'));
+document.getElementById('btn-update').addEventListener('click', () => location.reload());
+document.getElementById('btn-update-later').addEventListener('click', () => updateBanner.classList.add('hidden'));
 setTheme(localStorage.getItem('theme') || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 window.setLang(currentLang);
 switchPage(1);
