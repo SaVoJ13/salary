@@ -23,7 +23,7 @@ js/firebase.js      ініціалізація Firebase
 js/utils.js         formatPLN, showToast
 js/sw-register.js   реєстрація service worker
 sw.js               кеш для офлайн-роботи
-tests/              golden-тест математики, i18n, офлайн-старт, безпека
+tests/              математика (golden + еталон), i18n, офлайн-старт, безпека, розкладка, версія
 firestore.rules     правила Firestore
 firebase.json, .firebaserc   деплой правил
 ```
@@ -34,11 +34,13 @@ firebase.json, .firebaserc   деплой правил
 
 ```bash
 npx serve .
-npm test           # golden-тест математики + перевірка i18n (Node 22+)
+npm test           # усі тести (Node 20+; у CI — Node 22)
 npm run test:update   # лише якщо формули змінено свідомо
 ```
 
-`tests/golden.json` фіксує результати `compute()` на наборі сценаріїв. Якщо `npm test` падає після рефакторингу, значить змінилися цифри.
+`tests/golden.json` фіксує результати `compute()` на наборі сценаріїв. Якщо `npm test` падає після рефакторингу, значить змінилися цифри. Без `golden.json` тест падає (тиха регенерація заборонена).
+
+`tests/reference.mjs` порівнює `js/calc.js` з оригінальною математикою (вбудована в сам файл копія блоку `@@PURE` з `index.html` до розбиття на модулі) на десятках тисяч випадкових наборів. Це незалежний еталон: він не генерується з поточного коду. Не редагуй його без пояснення в коміті.
 
 ## Деплой (GitHub Pages)
 
