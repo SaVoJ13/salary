@@ -15,6 +15,7 @@ const CORE = [
   './js/firebase.js',
   './js/utils.js',
   './js/monthcache.js',
+  './js/pit.js',
   './js/version.js',
   './android-chrome-192x192.png',
   './android-chrome-512x512.png',

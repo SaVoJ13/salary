@@ -102,13 +102,16 @@
 </div><div class="forms dside">
 <section class="card total"><h3 data-i18n="secTotals">Підсумок</h3>
 <div class="row strong"><span><span data-i18n="totalBrutto" data-nocolon>BRUTTO:</span></span><b id="infoTotalBrutto">0,00 zł</b></div><div class="row"><span><span data-i18n="infoLaundry" data-nocolon>Доплата (прання):</span></span><b id="infoLaundrySum">0,00 zł</b></div>
+<div class="row hidden" id="rowPitExtra"><span><span data-i18n="infoPitExtra" data-nocolon>PIT 32% (понад 120 000):</span></span><b id="infoPitExtraVal">0,00 zł</b></div>
 <div class="row net"><span data-i18n="totalNetto" data-nocolon>NETTO:</span><b id="infoTotalNetto">0,00 zł</b></div></section>
 
 <section class="card"><h3 data-i18n="secStats">Параметри місяця</h3>
 <div class="row"><span data-i18n="infoWorkedDays" data-nocolon>Відпрацьовано змін:</span><b id="infoWorkedDaysVal">-</b></div>
 <div class="row"><span data-i18n="infoTotalDays" data-nocolon>Всього днів:</span><b id="infoTotalDaysVal">-</b></div>
 <div class="row"><span data-i18n="infoSched" data-nocolon>Дні за графіком:</span><b id="infoSchedVal">-</b></div>
-<div class="row"><span data-i18n="infoNightTariff" data-nocolon>Нічний тариф:</span><b id="infoNightTariffVal">-</b></div></section>
+<div class="row"><span data-i18n="infoNightTariff" data-nocolon>Нічний тариф:</span><b id="infoNightTariffVal">-</b></div>
+<div class="row hidden" id="rowPitYtd"><span data-i18n="infoPitYtd" data-nocolon>База PIT з початку року:</span><b id="infoPitYtdVal">-</b></div>
+<p class="card-sub hidden" id="pitYtdNote"></p></section>
 
 <div class="hidden" data-cloud-only><button type="button" id="btn-sync-up-info" class="btn primary" data-sync-up data-i18n="btnSaveCloud">Зберегти місяць</button></div>
 </div></div></section>
