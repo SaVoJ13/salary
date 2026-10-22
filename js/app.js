@@ -2,6 +2,7 @@ import { dict } from './i18n.js';
 import { CONFIG, getNormHours, stateDaysFor, getMinWage, compute, computeDailyUrlopBonus } from './calc.js';
 import { formatPLN, showToast } from './utils.js';
 import { saveMonthCache, loadMonthCache, clearMonthCache } from './monthcache.js';
+import { pitBaseOf, pitExtra, yearToDate } from './pit.js';
 
 /* Лише для тестів: tests/cloud.mjs підставляє фейковий Firebase і короткий таймаут. У браузері не задано. */
 const TEST = globalThis.__salaryTest || {};
@@ -115,6 +116,7 @@ document.getElementById('btn-save-profile').addEventListener('click', async () =
   if (!localStorage.getItem(`guest_month_${monthVal}`) && (!auth.currentUser || !monthsCollectionCache?.some(d => d.id === monthVal))) {
     applyProfileToMain();
   }
+  await updateYtdCache(monthVal);        // вік до 26 років змінює, чи діє поріг
   calculateSalary();
   showToast(profileCloudFailed ? dict[currentLang].toastProfLocalOnly : dict[currentLang].toastProfOk);
 });
@@ -334,6 +336,8 @@ async function loadCloudData() {
     if (currentReq !== requestCounter) return;
     await updateL4Cache(monthVal);
     if (currentReq !== requestCounter) return;
+    await updateYtdCache(monthVal);
+    if (currentReq !== requestCounter) return;
     calculateSalary();
     return true;
   } catch(e) { showToast(dict[currentLang].toastLoadErr); return false; }
@@ -341,12 +345,12 @@ async function loadCloudData() {
 
 /* Мережі немає (або Firestore не відповів): показуємо останню локальну копію місяця.
    Повертає 'cache', якщо копія є, інакше false (з тостом про помилку). */
-function showCachedMonth(uid, monthVal, defaultSched) {
+async function showCachedMonth(uid, monthVal, defaultSched) {
   const cached = loadMonthCache(localStorage, uid, monthVal);
   if (!cached) { showToast(dict[currentLang].toastLoadErr); return false; }
   fillFrom(cached.data);
   if (!cached.data.scheduleDays) document.getElementById('scheduleDays').value = defaultSched;
-  updateVisibility(); calculateSalary();
+  updateVisibility(); await updateYtdCache(monthVal); calculateSalary();
   const when = new Date(cached.savedAt).toLocaleDateString(currentLang === 'pl' ? 'pl-PL' : 'uk-UA');
   showToast(dict[currentLang].toastLoadCached + when);
   return 'cache';
@@ -429,6 +433,22 @@ async function autoFillUrlopBonus(monthVal) {
   }
 }
 
+/* Накопичена з початку року база PIT (для порога 120 000): місяці року ПЕРЕД поточним з хмари,
+   а без мережі — з локальної копії. Для гостя порога немає (немає збережених місяців). */
+let ytdState = { monthVal: '', prev: 0, found: 0, expected: 0 };
+async function updateYtdCache(monthVal) {
+  if (!auth.currentUser) { ytdState = { monthVal, prev: 0, found: 0, expected: 0 }; return; }
+  const uid = auth.currentUser.uid;
+  const records = {};
+  (await getCachedMonths()).forEach(d => { records[d.id] = d.data; });
+  const [y, m] = monthVal.split('-');
+  for (let j = 1; j < parseInt(m); j++) {
+    const id = `${y}-${String(j).padStart(2, '0')}`;
+    if (!records[id]) { const c = loadMonthCache(localStorage, uid, id); if (c) records[id] = c.data; }
+  }
+  ytdState = yearToDate(records, monthVal, userProfile);
+}
+
 async function updateL4Cache(currentMonthVal) {
   if (!auth.currentUser) { window.cachedL4DailyRate = null; return; }
   const [yStr, mStr] = currentMonthVal.split('-'); let cYear = parseInt(yStr); let cMonth = parseInt(mStr);
@@ -505,8 +525,13 @@ function calculateSalary() {
   };
   inputs.regWorkedDays = inputs.morningShifts + inputs.afternoonShifts + inputs.nightShifts;
   const res = compute(inputs);
+  // Поріг PIT 120 000: лише для залогінених (потрібні збережені місяці року). Нижче порога extraPit = 0,
+  // тож результат такий самий, як у compute(); понад поріг — 32% замість 12% з надлишку.
+  const ytd = isPremium && ytdState.monthVal === monthVal && !inputs.isUnder26 ? ytdState : null;
+  const extraPit = ytd ? pitExtra(res, ytd.prev) : 0;
+  const net = res.net - extraPit;
   if (inputs.bloodDonationDays > 0) document.getElementById('bloodBonus').value = res.autoDailyBlood.toFixed(2);
-  updateUI(res.gross, res.net);
+  updateUI(res.gross, net);
   const totalNightMinutes = Math.round(((res.totalMorningShifts * (10/60)) + (res.totalNightShifts * 8)) * 60);
   const nHours = Math.floor(totalNightMinutes / 60); const nMins = totalNightMinutes % 60;
   document.getElementById('infoNightHours').innerText = nHours > 0 ? `${nHours} ${dict[currentLang].hoursShort} ${nMins} ${dict[currentLang].minsShort}` : `${nMins} ${dict[currentLang].minsShort}`;
@@ -527,7 +552,15 @@ function calculateSalary() {
   setFormatSum('infoL4Sum', res.l4Pay);
   setFormatSum('infoLaundrySum', res.laundryAllowance, false);
   document.getElementById('infoTotalBrutto').innerText = formatPLN(res.gross);
-  document.getElementById('infoTotalNetto').innerText = formatPLN(res.net);
+  document.getElementById('infoTotalNetto').innerText = formatPLN(net);
+  document.getElementById('rowPitExtra').classList.toggle('hidden', !(extraPit > 0));
+  document.getElementById('infoPitExtraVal').innerText = formatPLN(extraPit);
+  document.getElementById('rowPitYtd').classList.toggle('hidden', !ytd);
+  document.getElementById('pitYtdNote').classList.toggle('hidden', !(ytd && ytd.found < ytd.expected));
+  if (ytd) {
+    document.getElementById('infoPitYtdVal').innerText = formatPLN(ytd.prev + pitBaseOf(res));
+    document.getElementById('pitYtdNote').innerText = dict[currentLang].pitYtdNote.replace('{found}', ytd.found).replace('{expected}', ytd.expected);
+  }
   document.getElementById('infoWorkedDaysVal').innerText = res.regWorkedDays;
   document.getElementById('infoTotalDaysVal').innerText = res.totalEngagedDays;
   document.getElementById('infoSchedVal').innerText = inputs.schedDays;
