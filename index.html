@@ -71,12 +71,12 @@
 <section class="card pro-only"><h3 data-i18n="cardAbsence">Відсутності</h3>
 <div class="field"><div class="lab"><label for="vacationDays" data-i18n="vacationDays">Відпустка (днів)</label></div><div class="ctl"><input type="number" inputmode="numeric" id="vacationDays" placeholder="0"></div></div>
 <div class="field sub hidden" id="urlopBonusGroup"><div class="lab"><label for="urlopBonus" data-i18n="urlopBonus">Сер. за 1 дн. (zł)</label><small data-i18n="hintUrlop">Авто за 3 попередні місяці (з хмари), можна змінити</small></div><div class="ctl"><input type="number" inputmode="decimal" id="urlopBonus" placeholder="0.00"></div></div>
-<div class="field"><div class="lab"><label for="bloodDonationDays" data-i18n="bloodDonation">Донація (днів)</label></div><div class="ctl"><input type="number" inputmode="numeric" id="bloodDonationDays" placeholder="0"></div></div>
+<div class="field"><div class="lab"><label for="bloodDonationDays" data-i18n="bloodDonation">Поважна відсутність (днів)</label></div><div class="ctl"><input type="number" inputmode="numeric" id="bloodDonationDays" placeholder="0"></div></div>
 <div class="field sub hidden" id="bloodBonusGroup"><div class="lab"><label for="bloodBonus" data-i18n="bloodBonus">Сер. за 1 дн. (zł)</label><small data-i18n="hintBlood">Розраховується автоматично</small></div><div class="ctl"><input type="number" inputmode="decimal" id="bloodBonus" placeholder="0.00" readonly></div></div>
 <div class="field"><div class="lab"><label for="l4Days" data-i18n="l4Days">Лікарняний L4</label><small data-i18n="hintL4">Календарних днів</small></div><div class="ctl"><input type="number" inputmode="numeric" id="l4Days" placeholder="0"></div></div>
 <div class="field sub hidden" id="l4MissedGroup"><div class="lab"><label for="l4MissedShifts" data-i18n="l4Missed">Пропущено (змін)</label></div><div class="ctl"><input type="number" inputmode="numeric" id="l4MissedShifts" placeholder="0"></div></div></section>
 
-<p class="note guest-only" data-i18n="proNote">Відпустка, донорство крові та лікарняний доступні після входу (PRO).</p>
+<p class="note guest-only" data-i18n="proNote">Відпустка, поважна відсутність та лікарняний доступні після входу (PRO).</p>
 <button type="button" class="btn" data-page="2" data-i18n="toDetails">Деталізація</button>
 <div class="hidden" data-cloud-only><button type="button" id="btn-sync-up-calc" class="btn primary" data-sync-up data-i18n="btnSaveCloud">Зберегти місяць</button></div>
 </div></div></section>
@@ -98,7 +98,7 @@
 <section class="card"><h3 data-i18n="cardOvertime">Надгодини</h3>
 <div class="row"><span><span data-i18n="infoOvertime" data-nocolon>Надгодини:</span></span><b id="infoOvertimeSum">0,00 zł</b></div><div class="row subrow"><span><span data-i18n="lblNettoShort" data-nocolon>нетто</span></span><b id="infoOvertimeNetSum">0,00 zł</b></div></section>
 
-<section class="card line"><h3 data-i18n="secVac">Відпускні</h3><b id="infoVacationSum">0,00 zł</b></section><section class="card line"><h3 data-i18n="secBlood">Донорство крові</h3><b id="infoBloodSum">0,00 zł</b></section><section class="card line"><h3 data-i18n="secL4">Лікарняний</h3><b id="infoL4Sum">0,00 zł</b></section>
+<section class="card line"><h3 data-i18n="secVac">Відпускні</h3><b id="infoVacationSum">0,00 zł</b></section><section class="card line"><h3 data-i18n="secBlood">Поважна відсутність</h3><b id="infoBloodSum">0,00 zł</b></section><section class="card line"><h3 data-i18n="secL4">Лікарняний</h3><b id="infoL4Sum">0,00 zł</b></section>
 </div><div class="forms dside">
 <section class="card total"><h3 data-i18n="secTotals">Підсумок</h3>
 <div class="row strong"><span><span data-i18n="totalBrutto" data-nocolon>BRUTTO:</span></span><b id="infoTotalBrutto">0,00 zł</b></div><div class="row"><span><span data-i18n="infoLaundry" data-nocolon>Доплата (прання):</span></span><b id="infoLaundrySum">0,00 zł</b></div>
