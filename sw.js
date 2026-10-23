@@ -17,10 +17,10 @@ const CORE = [
   './js/monthcache.js',
   './js/pit.js',
   './js/version.js',
+  // Великі іконки (512) навмисно не в прекеші: браузер бере їх сам під час встановлення PWA, а в CORE вони змусили б
+  // кожне оновлення заново качати сотні КБ (прекеш іде з cache: 'reload').
   './android-chrome-192x192.png',
-  './android-chrome-512x512.png',
-  './maskable-192.png',
-  './maskable-512.png'
+  './maskable-192.png'
 ];
 
 // Прекеш у обхід HTTP-кешу браузера: новий service worker має отримати справді нові файли.
