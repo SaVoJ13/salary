@@ -39,9 +39,19 @@ for (const icon of m.icons) {
 }
 for (const need of ['any:192x192', 'any:512x512', 'maskable:192x192', 'maskable:512x512']) assert.ok(purposes.has(need), `немає іконки ${need}`);
 
-// 4. Усе з manifest кешується service worker-ом (інакше офлайн-установка/запуск без іконок)
+// 4. У прекеші — manifest і малі іконки (≤192). Великі (512) браузер бере сам під час встановлення PWA; у CORE вони змусили б
+//    кожне оновлення заново качати сотні КБ (прекеш іде з cache: 'reload').
 const core = (sw.match(/CORE = \[([\s\S]*?)\]/) || [])[1] || '';
-for (const f of ['manifest.json', ...m.icons.map(i => i.src.replace(/^\.\//, ''))]) assert.ok(core.includes(`'./${f}'`), `sw.js CORE без ${f}`);
+const sizeOf = i => parseInt(i.sizes.split('x')[0]);
+const file = i => i.src.replace(/^\.\//, '');
+for (const f of ['manifest.json', ...m.icons.filter(i => sizeOf(i) <= 192).map(file)]) assert.ok(core.includes(`'./${f}'`), `sw.js CORE без ${f}`);
+for (const f of m.icons.filter(i => sizeOf(i) > 192).map(file)) assert.ok(!core.includes(`'./${f}'`), `${f}: велика іконка не має бути в прекеші`);
+
+// 4b. maskable не може бути копією звичайної іконки: Android обрізає край маскою (коло ≈ 80%), тож графіці потрібне поле навколо
+for (const mk of m.icons.filter(i => i.purpose === 'maskable')) {
+  for (const an of m.icons.filter(i => i.purpose === 'any' && i.sizes === mk.sizes))
+    assert.ok(!readFileSync(join(root, file(mk))).equals(readFileSync(join(root, file(an)))), `${file(mk)} — байт у байт копія ${file(an)}: для maskable потрібна версія з полями`);
+}
 
 // 5. apple-touch-icon існує
 const apple = (html.match(/rel="apple-touch-icon" href="([^"]+)"/) || [])[1];

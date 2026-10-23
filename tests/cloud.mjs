@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { installFakeDom } from './fake-dom.mjs';
+import { compute } from '../js/calc.js';
+import { pitBaseOf, inputsFromSaved } from '../js/pit.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -22,7 +24,7 @@ const toast = () => getEl('toast').innerText;
 // ---- фейковий Firebase ----
 const cloud = new Map();                 // path -> дані
 const calls = { setDoc: [] };
-let getDocMode = 'ok', setDocMode = 'ok';
+let getDocMode = 'ok', setDocMode = 'ok', getDocsMode = 'ok';
 const auth = { currentUser: null };
 const resets = []; let resetMode = 'ok';
 let authCb = null;
@@ -46,7 +48,12 @@ const stub = {
     if (setDocMode === 'hang') return new Promise(() => {});
     cloud.set(ref.path, data);
   },
-  getDocs: async () => ({ forEach() {} })
+  getDocs: async ref => {
+    if (getDocsMode === 'fail') throw Object.assign(new Error('unavailable'), { code: 'unavailable' });
+    return {
+      forEach(cb) { for (const [p, d] of cloud) if (p.startsWith(ref.path + '/')) cb({ id: p.slice(ref.path.length + 1), data: () => d }); }
+    };
+  }
 };
 globalThis.__salaryTest = { cloudLoader: async () => stub, saveTimeoutMs: 60, resetCooldownMs: 120 };
 console.warn = () => {};
@@ -143,6 +150,61 @@ assert.equal(calls.setDoc[0].data.morningShifts, '12');
 assert.equal(toast(), dict.uk.toastSaveCloud);
 assert.equal(JSON.parse(store.get(cacheKey)).data.morningShifts, '12', 'копія оновлена після збереження');
 
+// 4b. Поріг PIT 120 000: накопичена база береться з місяців року, збережених у хмарі
+const profile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
+const money = v => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(v);
+const seed = { baseSalary: '10500', morningShifts: '16', nightShifts: '4', scheduleDays: '20', bonusPctSelect: '10', presencePctSelect: '5' };
+for (let j = 1; j <= 12; j++) cloud.set(`users/u1/months/2026-${String(j).padStart(2, '0')}`, { ...seed });
+await authCb(auth.currentUser);                          // повторний вхід скидає кеш списку місяців
+const selectMonth = async id => { getEl('monthSelect').value = id; await fire(getEl('app-body'), 'change', getEl('monthSelect')); await sleep(80); };
+await selectMonth('2026-12');
+const dataOf = id => cloud.get(`users/u1/months/${id}`);
+const ytdPrev = Array.from({ length: 11 }, (_, j) => `2026-${String(j + 1).padStart(2, '0')}`)
+  .reduce((s, id) => s + pitBaseOf(compute(inputsFromSaved(dataOf(id), id, profile))), 0);
+const resDec = compute(inputsFromSaved(dataOf('2026-12'), '2026-12', profile));
+const baseDec = pitBaseOf(resDec);
+assert.ok(ytdPrev < 120000 && ytdPrev + baseDec > 120000, `передумова: у грудні перетинається поріг (${ytdPrev} + ${baseDec})`);
+// очікуване — окрема арифметика: 12% з частини під порогом, 32% з надлишку, мінус 300 (проти звичайних 12%)
+const below = 120000 - ytdPrev, above = baseDec - below;
+const expectedExtra = Math.round(below * 0.12 + above * 0.32 - 300) - Math.round(baseDec * 0.12 - 300);
+assert.ok(expectedExtra > 500, 'додатковий податок має бути відчутним');
+assert.equal(getEl('netResult').innerText, money(resDec.net - expectedExtra), 'netto зменшене на додатковий PIT');
+assert.equal(getEl('infoTotalNetto').innerText, money(resDec.net - expectedExtra));
+assert.equal(getEl('infoPitExtraVal').innerText, money(expectedExtra));
+assert.equal(getEl('rowPitExtra').classList.contains('hidden'), false, 'рядок «PIT 32%» показано');
+assert.equal(getEl('infoPitYtdVal').innerText, money(ytdPrev + baseDec), 'накопичена база PIT показана');
+assert.equal(getEl('pitYtdNote').classList.contains('hidden'), true, 'усі 11 місяців збережені — попередження немає');
+
+// 4b2. Застарілий накопичений дохід іншого місяця не застосовується: місяць змінено, а завантаження ще не завершилось
+getEl('monthSelect').value = '2026-11';
+await fire(getEl('app-body'), 'input', getEl('morningShifts'));      // перерахунок без перезавантаження накопичення
+assert.equal(getEl('rowPitExtra').classList.contains('hidden'), true, 'накопичення грудня не має впливати на листопад');
+assert.equal(getEl('rowPitYtd').classList.contains('hidden'), true);
+
+// 4c. Нижче порога (листопад: накопичено лише 10 місяців) — netto без змін проти compute(), рядка «PIT 32%» немає
+await selectMonth('2026-11');
+const resNov = compute(inputsFromSaved(dataOf('2026-11'), '2026-11', profile));
+assert.equal(getEl('netResult').innerText, money(resNov.net), 'нижче порога результат такий самий, як у compute()');
+assert.equal(getEl('rowPitExtra').classList.contains('hidden'), true);
+
+// 4d. Місяці року не збережені: поріг не вигадується, користувача попереджено
+await selectMonth('2027-03');
+assert.equal(getEl('rowPitExtra').classList.contains('hidden'), true);
+assert.equal(getEl('pitYtdNote').classList.contains('hidden'), false, 'є попередження про незбережені місяці');
+assert.ok(getEl('pitYtdNote').innerText.includes('0') && getEl('pitYtdNote').innerText.includes('2'), `у попередженні мають бути числа 0 і 2: "${getEl('pitYtdNote').innerText}"`);
+
+// 4e. Без мережі накопичена база береться з локальних копій місяців (хмара недоступна)
+for (let j = 1; j <= 12; j++) {
+  const id = `2026-${String(j).padStart(2, '0')}`;
+  store.set(`cloud_month_u1_${id}`, JSON.stringify({ v: 1, savedAt: new Date().toISOString(), data: { ...seed } }));
+}
+navigator.onLine = false; getDocsMode = 'fail';
+await authCb(auth.currentUser);                          // скидає кеш списку місяців в пам'яті
+await selectMonth('2026-12');
+assert.equal(getEl('netResult').innerText, money(resDec.net - expectedExtra), 'офлайн: поріг PIT враховано за локальними копіями');
+assert.equal(getEl('rowPitExtra').classList.contains('hidden'), false);
+navigator.onLine = true; getDocsMode = 'ok';
+
 // 5. Вихід: копія місяців і профіль акаунта прибрані, гостьові дані лишаються
 store.set('user_profile_u1', '{"baseSalary":6100}');
 store.set('guest_month_2026-01', '{"baseSalary":"5000"}');
@@ -150,6 +212,7 @@ await fire(getEl('btn-logout'), 'click');
 assert.ok(![...store.keys()].some(k => k.startsWith('cloud_month_u1_')), 'копії місяців акаунта видалені');
 assert.ok(!store.has('user_profile_u1'), 'локальна копія профілю акаунта видалена');
 assert.ok(store.has('guest_month_2026-01'), 'гостьові дані не чіпаємо');
+assert.equal(getEl('rowPitYtd').classList.contains('hidden'), true, 'після виходу рядки порога PIT сховані (у гостя їх немає)');
 
 // 6. Банер нової версії: подія від sw-register показує, «Пізніше» ховає, «Оновити» перезавантажує
 const banner = getEl('update-banner'); banner.classList.add('hidden');
