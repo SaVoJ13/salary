@@ -16,7 +16,10 @@ const CORE = [
   './js/utils.js',
   './js/monthcache.js',
   './js/pit.js',
+  './js/stats.js',
+  './js/charts.js',
   './js/version.js',
+  './js/sw-register.js',
   // Великі іконки (512) навмисно не в прекеші: браузер бере їх сам під час встановлення PWA, а в CORE вони змусили б
   // кожне оновлення заново качати сотні КБ (прекеш іде з cache: 'reload').
   './android-chrome-192x192.png',
