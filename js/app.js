@@ -1,8 +1,10 @@
 import { dict } from './i18n.js';
 import { CONFIG, getNormHours, stateDaysFor, getMinWage, compute, computeDailyUrlopBonus } from './calc.js';
 import { formatPLN, showToast } from './utils.js';
-import { saveMonthCache, loadMonthCache, clearMonthCache } from './monthcache.js';
+import { saveMonthCache, loadMonthCache, clearMonthCache, listMonthCache } from './monthcache.js';
 import { pitBaseOf, pitExtra, yearToDate } from './pit.js';
+import { collectPeriodStats, readGuestRecords, availableYears, normalizePeriod } from './stats.js';
+import { drawIncomeChart, drawMixChart, drawMixLegend } from './charts.js';
 
 /* Лише для тестів: tests/cloud.mjs підставляє фейковий Firebase і короткий таймаут. У браузері не задано. */
 const TEST = globalThis.__salaryTest || {};
@@ -134,7 +136,7 @@ window.setLang = function(lang) {
   document.querySelectorAll('button[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
   document.title = t.appTitle;
   document.getElementById('langSelect').value = lang;
-  initMonths(); calculateSalary(); refreshPeriod();
+  initMonths(); calculateSalary(); refreshPeriod(); paintStats();
 };
 
 window.setTheme = function(theme) {
@@ -144,12 +146,13 @@ window.setTheme = function(theme) {
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = theme === 'dark' ? '#0a0e16' : '#f2f4f8';
 };
 
-const VIEW_IDS = ['page1', 'page2', 'viewProfile', 'viewSettings'];
+const VIEW_IDS = ['page1', 'page2', 'viewStats', 'viewProfile', 'viewSettings'];
 window.switchPage = function(page) {
   currentActivePage = page;
   VIEW_IDS.forEach((id, i) => document.getElementById(id).classList.toggle('active', i + 1 === page));
   document.querySelectorAll('.tab').forEach(b => { if (Number(b.dataset.page) === page) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   window.scrollTo(0, 0);
+  if (page === 3) renderStats().catch(e => console.warn('Статистика:', e));     // дані читаємо щоразу при відкритті вкладки «Статистика»
 };
 
 function refreshPeriod() {
@@ -222,6 +225,8 @@ async function handleAuthState(user) {
     loadLocalGuestData();
   }
   calculateSalary();
+  statsLast = null; statsPeriod = DEFAULT_PERIOD(); statsPick = null;  // інше джерело даних — вибір періоду починаємо заново
+  if (currentActivePage === 3) renderStats({ reset: true }).catch(e => console.warn('Статистика:', e));
 }
 
 function fillFrom(d) {
@@ -433,7 +438,7 @@ async function autoFillUrlopBonus(monthVal) {
   }
 }
 
-/* Накопичена з початку року база PIT (для порога 120 000): місяці року ПЕРЕД поточним з хмари,
+/* Накопичена з початку року база PIT (для порога шкали PIT): місяці року ПЕРЕД поточним з хмари,
    а без мережі — з локальної копії. Для гостя порога немає (немає збережених місяців). */
 let ytdState = { monthVal: '', prev: 0, found: 0, expected: 0 };
 async function updateYtdCache(monthVal) {
@@ -525,10 +530,10 @@ function calculateSalary() {
   };
   inputs.regWorkedDays = inputs.morningShifts + inputs.afternoonShifts + inputs.nightShifts;
   const res = compute(inputs);
-  // Поріг PIT 120 000: лише для залогінених (потрібні збережені місяці року). Нижче порога extraPit = 0,
-  // тож результат такий самий, як у compute(); понад поріг — 32% замість 12% з надлишку.
+  // Поріг PIT (js/pit.js, шкала за роком): лише для залогінених (потрібні збережені місяці року). Нижче порога extraPit = 0,
+  // тож результат такий самий, як у compute(); понад поріг — вищі ставки замість 12% з надлишку.
   const ytd = isPremium && ytdState.monthVal === monthVal && !inputs.isUnder26 ? ytdState : null;
-  const extraPit = ytd ? pitExtra(res, ytd.prev) : 0;
+  const extraPit = ytd ? pitExtra(res, ytd.prev, inputs.year) : 0;
   const net = res.net - extraPit;
   if (inputs.bloodDonationDays > 0) document.getElementById('bloodBonus').value = res.autoDailyBlood.toFixed(2);
   updateUI(res.gross, net);
@@ -653,6 +658,121 @@ document.getElementById('auth-form').addEventListener('submit', e => e.preventDe
 document.getElementById('langSelect').addEventListener('change', e => window.setLang(e.target.value));
 document.getElementById('themeSelect').addEventListener('change', e => window.setTheme(e.target.value));
 
+/* ВКЛАДКА «СТАТИСТИКА»: підсумки за період (цифри рахують ті самі calc.js + pit.js, що й калькулятор).
+   Період: останні 3/6/12 місяців або вибрані роки. Майбутніх місяців немає: максимум — поточний.
+   Джерело: гість — guest_month_* у localStorage; акаунт — хмара, а без мережі локальні копії місяців. */
+const DEFAULT_PERIOD = () => ({ mode: '12', years: [] });
+let statsPeriod = DEFAULT_PERIOD();   // { mode: '3'|'6'|'12'|'years', years: [] }
+let statsPick = null;      // вибраний на графіку стовпчик (key)
+let statsToken = 0;        // відкидає застарілі відповіді при швидкому перемиканні вкладок
+let statsLast = null;      // { years, stats } — щоб перемальовувати (мова, вибір стовпчика) без повторного читання даних
+const statsNow = () => (TEST.now !== undefined ? new Date(TEST.now) : new Date());   // «сьогодні»; у тестах підміняється
+
+async function gatherStatsRecords() {
+  if (!auth.currentUser) return readGuestRecords(localStorage);
+  const uid = auth.currentUser.uid, records = {};
+  (await getCachedMonths()).forEach(d => { records[d.id] = d.data; });
+  for (const id of listMonthCache(localStorage, uid)) {                  // хмара недоступна/неповна — доповнюємо локальними копіями
+    if (!records[id]) { const c = loadMonthCache(localStorage, uid, id); if (c) records[id] = c.data; }
+  }
+  return records;
+}
+
+async function renderStats({ reset = false } = {}) {
+  const token = ++statsToken;
+  const records = await gatherStatsRecords();
+  if (token !== statsToken) return;
+  const now = statsNow(), years = availableYears(records, now);
+  if (reset) { statsPeriod = DEFAULT_PERIOD(); statsPick = null; }
+  statsPeriod = normalizePeriod(statsPeriod, years, now);
+  statsLast = { years, stats: collectPeriodStats(records, statsPeriod, userProfile, { premium: isPremium, now }) };
+  paintStats();
+}
+
+function setStatsMode(mode) {
+  if (!statsLast || statsPeriod.mode === mode) return;
+  statsPeriod = { mode, years: statsPeriod.years }; statsPick = null;
+  renderStats().catch(e => console.warn('Статистика:', e));
+}
+
+function toggleStatsYear(year) {
+  if (!statsLast || statsPeriod.mode !== 'years') return;
+  const set = new Set(statsPeriod.years);
+  if (set.has(year)) { if (set.size > 1) set.delete(year); } else set.add(year);       // останній рік зняти не можна
+  statsPeriod = { mode: 'years', years: [...set] }; statsPick = null;
+  renderStats().catch(e => console.warn('Статистика:', e));
+}
+
+function paintStats() {
+  if (!statsLast) return;
+  const t = dict[currentLang], names = t.monthNames, { years, stats } = statsLast, { buckets, mix, totals, kind, ids, missing } = stats;
+  const multiYear = new Set(ids.map(id => id.slice(0, 4))).size > 1;
+  const label = (year, month) => `${names[month - 1]}${multiYear ? ' ' + year : ''}`;
+  const monthLine = b => b.has
+    ? `${label(b.year, b.month)}: ${t.statsGross} ${formatPLN(b.gross)} · ${t.statsNet} ${formatPLN(b.net)}`
+    : `${label(b.year, b.month)}: ${t.statsNoMonth}`;
+  const yearLine = b => b.has
+    ? `${b.year}: ${t.statsPerMonth}: ${t.statsGross} ${formatPLN(b.gross)} · ${t.statsNet} ${formatPLN(b.net)} (${b.months} / ${b.expected} ${t.statsMonthsShort})`
+    : `${b.year}: ${t.statsNoMonth}`;
+  const lineOf = kind === 'year' ? yearLine : monthLine;
+
+  // фільтр: режим, роки, підпис діапазону
+  document.querySelectorAll('#periodPills .pill').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.mode === statsPeriod.mode)));
+  const yearBox = document.getElementById('yearPills');
+  yearBox.classList.toggle('hidden', statsPeriod.mode !== 'years');
+  yearBox.replaceChildren(...years.map(y => {
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'pill'; btn.textContent = String(y);
+    btn.setAttribute('aria-pressed', String(statsPeriod.years.includes(y)));
+    btn.addEventListener('click', () => toggleStatsYear(y));
+    return btn;
+  }));
+  const range = document.getElementById('periodRange');
+  if (stats.from) {
+    const f = stats.from.split('-').map(Number), l = stats.to.split('-').map(Number);
+    range.textContent = `${names[f[1] - 1]} ${f[0]} – ${names[l[1] - 1]} ${l[0]}`;
+  } else range.textContent = '';
+
+  // місяці без даних у вибраному періоді (майбутніх немає за побудовою періоду)
+  const missBox = document.getElementById('statsMissing');
+  missBox.classList.toggle('hidden', missing.length === 0);
+  document.getElementById('statsMissingTitle').textContent = `${t.statsMissingN} ${missing.length}`;
+  document.getElementById('statsMissingList').replaceChildren(...missing.map(id => {
+    const li = document.createElement('li'); const [y, m] = id.split('-').map(Number);
+    li.textContent = `${names[m - 1]} ${y}`; return li;
+  }));
+
+  const empty = totals.count === 0;
+  document.getElementById('statsEmpty').classList.toggle('hidden', !empty);
+  document.getElementById('statsBody').classList.toggle('hidden', empty);
+  if (empty) return;
+
+  document.getElementById('statsIncomeTitle').textContent = kind === 'year' ? t.statsIncomeYears : t.statsIncome;
+  const labels = buckets.map(b => (kind === 'year' ? String(b.year) : names[b.month - 1].slice(0, 3)));
+  const subLabels = kind === 'month' && multiYear ? buckets.map((b, i) => (i === 0 || b.month === 1 ? String(b.year) : '')) : null;
+  const picked = buckets.find(b => b.key === statsPick);
+  if (!picked) statsPick = null;
+  drawIncomeChart(document, document.getElementById('incomeChart'), buckets, {
+    labels, subLabels, selected: statsPick, ariaLabel: t.statsChartAria, pickLabel: lineOf,
+    onPick: key => { statsPick = key; paintStats(); }
+  });
+  document.getElementById('statsPick').textContent = picked ? lineOf(picked) : t.statsPickHint;
+
+  const total = Object.values(mix).reduce((s, v) => s + v, 0);
+  drawMixChart(document, document.getElementById('mixChart'), mix, { ariaLabel: t.statsMixAria, centerText: String(Math.round(total * 10) / 10), unitText: t.mixUnitCenter });
+  drawMixLegend(document, document.getElementById('mixLegend'), mix,
+    { regular: t.mixRegular, night: t.mixNight, overtime: t.mixOvertime, vacation: t.mixVacation, l4: t.mixL4, excused: t.mixExcused }, { unit: t.mixUnit });
+
+  document.getElementById('statsGrossVal').textContent = formatPLN(totals.gross);
+  document.getElementById('statsNetVal').textContent = formatPLN(totals.net);
+  document.getElementById('statsAvgVal').textContent = formatPLN(totals.avgNet);
+  document.getElementById('statsBestVal').textContent = totals.best ? `${label(totals.best.year, totals.best.month)} · ${formatPLN(totals.best.net)}` : '-';
+  document.getElementById('statsCountVal').textContent = `${totals.count} / ${totals.expected}`;
+}
+
+document.querySelectorAll('#periodPills .pill').forEach(btn => btn.addEventListener('click', () => setStatsMode(btn.dataset.mode)));
+
+
 const appVerEl = document.getElementById('appVersion');
 if (appVerEl && globalThis.APP_VERSION) appVerEl.textContent = 'v' + globalThis.APP_VERSION;
 // Повідомлення про нову версію: js/sw-register.js диспатчить подію, коли новий service worker перейняв керування
@@ -671,13 +791,13 @@ const swipeThreshold = 50; // Мінімальна довжина свайпу �
 
 document.addEventListener('touchstart', e => {
   // Ігноруємо свайпи на полях вводу, селекторах та нижній панелі вкладок
-  if (e.target.closest('input, select, button, .tabs, .ctl, .seg')) return;
+  if (e.target.closest('input, select, button, .tabs, .ctl, .seg, .chart-host')) return;
   touchStartX = e.changedTouches[0].screenX;
   touchStartY = e.changedTouches[0].screenY;
 }, { passive: true });
 
 document.addEventListener('touchend', e => {
-  if (e.target.closest('input, select, button, .tabs, .ctl, .seg')) return;
+  if (e.target.closest('input, select, button, .tabs, .ctl, .seg, .chart-host')) return;
   const touchEndX = e.changedTouches[0].screenX;
   const touchEndY = e.changedTouches[0].screenY;
   const dx = touchEndX - touchStartX;
@@ -685,8 +805,8 @@ document.addEventListener('touchend', e => {
   // Перевіряємо, чи рух був горизонтальним і чи перевищив поріг спрацьовування
   if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > swipeThreshold) {
     if (dx < 0) {
-      // Свайп вліво -> Наступна сторінка (до 4)
-      if (currentActivePage < 4) switchPage(currentActivePage + 1);
+      // Свайп вліво -> Наступна сторінка (до 5)
+      if (currentActivePage < 5) switchPage(currentActivePage + 1);
     } else {
       // Свайп вправо -> Попередня сторінка (до 1)
       if (currentActivePage > 1) switchPage(currentActivePage - 1);

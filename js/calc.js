@@ -6,7 +6,8 @@ export const CONFIG = {
   LAUNDRY_MAX: 16.00, BENEFIT_ZUS_NFZ: 30.25, BENEFIT_TAX: 54.00,
   EXTRA_INSURANCE_RATE: 36.70, NIGHT_SHIFT_BONUS: 30.00,
   WEEKEND_DAY_RATE: 100.00, DAILY_HOURS: 8,
-  MIN_WAGES: { 2024: 4300, 2025: 4666, 2026: 4806 }
+  // мінімальна зарплата брутто на 1 січня року; 2027 — розпорядження Ради Міністрів (Dz.U. 2026 poz. 1213): 4 950 zł
+  MIN_WAGES: { 2024: 4300, 2025: 4666, 2026: 4806, 2027: 4950 }
 };
 
 export function getEaster(year) {
@@ -50,7 +51,13 @@ export const stateDaysFor = (monthVal) => {
   return getNormHours(parseInt(y), parseInt(m) - 1) / 8;
 };
 
-export const getMinWage = (year) => CONFIG.MIN_WAGES[year] || 4806;
+/* Для року без запису береться остання відома ставка (не пізніша за рік), щоб нова зарплата не застаріла мовчки;
+   для року раніше за першу — перша. Додаючи новий рік у MIN_WAGES, більше нічого міняти не треба. */
+export const getMinWage = (year) => {
+  if (CONFIG.MIN_WAGES[year]) return CONFIG.MIN_WAGES[year];
+  const years = Object.keys(CONFIG.MIN_WAGES).map(Number).sort((a, b) => a - b);
+  return CONFIG.MIN_WAGES[years.filter(k => k <= year).pop() ?? years[0]];
+};
 
 export function compute(inputs) {
   const {

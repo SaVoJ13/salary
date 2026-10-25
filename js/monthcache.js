@@ -49,6 +49,12 @@ export function pruneMonthCache(storage, uid, max = MAX_MONTHS) {
   for (const { k } of dated.slice(0, keys.length - max)) storage.removeItem(k);
 }
 
+/* Id ('YYYY-MM') місяців акаунта, що є в локальній копії, за зростанням. Без розбору вмісту — лише ключі. */
+export function listMonthCache(storage, uid) {
+  const prefix = `${PREFIX}${uid}_`;
+  return keysWithPrefix(storage, prefix).map(k => k.slice(prefix.length)).filter(id => /^\d{4}-\d{2}$/.test(id)).sort();
+}
+
 export function clearMonthCache(storage, uid) {
   for (const k of keysWithPrefix(storage, `${PREFIX}${uid}_`)) storage.removeItem(k);
 }

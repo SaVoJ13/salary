@@ -1,20 +1,40 @@
-/* Поріг PIT 120 000 zł на рік (ставка 32% з надлишку).
-   Чистий модуль без DOM і Firebase. js/calc.js НЕ змінено: він і далі рахує PIT за ставкою 12%
-   (це еталонна математика, її охороняє tests/reference.mjs). Тут рахується лише ДОДАТКОВИЙ податок,
-   коли накопичена з початку року база PIT перевищує 120 000.
+/* Поріг(и) PIT за роками. Чистий модуль без DOM і Firebase. js/calc.js НЕ змінено для логіки податку: він і далі рахує PIT
+   за ставкою 12% (це еталонна математика, її охороняє tests/reference.mjs). Тут рахується лише ДОДАТКОВИЙ податок,
+   коли накопичена з початку року база PIT перевищує перший поріг шкали.
+
+   ШКАЛА ЗА РОКАМИ — єдине місце, яке міняють, коли змінюється закон:
+   - 2026 (і раніше): 12% до 120 000, 32% вище.
+   - 2027: 12% до 130 000, 24% від 130 000 до 150 000, 32% вище. СТАТУС: закон ухвалив Сейм (22.10.2026), на момент
+     написання він ще йде до Сенату й президента. Якщо його не підпишуть або змінять — виправити лише запис 2027 нижче.
+   Для років після останнього в таблиці береться остання шкала (поки не вийде нова), для років до першого — перша.
 
    Як рахує роботодавець (метод наростаючим підсумком):
    - база PIT місяця = брутто − внески ZUS − витрати (у цьому застосунку 300 zł: праця в іншій місцевості);
-   - у місяць перетину порога: 12% з частини бази, що вмістилась під 120 000, і 32% з надлишку;
-   - щомісячна знижка 300 zł (PIT-2) віднімається в усі місяці, тож за рік виходить рівно
-     10 800 zł + 32% з надлишку понад 120 000, як вимагає шкала;
+   - місячна база «лягає» на шкалу поверх уже накопиченої: частина під порогом — за нижчою ставкою, решта — за вищою;
+   - щомісячна знижка 300 zł (PIT-2 = 3 600 zł на рік) віднімається в усі місяці, тож за рік виходить рівно
+     скільки дає шкала (kwota wolna 30 000 zł незмінна в 2027);
    - аванс округлюється до повних злотих.
-   Нижче порога результат збігається з calc.js до злотого (це перевіряє tests/pit.mjs). */
+   Нижче першого порога результат збігається з calc.js до злотого (це перевіряє tests/pit.mjs). */
 
 import { CONFIG, compute, getNormHours } from './calc.js';
 
-export const PIT_LIMIT = 120000;
-export const PIT_RATE_HIGH = 0.32;
+export const PIT_SCALES = {
+  2026: [{ upTo: 120000, rate: 0.12 }, { upTo: Infinity, rate: 0.32 }],
+  2027: [{ upTo: 130000, rate: 0.12 }, { upTo: 150000, rate: 0.24 }, { upTo: Infinity, rate: 0.32 }]
+};
+
+/* Шкала для року: остання, що не пізніша за рік; для року раніше за першу — перша. Рік обов'язковий (без нього
+   легко мовчки взяти не ту шкалу), тому нечисловий рік — помилка. */
+export function pitScaleFor(year) {
+  const y = Number(year);
+  if (!Number.isFinite(y)) throw new TypeError(`PIT: потрібен рік, отримано ${year}`);
+  const years = Object.keys(PIT_SCALES).map(Number).sort((a, b) => a - b);
+  const pick = years.filter(k => k <= y).pop() ?? years[0];
+  return PIT_SCALES[pick];
+}
+
+/* Перший поріг шкали (де закінчується ставка 12%) — для підписів і тестів. */
+export const pitThreshold = year => pitScaleFor(year)[0].upTo;
 
 /* База PIT місяця — рівно так, як її рахує compute(): (брутто − ZUS) − 300, округлено до zł, не менше 0. */
 export function pitBaseOf(res) {
@@ -23,25 +43,30 @@ export function pitBaseOf(res) {
   return Math.round(Math.max(0, healthBase - CONFIG.KWOTA_WOLNA));
 }
 
-/* PIT-аванс місяця за наростаючим підсумком. ytdPrev — база PIT за попередні місяці цього року. */
-export function pitForMonth(pitBase, ytdPrev) {
-  const room = Math.max(0, PIT_LIMIT - ytdPrev);          // скільки ще вміщується під порогом
-  const below = Math.min(pitBase, room);
-  const above = pitBase - below;
-  if (above <= 0) return Math.max(0, Math.round(pitBase * CONFIG.PIT - CONFIG.KWOTA_WOLNA));   // точно як у compute()
-  return Math.max(0, Math.round(below * CONFIG.PIT + above * PIT_RATE_HIGH - CONFIG.KWOTA_WOLNA));
+/* PIT-аванс місяця за наростаючим підсумком. ytdPrev — база PIT за попередні місяці цього року, year — рік місяця. */
+export function pitForMonth(pitBase, ytdPrev, year) {
+  const scale = pitScaleFor(year);
+  const start = ytdPrev, end = ytdPrev + pitBase;
+  if (end <= scale[0].upTo) return Math.max(0, Math.round(pitBase * CONFIG.PIT - CONFIG.KWOTA_WOLNA));   // точно як у compute()
+  let tax = 0, from = 0;
+  for (const b of scale) {                                  // частина місячної бази, що потрапила в кожен щабель шкали
+    const lo = Math.max(start, from), hi = Math.min(end, b.upTo);
+    if (hi > lo) tax += (hi - lo) * b.rate;
+    from = b.upTo;
+  }
+  return Math.max(0, Math.round(tax - CONFIG.KWOTA_WOLNA));
 }
 
 /* Скільки ДОДАТКОВО податку проти compute() (завжди ≥ 0). Віднімається від netto, яке дав compute(). */
-export function pitExtra(res, ytdPrev) {
+export function pitExtra(res, ytdPrev, year) {
   const base = pitBaseOf(res);
   const original = Math.max(0, Math.round(base * CONFIG.PIT - CONFIG.KWOTA_WOLNA));   // те, що вже враховано в res.net
-  return pitForMonth(base, ytdPrev) - original;
+  return pitForMonth(base, ytdPrev, year) - original;
 }
 
 /* Вхідні дані compute() із запису місяця (як у Firestore / локальній копії). Дзеркало того, як
    calculateSalary() у app.js читає поля форми, включно зі значеннями за замовчуванням з fillFrom(). */
-export function inputsFromSaved(data, monthId, profile) {
+export function inputsFromSaved(data, monthId, profile, { premium = true } = {}) {
   const [yStr, mStr] = monthId.split('-');
   const year = parseInt(yStr);
   const stateDays = getNormHours(year, parseInt(mStr) - 1) / 8;
@@ -60,12 +85,12 @@ export function inputsFromSaved(data, monthId, profile) {
     overtimeDays: flt('overtimeDays'),
     overtimeMorningShifts: int('overtimeMorningShifts'), overtimeNightShifts: int('overtimeNightShifts'),
     weekendDays: int('weekendDays'),
-    vacDays: int('vacationDays'), dailyUrlopBonus: flt('urlopBonus'),
+    vacDays: premium ? int('vacationDays') : 0, dailyUrlopBonus: premium ? flt('urlopBonus') : 0,
     extraBonus: flt('extraBonus'),
-    bloodDonationDays: int('bloodDonationDays'), l4Days,
+    bloodDonationDays: premium ? int('bloodDonationDays') : 0, l4Days: premium ? l4Days : 0,
     qualityBonusPct, presenceBonusPct,
     isUnder26: profile.under26 === 'yes', ppkActive: profile.ppk === 'yes', insuranceActive: profile.insurance === 'yes',
-    isPremium: true,                 // збережені в хмарі місяці належать залогіненому акаунту
+    isPremium: premium,              // за замовчуванням — місяці залогіненого акаунта; для гостя premium: false
     l4DailyRateCached: null          // для минулих місяців середнє за 12 місяців не відновлюємо: беремо ставку від окладу
   };
   inputs.regWorkedDays = inputs.morningShifts + inputs.afternoonShifts + inputs.nightShifts;
