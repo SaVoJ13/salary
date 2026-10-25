@@ -81,3 +81,59 @@ body{padding-bottom:calc(168px + env(safe-area-inset-bottom))}
 /* «Забули пароль?» — текстове посилання під полем пароля (область дотику 44px) */
 .link-btn{display:block;margin:-4px 0 4px auto;min-height:44px;padding:0 4px;border:0;background:none;color:var(--primary);font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
 .link-btn:disabled{opacity:.5}
+
+/* Вкладка «Статистика»: п'ять вкладок у нижній панелі + графіки (SVG; кольори з тем) */
+.tabs .tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:420px){.tab{font-size:10.5px}}
+:root{--c1:#2257e7;--c2:#0b7a55;--c3:#b7791f;--c4:#7c3aed;--c5:#dc2626;--c6:#64748b}
+[data-theme=dark]{--c1:#7fa4ff;--c2:#3fd69b;--c3:#f0b95a;--c4:#b79bff;--c5:#ff7a7a;--c6:#9aa8bf}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.filter{padding:12px}.filter .card-sub{margin:10px 2px 0}
+.pills{display:flex;flex-wrap:wrap;gap:8px}.pills+.pills{margin-top:8px}
+.pill{flex:1 1 0;min-width:64px;min-height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-main);font:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;cursor:pointer}
+.pill[aria-pressed=true]{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.pill:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+#periodPills{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#periodPills .pill{min-width:0;padding:0 4px;white-space:nowrap;font-size:clamp(12px,3.6vw,14px)}
+.missing{padding:0 16px}.missing summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;font-size:14px;font-weight:600;cursor:pointer;list-style:none}
+.missing summary::-webkit-details-marker{display:none}
+.missing summary::after{content:"";flex:none;width:7px;height:7px;border:solid var(--text-muted);border-width:0 2px 2px 0;transform:translateY(-20%) rotate(45deg)}
+.missing[open] summary::after{transform:translateY(20%) rotate(-135deg)}
+.missing-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.missing-list li{padding:5px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font-size:13px}
+.chart-host{width:100%}
+.chart{display:block;width:100%;height:auto}
+.chart .grid{stroke:var(--border);stroke-width:1}
+.chart .axis{fill:var(--text-muted);font-size:10px}
+.chart .axis.dim{opacity:.5}
+.chart .bar-gross{fill:var(--text-muted);opacity:.45}
+.chart .bar-net{fill:var(--primary)}
+.chart .sel-bg{fill:var(--primary-soft)}
+.chart .bar-group.sel .bar-gross{opacity:.8}
+.chart .bar-group.sel .bar-net{fill:var(--success)}
+.chart .hit{fill:transparent;cursor:pointer;outline:none}
+.chart .hit:focus-visible{stroke:var(--primary);stroke-width:1.5}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 2px;font-size:13px;color:var(--text-muted)}
+.legend>span{display:inline-flex;align-items:center}
+.chip{display:inline-block;flex:none;width:11px;height:11px;border-radius:3px;margin-right:7px}
+.chip-gross{background:var(--text-muted);opacity:.45}.chip-net{background:var(--primary)}
+.chip-0{background:var(--c1)}.chip-1{background:var(--c2)}.chip-2{background:var(--c3)}.chip-3{background:var(--c4)}.chip-4{background:var(--c5)}.chip-5{background:var(--c6)}
+.mix-host{max-width:240px;margin:8px auto 0}
+.chart .seg-track{fill:none;stroke:var(--surface-2);stroke-width:18}
+.chart .seg{fill:none;stroke-width:18}
+.seg-0{stroke:var(--c1)}.seg-1{stroke:var(--c2)}.seg-2{stroke:var(--c3)}.seg-3{stroke:var(--c4)}.seg-4{stroke:var(--c5)}.seg-5{stroke:var(--c6)}
+.chart .center-num{fill:var(--text-main);font-size:22px;font-weight:800}
+.chart .center-unit{fill:var(--text-muted);font-size:9px}
+.mix-legend{list-style:none;margin:10px 0 4px;padding:0}
+.mix-legend li{display:flex;align-items:center;gap:0;padding:9px 0;border-top:1px solid var(--border);font-size:14px}
+.mix-legend .name{flex:1;min-width:0}
+.mix-legend b{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* П'ять вкладок унизу: довгий підпис обрізається трикрапкою, а не розпирає рядок */
+.tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* П'ять вкладок на вузькому екрані: шрифт плавно залежить від ширини, а відступи мінімальні, щоб найширший підпис
+   («Розрахунок») вміщувався без обрізання від 320px. На широкому екрані (≥900px) вкладки — рядок у шапці й цих правил не потребують. */
+@media (max-width:899px){
+  .tabs{gap:2px;padding-left:4px;padding-right:4px}
+  .tab{padding:0;font-size:clamp(8.5px,2.7vw,11px)}
+}
