@@ -1,8 +1,8 @@
-/* Поріг PIT 120 000 zł (js/pit.js). Незалежні еталони — приклади розрахунку з опублікованих джерел,
+/* Шкала PIT за роками: 2026 — 12%/32% з порогом 120 000; 2027 — 12%/24%/32% з порогами 130 000 і 150 000 (js/pit.js). Незалежні еталони — приклади розрахунку з опублікованих джерел,
    а не числа, згенеровані з цього коду. Нижче порога результат має збігатися з calc.js до злотого. */
 import assert from 'node:assert/strict';
 import { CONFIG, compute } from '../js/calc.js';
-import { PIT_LIMIT, pitBaseOf, pitForMonth, pitExtra, inputsFromSaved, yearToDate } from '../js/pit.js';
+import { PIT_SCALES, pitScaleFor, pitThreshold, pitBaseOf, pitForMonth, pitExtra, inputsFromSaved, yearToDate } from '../js/pit.js';
 
 // 1. Приклади з джерел: (накопичена база до місяця, база місяця) → аванс PIT у місяць перетину порога
 const examples = [
@@ -15,17 +15,18 @@ const examples = [
   // той самий сайт, листопад 2026: 115 000 накопичено, база 26 089 → 600 + 6 748,48 − 300 = 7 048,48 → 7 048
   { name: 'листопад: 12% з 5 000 + 32% з 21 089', ytdPrev: 115000, base: 26089, expected: 7048 }
 ];
-for (const e of examples) assert.equal(pitForMonth(e.base, e.ytdPrev), e.expected, `${e.name}: очікувалось ${e.expected}`);
+for (const e of examples) assert.equal(pitForMonth(e.base, e.ytdPrev, 2026), e.expected, `${e.name}: очікувалось ${e.expected}`);
 
 // 2. Після перетину порога весь місяць — 32% мінус 300 (поріг вже вичерпано)
-assert.equal(pitForMonth(10000, 130000), Math.round(10000 * 0.32 - 300));
+assert.equal(pitForMonth(10000, 130000, 2026), Math.round(10000 * 0.32 - 300));
 
 // 3. Нижче порога — точно та сама формула, що в compute() (жодних змін для звичайних зарплат)
 let seed = 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
 for (let i = 0; i < 20000; i++) {
+  const year = rnd() < 0.5 ? 2026 : 2027, limit = year === 2026 ? 120000 : 130000;     // перший поріг (незалежно від коду)
   const base = Math.round(rnd() * 40000);
-  const ytdPrev = Math.round(rnd() * Math.max(0, PIT_LIMIT - base));        // ytdPrev + base ≤ 120 000
-  assert.equal(pitForMonth(base, ytdPrev), Math.max(0, Math.round(base * 0.12 - 300)), `нижче порога base=${base} ytd=${ytdPrev}`);
+  const ytdPrev = Math.round(rnd() * Math.max(0, limit - base));            // ytdPrev + base ≤ перший поріг
+  assert.equal(pitForMonth(base, ytdPrev, year), Math.max(0, Math.round(base * 0.12 - 300)), `нижче порога ${year} base=${base} ytd=${ytdPrev}`);
 }
 
 // 4. pitBaseOf() відтворює базу з compute(): збираємо netto назад із res і порівнюємо з res.net
@@ -42,19 +43,25 @@ for (let i = 0; i < 5000; i++) {
   };
   const res = compute(inputs);
   const zus = (res.gross - res.l4Pay) * CONFIG.ZUS, nfz = Math.round((res.gross - zus) * CONFIG.NFZ * 100) / 100;
-  const pit = under26 ? 0 : pitForMonth(pitBaseOf(res), 0);
+  const pit = under26 ? 0 : pitForMonth(pitBaseOf(res), 0, 2026);
   const net = res.gross - zus - nfz - pit - (ppk ? res.gross * 0.02 : 0) - (ins ? CONFIG.EXTRA_INSURANCE_RATE : 0)
     - (CONFIG.BENEFIT_ZUS_NFZ + CONFIG.BENEFIT_TAX) + res.laundryAllowance;
   assert.ok(Math.abs(net - res.net) < 1e-9, `pitBaseOf не збігається з compute(): ${net} ≠ ${res.net}`);
-  assert.equal(pitExtra(res, 0), 0, 'без накопиченого доходу додаткового податку немає');
+  assert.equal(pitExtra(res, 0, 2026), 0, 'без накопиченого доходу додаткового податку немає');
 }
 
 // 5. Річна узгодженість: сума місячних авансів = податок за шкалою (10 800 + 32% надлишку), ±0,5 zł на місяць округлення
 for (const monthly of [9000, 10000, 11500, 13000, 20000]) {
   let ytd = 0, total = 0;
-  for (let m = 1; m <= 12; m++) { total += pitForMonth(monthly, ytd); ytd += monthly; }
-  const annual = ytd <= PIT_LIMIT ? ytd * 0.12 - 3600 : 10800 + 0.32 * (ytd - PIT_LIMIT);
-  assert.ok(Math.abs(total - annual) <= 6, `щомісячно ${monthly}: сума авансів ${total}, за шкалою ${annual}`);
+  let ytd27 = 0, total27 = 0;
+  for (let m = 1; m <= 12; m++) { total += pitForMonth(monthly, ytd, 2026); ytd += monthly; total27 += pitForMonth(monthly, ytd27, 2027); ytd27 += monthly; }
+  const annual = ytd <= 120000 ? ytd * 0.12 - 3600 : 10800 + 0.32 * (ytd - 120000);
+  assert.ok(Math.abs(total - annual) <= 6, `2026, щомісячно ${monthly}: сума авансів ${total}, за шкалою ${annual}`);
+  // 2027: податок за шкалою 12/24/32 мінус 3 600 (окрема арифметика за щаблями)
+  const annual27 = ytd27 <= 130000 ? ytd27 * 0.12 - 3600
+    : ytd27 <= 150000 ? 15600 + (ytd27 - 130000) * 0.24 - 3600
+    : 15600 + 4800 + (ytd27 - 150000) * 0.32 - 3600;
+  assert.ok(Math.abs(total27 - annual27) <= 6, `2027, щомісячно ${monthly}: сума авансів ${total27}, за шкалою ${annual27}`);
 }
 
 // 6. pitExtra: різниця проти compute() невід'ємна й дорівнює різниці формул
@@ -65,9 +72,9 @@ const resHigh = compute({
   l4DailyRateCached: null, presenceBonusPct: 5, qualityBonusPct: 10, year: 2026
 });
 const b = pitBaseOf(resHigh);
-assert.equal(pitExtra(resHigh, 0), 0);
-assert.equal(pitExtra(resHigh, 120000), Math.round(b * 0.32 - 300) - Math.round(b * 0.12 - 300), 'повністю над порогом');
-assert.ok(pitExtra(resHigh, 115000) > 0 && pitExtra(resHigh, 115000) < pitExtra(resHigh, 120000), 'часткове перевищення менше за повне');
+assert.equal(pitExtra(resHigh, 0, 2026), 0);
+assert.equal(pitExtra(resHigh, 120000, 2026), Math.round(b * 0.32 - 300) - Math.round(b * 0.12 - 300), 'повністю над порогом');
+assert.ok(pitExtra(resHigh, 115000, 2026) > 0 && pitExtra(resHigh, 115000, 2026) < pitExtra(resHigh, 120000, 2026), 'часткове перевищення менше за повне');
 
 // 7. yearToDate: беруться лише місяці цього року ПЕРЕД поточним; відсутні — рахуються як 0 і видно з found/expected
 const profile = { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' };
@@ -93,4 +100,44 @@ assert.equal(inp.presenceBonusPct, 0);
 inp = inputsFromSaved({ bonusPctSelect: '0', presencePctSelect: '0' }, '2026-05', profile);
 assert.equal(inp.baseSalary, 5750, 'без окладу в записі — ставка з профілю'); assert.equal(inp.qualityBonusPct, 0);
 
-console.log('OK: поріг PIT 120 000 (приклади з джерел, збіг з calc.js нижче порога, річна узгодженість, накопичення)');
+// 9. Шкала 2027 (12% до 130 000, 24% до 150 000, 32% вище): ручні приклади по щаблях, мінус 300
+const ex27 = [
+  { name: 'під порогом 130 000 — як compute()',  ytdPrev: 100000, base: 20000, expected: 2100 },           // 20 000 × 12% − 300
+  { name: 'перетин 130 000: 5 000 × 12% + 5 000 × 24%', ytdPrev: 125000, base: 10000, expected: 1500 },  // 600 + 1 200 − 300
+  { name: 'увесь місяць у щаблі 24%',               ytdPrev: 130000, base: 10000, expected: 2100 },       // 2 400 − 300
+  { name: 'перетин 150 000: 5 000 × 24% + 5 000 × 32%', ytdPrev: 145000, base: 10000, expected: 2500 },  // 1 200 + 1 600 − 300
+  { name: 'над 150 000 — 32%',                       ytdPrev: 150000, base: 10000, expected: 2900 },       // 3 200 − 300
+  { name: 'один місяць через усі щаблі',            ytdPrev: 100000, base: 60000, expected: 11300 }       // 3 600 + 4 800 + 3 200 − 300
+];
+for (const e of ex27) assert.equal(pitForMonth(e.base, e.ytdPrev, 2027), e.expected, `2027 ${e.name}`);
+assert.equal(pitForMonth(10000, 125000, 2026), 2900, 'ті самі дані за шкалою 2026 дають інший податок (32% одразу над 120 000)');
+assert.ok(pitForMonth(10000, 125000, 2027) < pitForMonth(10000, 125000, 2026), '2027 вигідніша за 2026 у проміжку 120–150 тис.');
+
+// 10. Вибір шкали за роком: невідомі роки — найближча попередня (після останньої — остання), нечисловий рік — помилка
+assert.equal(pitScaleFor(2025), PIT_SCALES[2026], 'до першої шкали — перша');
+assert.equal(pitScaleFor(2026), PIT_SCALES[2026]); assert.equal(pitScaleFor(2027), PIT_SCALES[2027]);
+assert.equal(pitScaleFor(2030), PIT_SCALES[2027], 'після останньої — остання, поки не додано нову');
+assert.deepEqual([2026, 2027, 2028].map(pitThreshold), [120000, 130000, 130000]);
+assert.throws(() => pitScaleFor(undefined), /потрібен рік/, 'рік не можна пропустити (інакше мовчки взялась би не та шкала)');
+assert.throws(() => pitForMonth(1000, 0), /потрібен рік/);
+for (const sc of Object.values(PIT_SCALES)) {                       // шкала впорядкована, закінчується безкінечним щаблем, ставки зростають
+  assert.ok(sc.every((b, i) => i === 0 || (b.upTo > sc[i - 1].upTo && b.rate > sc[i - 1].rate)));
+  assert.equal(sc[sc.length - 1].upTo, Infinity); assert.equal(sc[0].rate, CONFIG.PIT, 'перший щабель = ставка 12% з calc.js');
+}
+
+// 11. pitExtra за 2027: різниця проти compute() дорівнює різниці формул по щаблях
+const resHigh27 = compute({ ...{
+  baseSalary: 15000, stateDays: 21, schedDays: 21, regWorkedDays: 21, morningShifts: 21, nightShifts: 0,
+  overtimeMorningShifts: 0, overtimeNightShifts: 0, weekendDays: 0, overtimeDays: 0, vacDays: 0, dailyUrlopBonus: 0,
+  extraBonus: 0, bloodDonationDays: 0, l4Days: 0, isPremium: true, isUnder26: false, ppkActive: false, insuranceActive: true,
+  l4DailyRateCached: null, presenceBonusPct: 5, qualityBonusPct: 10 }, year: 2027 });
+const b27 = pitBaseOf(resHigh27);
+assert.equal(pitExtra(resHigh27, 0, 2027), 0, 'без накопиченого доходу додаткового податку немає');
+assert.equal(pitExtra(resHigh27, 130000, 2027), Math.round(b27 * 0.24 - 300) - Math.round(b27 * 0.12 - 300), 'щабель 24%');
+assert.equal(pitExtra(resHigh27, 150000, 2027), Math.round(b27 * 0.32 - 300) - Math.round(b27 * 0.12 - 300), 'щабель 32%');
+
+// 12. yearToDate для 2027 бере місяці 2027 року
+const y27 = yearToDate({ '2027-01': { baseSalary: '10000', morningShifts: '20', scheduleDays: '20' }, '2026-12': { baseSalary: '10000', morningShifts: '20' } }, '2027-02', { baseSalary: 5750, under26: 'no', ppk: 'no', insurance: 'yes' });
+assert.deepEqual([y27.found, y27.expected], [1, 1], '2027: рахується лише січень 2027, грудень 2026 — ні');
+
+console.log('OK: шкала PIT за роками (2026: 120 000; 2027: 130 000 / 150 000; приклади по щаблях, збіг з calc.js нижче порога, річна узгодженість, накопичення)');

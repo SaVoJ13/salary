@@ -28,7 +28,8 @@ for (const f of jsFiles) {
   assert.ok(!/\beval\s*\(|new Function\s*\(|document\.write\s*\(/.test(src), `${f}: eval/Function/document.write`);
   assert.ok(!/setAttribute\(\s*['"]style['"]|\.cssText\s*=/.test(src), `${f}: inline style через JS`);
   for (const m of src.matchAll(/\.(?:innerHTML|outerHTML)\s*=\s*([^;\n]+)/g)) assert.match(m[1].trim(), /^(''|"")$/, `${f}: innerHTML лише для очищення`);
-  for (const m of src.matchAll(/https?:\/\/[^\s'"`)]+/g)) assert.ok(m[0].startsWith('https://www.gstatic.com/firebasejs/'), `${f}: сторонній URL ${m[0]}`);
+  // Єдиний виняток — ідентифікатор простору імен SVG: це не адреса, її ніхто не завантажує (потрібна для createElementNS у js/charts.js)
+  for (const m of src.matchAll(/https?:\/\/[^\s'"`)]+/g)) assert.ok(m[0].startsWith('https://www.gstatic.com/firebasejs/') || m[0] === 'http://www.w3.org/2000/svg', `${f}: сторонній URL ${m[0]}`);
 }
 
 // 3b. firebase.js: одна версія SDK, мажорна ≥ 12

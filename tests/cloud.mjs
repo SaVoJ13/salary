@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { installFakeDom } from './fake-dom.mjs';
+import { installFakeDom, findAll, hasClass } from './fake-dom.mjs';
 import { compute } from '../js/calc.js';
 import { pitBaseOf, inputsFromSaved } from '../js/pit.js';
 
@@ -16,7 +16,8 @@ const html = readFileSync(join(root, 'index.html'), 'utf8');
 const formHtml = html.slice(html.indexOf('<form id="auth-form"'), html.indexOf('</form>'));
 assert.ok(/<button type="button" id="btn-reset-password"/.test(formHtml), '«Забули пароль?» має бути type="button" усередині форми входу');
 
-const { getEl, fire, fireWindow, store } = installFakeDom();
+const { getEl, fire, fireWindow, store } = installFakeDom({ groups: { '#periodPills .pill': ['pill3', 'pill6', 'pill12', 'pillYears'] } });
+['3', '6', '12', 'years'].forEach((m, i) => { getEl(['pill3', 'pill6', 'pill12', 'pillYears'][i]).dataset.mode = m; });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const { dict } = await import('../js/i18n.js');
 const toast = () => getEl('toast').innerText;
@@ -55,7 +56,8 @@ const stub = {
     };
   }
 };
-globalThis.__salaryTest = { cloudLoader: async () => stub, saveTimeoutMs: 60, resetCooldownMs: 120 };
+globalThis.__salaryTest = { cloudLoader: async () => stub, saveTimeoutMs: 60, resetCooldownMs: 120,
+  now: new Date(2026, 11, 15, 12).getTime() };   // «сьогодні» для статистики: грудень 2026 (поточний місяць, у якому перетинається поріг PIT)
 console.warn = () => {};
 
 await import('../js/app.js');
@@ -193,6 +195,30 @@ assert.equal(getEl('rowPitExtra').classList.contains('hidden'), true);
 assert.equal(getEl('pitYtdNote').classList.contains('hidden'), false, 'є попередження про незбережені місяці');
 assert.ok(getEl('pitYtdNote').innerText.includes('0') && getEl('pitYtdNote').innerText.includes('2'), `у попередженні мають бути числа 0 і 2: "${getEl('pitYtdNote').innerText}"`);
 
+// 4d2. Шкала 2027 у калькуляторі акаунта: грудень 2027 після 11 місяців — у щаблі 24% (130–150 тис.), а не 32% як у 2026
+{
+  const mk = base => ({ ...seed, baseSalary: String(base) });
+  let seed27 = null;                               // оклад, при якому за 11 місяців накопичується 135–145 тис.
+  for (let base = 8000; base <= 20000 && !seed27; base += 100) {
+    const ids = Array.from({ length: 12 }, (_, j) => `2027-${String(j + 1).padStart(2, '0')}`);
+    const bs = ids.map(id => pitBaseOf(compute(inputsFromSaved(mk(base), id, profile))));
+    const y11 = bs.slice(0, 11).reduce((a, v) => a + v, 0);
+    if (y11 > 135000 && y11 + bs[11] < 149000) seed27 = mk(base);
+  }
+  assert.ok(seed27, 'не вдалося підібрати оклад для щабля 24%');
+  const ids27 = Array.from({ length: 12 }, (_, j) => `2027-${String(j + 1).padStart(2, '0')}`);
+  ids27.forEach(id => cloud.set(`users/u1/months/${id}`, { ...seed27 }));
+  await authCb(auth.currentUser);
+  await selectMonth('2027-12');
+  const res27 = compute(inputsFromSaved(seed27, '2027-12', profile)), base27 = pitBaseOf(res27);
+  const extra27 = Math.round(base27 * 0.24 - 300) - Math.round(base27 * 0.12 - 300);       // увесь місяць у щаблі 24%
+  assert.equal(getEl('infoPitExtraVal').innerText, money(extra27), 'грудень 2027: додатковий PIT за ставкою 24% (12% → 24%)');
+  assert.equal(getEl('netResult').innerText, money(res27.net - extra27), 'netto 2027 зменшене на додатковий PIT за шкалою 2027');
+  assert.equal(getEl('rowPitExtra').classList.contains('hidden'), false);
+  ids27.forEach(id => { cloud.delete(`users/u1/months/${id}`); store.delete(`cloud_month_u1_${id}`); });
+  await authCb(auth.currentUser);
+}
+
 // 4e. Без мережі накопичена база береться з локальних копій місяців (хмара недоступна)
 for (let j = 1; j <= 12; j++) {
   const id = `2026-${String(j).padStart(2, '0')}`;
@@ -203,7 +229,40 @@ await authCb(auth.currentUser);                          // скидає кеш 
 await selectMonth('2026-12');
 assert.equal(getEl('netResult').innerText, money(resDec.net - expectedExtra), 'офлайн: поріг PIT враховано за локальними копіями');
 assert.equal(getEl('rowPitExtra').classList.contains('hidden'), false);
+// статистика без мережі: хмара недоступна — місяці беруться з локальних копій
+window.switchPage(3); await sleep(80);
+assert.equal(getEl('statsCountVal').textContent, '12 / 12', 'офлайн: вкладка «Статистика» бере місяці з локальних копій (останні 12 місяців = 2026 рік)');
+window.switchPage(1);
 navigator.onLine = true; getDocsMode = 'ok';
+
+// 4f. Вкладка «Статистика» (акаунт): netto місяця в статистиці = netto в калькуляторі, зокрема з порогом PIT у грудні
+window.switchPage(3); await sleep(80);
+assert.equal(getEl('periodRange').textContent, `${dict.uk.monthNames[0]} 2026 – ${dict.uk.monthNames[11]} 2026`, '12 місяців до грудня 2026 включно');
+assert.equal(getEl('statsMissing').classList.contains('hidden'), true, 'усі 12 місяців збережено — списку відсутніх немає');
+const monthsNames = dict.uk.monthNames;
+const resOf = id => compute(inputsFromSaved(dataOf(id), id, profile));
+const allIds = Array.from({ length: 12 }, (_, j) => `2026-${String(j + 1).padStart(2, '0')}`);
+const sumNet = allIds.reduce((s, id) => s + resOf(id).net, 0) - expectedExtra;
+assert.equal(getEl('statsCountVal').textContent, '12 / 12');
+assert.equal(getEl('statsNetVal').textContent, money(sumNet), 'підсумок за рік враховує додатковий PIT понад 120 000');
+assert.equal(getEl('statsGrossVal').textContent, money(allIds.reduce((s, id) => s + resOf(id).gross, 0)));
+findAll(getEl('incomeChart'), n => hasClass(n, 'hit'))[11].handlers.click[0]();
+assert.equal(getEl('statsPick').textContent, `${monthsNames[11]}: ${dict.uk.statsGross} ${money(resDec.gross)} · ${dict.uk.statsNet} ${money(resDec.net - expectedExtra)}`,
+  'грудень: те саме netto, що показує калькулятор (з додатковим PIT)');
+findAll(getEl('incomeChart'), n => hasClass(n, 'hit'))[0].handlers.click[0]();
+assert.equal(getEl('statsPick').textContent, `${monthsNames[0]}: ${dict.uk.statsGross} ${money(resOf('2026-01').gross)} · ${dict.uk.statsNet} ${money(resOf('2026-01').net)}`, 'нижче порога — без додаткового податку');
+
+// 4g. Майбутні місяці: якщо «сьогодні» 25.10.2026, листопад і грудень 2026 у статистику не входять
+globalThis.__salaryTest.now = new Date(2026, 9, 25, 12).getTime();
+await fire(getEl('pillYears'), 'click'); await sleep(80);
+{ const octIds = Array.from({ length: 10 }, (_, j) => `2026-${String(j + 1).padStart(2, '0')}`);
+  assert.equal(getEl('statsCountVal').textContent, '10 / 10', 'рік 2026 до жовтня включно: грудень (який є в хмарі) не рахується');
+  assert.equal(getEl('statsNetVal').textContent, money(octIds.reduce((s, id) => s + resOf(id).net, 0)), 'без грудня немає й додаткового PIT');
+  assert.equal(getEl('statsMissing').classList.contains('hidden'), true); }
+await fire(getEl('pill12'), 'click'); await sleep(80);
+assert.equal(getEl('statsCountVal').textContent, '10 / 12', 'вікно 12 місяців: листопад–грудень 2025 не збережені');
+assert.deepEqual(getEl('statsMissingList').children.map(li => li.textContent), [`${monthsNames[10]} 2025`, `${monthsNames[11]} 2025`], 'у списку відсутніх лише минулі місяці');
+globalThis.__salaryTest.now = new Date(2026, 11, 15, 12).getTime();
 
 // 5. Вихід: копія місяців і профіль акаунта прибрані, гостьові дані лишаються
 store.set('user_profile_u1', '{"baseSalary":6100}');
@@ -213,6 +272,9 @@ assert.ok(![...store.keys()].some(k => k.startsWith('cloud_month_u1_')), 'коп
 assert.ok(!store.has('user_profile_u1'), 'локальна копія профілю акаунта видалена');
 assert.ok(store.has('guest_month_2026-01'), 'гостьові дані не чіпаємо');
 assert.equal(getEl('rowPitYtd').classList.contains('hidden'), true, 'після виходу рядки порога PIT сховані (у гостя їх немає)');
+await sleep(80);
+assert.equal(getEl('statsCountVal').textContent, '1 / 12', 'після виходу вкладка «Статистика» показує дані гостя, а не акаунта');
+window.switchPage(1);
 
 // 6. Банер нової версії: подія від sw-register показує, «Пізніше» ховає, «Оновити» перезавантажує
 const banner = getEl('update-banner'); banner.classList.add('hidden');

@@ -181,6 +181,10 @@ const ctx = vm.createContext({});
 vm.runInContext(src + '\n;this.api={CONFIG,getNormHours,stateDaysFor,getMinWage,compute,computeDailyUrlopBonus};', ctx);
 const ref = ctx.api;
 
+/* ЗАПЛАНОВАНЕ ОНОВЛЕННЯ ДАНИХ (не математики): мінімальна зарплата 2027 = 4 950 zł (розпорядження Ради Міністрів, Dz.U. 2026 poz. 1213).
+   Текст оригіналу вище НЕ змінено; значення додається до еталона тут, щоб порівняння лишалось чесним: усі формули еталона — оригінальні. */
+ref.CONFIG.MIN_WAGES[2027] = 4950;
+
 // mulberry32
 let seed = 20261020;
 const rnd = () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -193,6 +197,12 @@ const same = (a, b, where) => {
 
 // 1. Константи
 assert.equal(JSON.stringify(mine.CONFIG), JSON.stringify(ref.CONFIG), 'CONFIG відрізняється від оригіналу');
+
+/* Правило для років без запису в MIN_WAGES (змінено свідомо): береться остання відома ставка, а не застаріла 4 806.
+   Оригінал для таких років давав 4 806, тож для порівняння 2028 еталону задається та сама ставка явно. */
+assert.deepEqual([2024, 2025, 2026, 2027, 2028, 2035].map(mine.getMinWage), [4300, 4666, 4806, 4950, 4950, 4950], 'ставки за роками й запасний варіант');
+assert.equal(mine.getMinWage(2023), 4300, 'до першого відомого року — перша ставка');
+ref.CONFIG.MIN_WAGES[2028] = 4950;
 
 // 2. Норма годин: усі місяці 2000–2040
 for (let y = 2000; y <= 2040; y++) for (let m = 0; m < 12; m++)

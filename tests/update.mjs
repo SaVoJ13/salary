@@ -1,6 +1,6 @@
 /* Оновлення застосунку: js/sw-register.js (подія «нова версія»), sw.js (прекеш без HTTP-кешу), розмітка банера. */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
@@ -62,6 +62,10 @@ vm.runInNewContext(swRegisterSrc, { navigator: {}, window: {}, document: {}, con
 const sw = read('sw.js');
 assert.ok(/self\.skipWaiting\(\)/.test(sw) && /self\.clients\.claim\(\)/.test(sw), 'sw.js: skipWaiting + clients.claim');
 assert.ok(/new Request\(url,\s*\{\s*cache:\s*'reload'\s*\}\)/.test(sw), "sw.js: прекеш має йти з cache: 'reload'");
+
+// 6b. Кожен файл js/ має бути в прекеші: інакше новий модуль працюватиме офлайн лише після першого «живого» запиту
+const core = (sw.match(/CORE = \[([\s\S]*?)\]/) || [])[1] || '';
+for (const f of readdirSync(join(root, 'js')).filter(f => f.endsWith('.js'))) assert.ok(core.includes(`'./js/${f}'`), `sw.js CORE без js/${f}`);
 
 // 7. Розмітка банера: прихований за замовчуванням, обидві кнопки, переклади в обох мовах
 const html = read('index.html');

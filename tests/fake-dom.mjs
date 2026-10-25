@@ -2,6 +2,27 @@
    localStorage — Map, navigator/location/window керовані тестом. Спільний для offline.mjs і cloud.mjs.
    Лежить прямо в tests/ (не у вкладеній папці): структура репозиторію плоска, бо підпапки важко завантажувати з телефона. */
 
+/* Вузол дерева (елемент HTML/SVG): атрибути, діти, обробники — достатньо, щоб перевірити, що намальовано. */
+export function makeNode(tag) {
+  return {
+    tag, attrs: {}, children: [], className: '', textContent: '', value: '', text: '', handlers: {},
+    setAttribute(k, v) { this.attrs[k] = v; },
+    getAttribute(k) { return this.attrs[k]; },
+    appendChild(c) { this.children.push(c); return c; },
+    replaceChildren(...nodes) { this.children = nodes; },
+    addEventListener(type, fn) { (this.handlers[type] ||= []).push(fn); }
+  };
+}
+
+/* Усі вузли піддерева, що задовольняють умову (разом із коренем). */
+export function findAll(root, pred, out = []) {
+  if (!root || typeof root !== 'object') return out;
+  if (pred(root)) out.push(root);
+  for (const c of root.children || []) findAll(c, pred, out);
+  return out;
+}
+export const hasClass = (n, cls) => ((n.attrs && n.attrs.class) || n.className || '').split(/\s+/).includes(cls);
+
 export function installFakeDom({ groups = {} } = {}) {
   const elements = new Map();
   const winHandlers = {};
@@ -21,8 +42,11 @@ export function installFakeDom({ groups = {} } = {}) {
       get options() { return options; },
       set innerHTML(_v) { options = []; },
       appendChild(o) { options.push(o); },
+      children: [],
+      replaceChildren(...nodes) { this.children = nodes; },
       addEventListener(type, fn) { (this.handlers[type] ||= []).push(fn); },
-      setAttribute() {}, removeAttribute() {}, hasAttribute() { return false; },
+      attrs: {}, setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
+      removeAttribute(k) { delete this.attrs[k]; }, hasAttribute() { return false; },
       dispatchEvent() {}, closest() { return null; }
     };
   }
@@ -49,7 +73,8 @@ export function installFakeDom({ groups = {} } = {}) {
     getElementById: getEl,
     querySelector: () => null,
     querySelectorAll: sel => (sel === 'input, select' ? [...elements.values()] : (groupDefs[sel] || []).map(getEl)),
-    createElement: () => ({ value: '', text: '' }),
+    createElement: tag => makeNode(tag),
+    createElementNS: (_ns, tag) => makeNode(tag),
     addEventListener() {}
   };
   Object.defineProperty(globalThis, 'navigator', { value: { language: 'uk', onLine: true }, configurable: true, writable: true });

@@ -26,4 +26,15 @@ assert.equal((html.match(/data-cloud-only/g) || []).length, 2, 'очікуєть
 assert.ok(profile.includes('id="btn-sync-down"') && profile.includes('id="btn-logout"'), 'у профілі мають лишитись «Завантажити» та «Вийти»');
 assert.equal((html.match(/\bid="btn-sync-up/g) || []).length, 2, 'дублікати id кнопок збереження');
 
+
+// Навігація: кожна вкладка веде на свою секцію, а свайп знає про всі сторінки
+const app = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../js/app.js'), 'utf8');
+const viewIds = [...app.match(/const VIEW_IDS = \[([^\]]*)\]/)[1].matchAll(/'(\w+)'/g)].map(m => m[1]);
+const navNums = [...html.slice(html.indexOf('<nav class="tabs"'), html.indexOf('</nav>')).matchAll(/data-page="(\d+)"/g)].map(m => Number(m[1]));
+assert.deepEqual(navNums, viewIds.map((_, i) => i + 1), 'номери вкладок мають збігатися з порядком VIEW_IDS');
+for (const id of viewIds) assert.ok(html.includes(`id="${id}"`), `немає секції #${id}`);
+assert.match(app, new RegExp(`currentActivePage < ${viewIds.length}\\)`), `свайп має доходити до останньої сторінки (${viewIds.length})`);
+
+assert.equal((app.match(/\.seg, \.chart-host'\)\) return;/g) || []).length, 2, 'touchstart і touchend мають ігнорувати .chart-host (графіки не гортають сторінку)');
+
 console.log('OK: розкладка (збереження місяця: калькулятор внизу + деталі, не в профілі)');
